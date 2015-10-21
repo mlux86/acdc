@@ -19,7 +19,6 @@ void Opts::initialize(int argc, char const *argv[])
 
 	description.add_options()
 	    ("help,h", "Display this help message")
-	    ("version,v", "Display the version number")
 	    ("input-fasta,i", boost::program_options::value<std::string>()->default_value(""), "Input FASTA file")
 	    ("tsne-dimension,d", boost::program_options::value<unsigned>()->default_value(2), "T-SNE dimension")
 	    ("tsne-perplexity,p", boost::program_options::value<unsigned>(), "T-SNE perplexity (overrides automatic estimation)")
@@ -31,7 +30,8 @@ void Opts::initialize(int argc, char const *argv[])
 	    ;
 	
 	boost::program_options::variables_map vm;
-	boost::program_options::store(boost::program_options::command_line_parser(argc, argv).options(description).run(), vm);
+	boost::program_options::parsed_options parsed = boost::program_options::command_line_parser(argc, argv).options(description).allow_unregistered().run(); 
+	boost::program_options::store(parsed, vm);
 	boost::program_options::notify(vm);
 
 	std::stringstream ss;

@@ -1,13 +1,16 @@
+#include "easylogging++.h"
+
 #include "SequenceVectorizer.h"
 #include "Util.h"
 
-#include <seqan/alignment_free.h> 
-#include <seqan/sequence.h> 
-#include <seqan/seq_io.h>
 #include <string>
 #include <vector>
 #include <unordered_set>
 #include <math.h>
+
+#include <seqan/alignment_free.h> 
+#include <seqan/sequence.h> 
+#include <seqan/seq_io.h>
 
 SequenceVectorizer::SequenceVectorizer(const unsigned kmerLength_, const unsigned windowWidth_, const unsigned windowStep_) : kmerLength(kmerLength_), windowWidth(windowWidth_), windowStep(windowStep_)
 {
@@ -36,7 +39,7 @@ void SequenceVectorizer::buildParams(const Opts & opts)
 		auto fileSize = Util::getFileSizeBytes(inputFASTA);
         windowStep = (unsigned) ceil((double)fileSize / (double)opts.targetNumPoints());
         windowWidth = 2 * windowStep;
-        std::cout << "Estimated windowWidth = " << windowWidth << " and windowStep = " << windowStep << std::endl;
+        VLOG(2) << "Estimated windowWidth=" << windowWidth << " and windowStep=" << windowStep;
 	}
 	
 	if(windowStep == 0)
@@ -75,10 +78,9 @@ Eigen::MatrixXd SequenceVectorizer::vectorize(seqan::Dna5String & sequence) cons
 
 	if (len < windowWidth)
 	{
-		std::cout << "Length of contig is smaller than window size." << std::endl;
+		VLOG(3) << "Length of contig is smaller than window size.";
 		return mat;
 	}
-
 
 	for (unsigned i = 0; i < n; i++)
 	{

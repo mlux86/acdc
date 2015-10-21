@@ -1,5 +1,5 @@
-#ifndef OPTS_H
-#define OPTS_H
+#ifndef __Opts__
+#define __Opts__
 
 #include <string>
 

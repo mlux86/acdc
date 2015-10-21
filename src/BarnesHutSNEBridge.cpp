@@ -1,7 +1,7 @@
-#include "BarnesHutSNEBridge.h"
+#include "easylogging++.h"
 
+#include "BarnesHutSNEBridge.h"
 #include "Util.h"
-#include <iostream>
 
 BarnesHutSNEBridge::BarnesHutSNEBridge()
 {
@@ -61,7 +61,6 @@ Eigen::MatrixXd BarnesHutSNEBridge::runBarnesHutSNE(const Eigen::MatrixXd & eige
     if (perplexity == 0)
     {
         perplexity = Util::estimateTsnePerplexity(eigendata);
-        std::cout << "Estimated perplexity: " << perplexity << std::endl;
     }
 
     // read the parameters and the dataset
@@ -71,10 +70,11 @@ Eigen::MatrixXd BarnesHutSNEBridge::runBarnesHutSNE(const Eigen::MatrixXd & eige
 	double * Y = (double*) malloc(N * opts.tsneDim() * sizeof(double));
     if (Y == NULL)
 	{ 
-		printf("Memory allocation failed!\n"); 
-		exit(1); 
+		throw std::runtime_error("Memory allocation failed.");
 	}
     srand(time(NULL));
+    
+    VLOG(2) << "targetDim=" << opts.tsneDim() << ", perplexity=" << perplexity << ", theta=" << opts.tsneTheta();
 	tsne->run(data, N, D, Y, opts.tsneDim(), perplexity, opts.tsneTheta());
 	
 	// save the results
