@@ -21,6 +21,8 @@ public:
 	static Eigen::MatrixXd loadMatrix(std::string filename, char delimiter = ' ');
 	static void saveMatrix(const Eigen::MatrixXd & mat, std::string filename, char delimiter = ' ');
 
+	static unsigned estimateTsnePerplexity(const Eigen::MatrixXd & mat);
+
 };
 
 

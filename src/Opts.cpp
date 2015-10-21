@@ -22,7 +22,7 @@ void Opts::initialize(int argc, char const *argv[])
 	    ("version,v", "Display the version number")
 	    ("input-fasta,i", boost::program_options::value<std::string>()->default_value(""), "Input FASTA file")
 	    ("tsne-dimension,d", boost::program_options::value<unsigned>()->default_value(2), "T-SNE dimension")
-	    ("tsne-perplexity,p", boost::program_options::value<unsigned>()->default_value(50), "T-SNE perlexity")
+	    ("tsne-perplexity,p", boost::program_options::value<unsigned>(), "T-SNE perplexity (overrides automatic estimation)")
 	    ("tsne-theta,t", boost::program_options::value<float>()->default_value(0.5), "T-SNE parameter 'theta' of the underlying Barnes-Hut approximation")
 	    ("window-kmer-length,k", boost::program_options::value<unsigned>()->default_value(4), "Length of the k-mers in the sequence vectorizer window")
 	    ("window-width,w", boost::program_options::value<unsigned>()->default_value(1000), "Width of the sliding sequence vectorizer window")
@@ -41,7 +41,10 @@ void Opts::initialize(int argc, char const *argv[])
 	_inputFASTA = vm["input-fasta"].as<std::string>();
 	boost::algorithm::trim(_inputFASTA);
 	_tsneDim = vm["tsne-dimension"].as<unsigned>();
-	_tsnePerplexity = vm["tsne-perplexity"].as<unsigned>();
+	if (vm.count("tsne-perplexity"))
+	{
+		_tsnePerplexity = vm["tsne-perplexity"].as<unsigned>();
+	}
 	_tsneTheta = vm["tsne-theta"].as<float>();
 	_windowKmerLength = vm["window-kmer-length"].as<unsigned>();
 	_windowWidth = vm["window-width"].as<unsigned>();

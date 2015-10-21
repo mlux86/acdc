@@ -11,13 +11,13 @@ private:
 
 	std::string _inputFASTA = "";
 
-	unsigned _tsneDim;
-	unsigned _tsnePerplexity;
-	float _tsneTheta;
+	unsigned _tsneDim = 0;
+	unsigned _tsnePerplexity = 0;
+	float _tsneTheta = 0.0;
 
-	unsigned _windowKmerLength;
-	unsigned _windowWidth;
-	unsigned _windowStep;
+	unsigned _windowKmerLength = 0;
+	unsigned _windowWidth = 0;
+	unsigned _windowStep = 0;
 
 	void initialize(int argc, char const *argv[]);
 

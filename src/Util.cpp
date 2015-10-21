@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
+#include <math.h>  
 
 Util::Util()
 {
@@ -133,6 +134,9 @@ void Util::saveMatrix(const Eigen::MatrixXd & mat, std::string filename, char de
     ofs.close();
 }
 
-
+unsigned Util::estimateTsnePerplexity(const Eigen::MatrixXd & mat)
+{
+    return (unsigned) (pow(log(mat.rows()), 2)); 
+}
 
 

@@ -1,5 +1,8 @@
 #include "BarnesHutSNEBridge.h"
 
+#include "Util.h"
+#include <iostream>
+
 BarnesHutSNEBridge::BarnesHutSNEBridge()
 {
 }
@@ -45,7 +48,7 @@ Eigen::MatrixXd BarnesHutSNEBridge::saveData(double* data, int N, int D)
 }
 
 // copied and modified from the original BH-SNE implementation
-Eigen::MatrixXd BarnesHutSNEBridge::runBarnesHutSNE(const Eigen::MatrixXd & eigendata, const unsigned targetDim, const double theta, const double perplexity)
+Eigen::MatrixXd BarnesHutSNEBridge::runBarnesHutSNE(const Eigen::MatrixXd & eigendata, const Opts & opts)
 {
 
     TSNE* tsne = new TSNE();
@@ -53,23 +56,31 @@ Eigen::MatrixXd BarnesHutSNEBridge::runBarnesHutSNE(const Eigen::MatrixXd & eige
     int N = eigendata.rows();
     int D = eigendata.cols();
     
-    // Read the parameters and the dataset
+    // estimate perplexity if necessary
+    unsigned perplexity = opts.tsnePerplexity();
+    if (perplexity == 0)
+    {
+        perplexity = Util::estimateTsnePerplexity(eigendata);
+        std::cout << "Estimated perplexity: " << perplexity << std::endl;
+    }
+
+    // read the parameters and the dataset
 	double * data = BarnesHutSNEBridge::loadData(eigendata);
 	
-	// Fire up the SNE implementation
-	double * Y = (double*) malloc(N * targetDim * sizeof(double));
+	// fire up the SNE implementation
+	double * Y = (double*) malloc(N * opts.tsneDim() * sizeof(double));
     if (Y == NULL)
 	{ 
 		printf("Memory allocation failed!\n"); 
 		exit(1); 
 	}
     srand(time(NULL));
-	tsne->run(data, N, D, Y, targetDim, perplexity, theta);
+	tsne->run(data, N, D, Y, opts.tsneDim(), perplexity, opts.tsneTheta());
 	
-	// Save the results
-	Eigen::MatrixXd result = BarnesHutSNEBridge::saveData(Y, N, targetDim);
+	// save the results
+	Eigen::MatrixXd result = BarnesHutSNEBridge::saveData(Y, N, opts.tsneDim());
     
-    // Clean up
+    // clean up
 	free(data); 
 	free(Y);
     

@@ -2,6 +2,7 @@
 #define __BarnesHutSNEBridge__
 
 #include <eigen3/Eigen/Dense>
+#include "Opts.h"
 #include "tsne.h"
 
 class BarnesHutSNEBridge
@@ -15,7 +16,7 @@ private:
 	static Eigen::MatrixXd saveData(double* data, int n, int d);
 
 public:
-	static Eigen::MatrixXd runBarnesHutSNE(const Eigen::MatrixXd & eigendata, const unsigned targetDim, const double theta, const double perplexity);
+	static Eigen::MatrixXd runBarnesHutSNE(const Eigen::MatrixXd & eigendata, const Opts & opts);
 	
 };
 

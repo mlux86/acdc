@@ -37,7 +37,7 @@ int main(int argc, char const *argv[])
 
 	auto dat = sv.vectorize(opts->inputFASTA());
 
-	auto reduced = BarnesHutSNEBridge::runBarnesHutSNE(dat.first, opts->tsneDim(), opts->tsneTheta(), opts->tsnePerplexity());
+	auto reduced = BarnesHutSNEBridge::runBarnesHutSNE(dat.first, *opts);
 
 	Util::saveMatrix(reduced, "/tmp/reduced", ' ');
 
