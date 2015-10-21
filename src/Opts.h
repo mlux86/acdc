@@ -19,6 +19,8 @@ private:
 	unsigned _windowWidth = 0;
 	unsigned _windowStep = 0;
 
+	unsigned _targetNumPoints = 0;
+
 	void initialize(int argc, char const *argv[]);
 
 
@@ -35,6 +37,7 @@ public:
 	unsigned windowKmerLength() const;
 	unsigned windowWidth() const;
 	unsigned windowStep() const;
+	unsigned targetNumPoints() const;
 	
 };
 

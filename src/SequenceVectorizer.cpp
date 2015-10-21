@@ -7,8 +7,45 @@
 #include <string>
 #include <vector>
 #include <unordered_set>
+#include <math.h>
 
-SequenceVectorizer::SequenceVectorizer(const unsigned kmerLength_, const unsigned windowSize_, const unsigned windowStep_) : kmerLength(kmerLength_), windowSize(windowSize_), windowStep(windowStep_)
+SequenceVectorizer::SequenceVectorizer(const unsigned kmerLength_, const unsigned windowWidth_, const unsigned windowStep_) : kmerLength(kmerLength_), windowWidth(windowWidth_), windowStep(windowStep_)
+{
+	buildFeatureKmers();
+}
+
+
+SequenceVectorizer::SequenceVectorizer(const Opts & opts)
+{
+	buildParams(opts);
+	buildFeatureKmers();
+}
+
+SequenceVectorizer::~SequenceVectorizer() {}
+
+void SequenceVectorizer::buildParams(const Opts & opts)
+{
+	inputFASTA = opts.inputFASTA();
+	kmerLength = opts.windowKmerLength();
+	windowWidth = opts.windowWidth();
+	windowStep = opts.windowStep();
+
+	if(windowWidth == 0)
+	{
+		// The file size in bytes is approximately the number of nucleotide (not accounting for ID strings)
+		auto fileSize = Util::getFileSizeBytes(inputFASTA);
+        windowStep = (unsigned) ceil((double)fileSize / (double)opts.targetNumPoints());
+        windowWidth = 2 * windowStep;
+        std::cout << "Estimated windowWidth = " << windowWidth << " and windowStep = " << windowStep << std::endl;
+	}
+	
+	if(windowStep == 0)
+	{
+		windowStep = windowWidth / 2;
+	}	
+}
+
+void SequenceVectorizer::buildFeatureKmers()
 {
 	unsigned idx = 0;
 	for (auto kmer : Util::allKmers(kmerLength))
@@ -25,28 +62,29 @@ SequenceVectorizer::SequenceVectorizer(const unsigned kmerLength_, const unsigne
 		}
 
 		uniqueKmers.insert(final);
-	}
+	}	
 }
-
-SequenceVectorizer::~SequenceVectorizer() {}
-
-unsigned SequenceVectorizer::getDim() const { return uniqueKmers.size(); }
-std::set<std::string> SequenceVectorizer::getFeatures() const { return uniqueKmers; }
-unsigned SequenceVectorizer::getKmerLength() const { return kmerLength; }
-unsigned SequenceVectorizer::getWindowSize() const { return windowSize; }
-unsigned SequenceVectorizer::getWindowStep() const { return windowStep; }
-
-void SequenceVectorizer::setNormalize(const bool normalize_) { normalize = normalize_; }
-bool SequenceVectorizer::getNormalize() const { return normalize; }
 
 Eigen::MatrixXd SequenceVectorizer::vectorize(seqan::Dna5String & sequence) const
 {
-	unsigned n = ((int)(length(sequence) - (int)windowSize) / (int)windowStep) + 1;
+
+	unsigned len = length(sequence);
+	unsigned n = (unsigned) (((int)len - (int)windowWidth) / (int)windowStep) + 2;
+
 	Eigen::MatrixXd mat = Eigen::MatrixXd::Zero(n, getDim());
+
+	if (len < windowWidth)
+	{
+		std::cout << "Length of contig is smaller than window size." << std::endl;
+		return mat;
+	}
+
 
 	for (unsigned i = 0; i < n; i++)
 	{
-		seqan::Infix<seqan::Dna5String>::Type window = infix(sequence, i*windowStep, i*windowStep+windowSize);
+		unsigned from = i*windowStep;
+		unsigned to = std::min(len, i*windowStep+windowWidth);
+		seqan::Infix<seqan::Dna5String>::Type window = infix(sequence, from, to);
 
 		seqan::String<unsigned> counts;
 		countKmers(counts, window, kmerLength);
@@ -59,7 +97,6 @@ Eigen::MatrixXd SequenceVectorizer::vectorize(seqan::Dna5String & sequence) cons
 			mat(i, idx) += cnt;
 			kmerIter++;
 		}
-		
 	}
 
 	if (normalize)
@@ -71,9 +108,14 @@ Eigen::MatrixXd SequenceVectorizer::vectorize(seqan::Dna5String & sequence) cons
 	return mat;
 }
 
-std::pair< Eigen::MatrixXd, std::vector<std::string> > SequenceVectorizer::vectorize(const std::string & fasta) const
+std::pair< Eigen::MatrixXd, std::vector<std::string> > SequenceVectorizer::vectorize() const
 {
-	seqan::SeqFileIn seqFileIn(fasta.c_str());
+	if(inputFASTA.empty())
+	{
+		throw std::runtime_error("Input FASTA not set! Use Opts constructor.");
+	}
+
+	seqan::SeqFileIn seqFileIn(inputFASTA.c_str());
 	seqan::StringSet<seqan::CharString> ids;
 	seqan::StringSet<seqan::String<seqan::Iupac> > seqs;
 
@@ -106,3 +148,11 @@ std::pair< Eigen::MatrixXd, std::vector<std::string> > SequenceVectorizer::vecto
 	
 	return std::make_pair(result, labels);
 }
+
+unsigned SequenceVectorizer::getDim() const { return uniqueKmers.size(); }
+std::set<std::string> SequenceVectorizer::getFeatures() const { return uniqueKmers; }
+unsigned SequenceVectorizer::getKmerLength() const { return kmerLength; }
+unsigned SequenceVectorizer::getWindowWidth() const { return windowWidth; }
+unsigned SequenceVectorizer::getWindowStep() const { return windowStep; }
+void SequenceVectorizer::setNormalize(const bool normalize_) { normalize = normalize_; }
+bool SequenceVectorizer::getNormalize() const { return normalize; }

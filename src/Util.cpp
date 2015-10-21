@@ -139,4 +139,8 @@ unsigned Util::estimateTsnePerplexity(const Eigen::MatrixXd & mat)
     return (unsigned) (pow(log(mat.rows()), 2)); 
 }
 
-
+unsigned long long Util::getFileSizeBytes(const std::string & filename)
+{
+    std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
+    return in.tellg(); 
+}

@@ -15,7 +15,7 @@ Opts::~Opts()
 
 void Opts::initialize(int argc, char const *argv[])
 {
-	boost::program_options::options_description description("Usage");
+	boost::program_options::options_description description("Usage", 250);
 
 	description.add_options()
 	    ("help,h", "Display this help message")
@@ -25,8 +25,9 @@ void Opts::initialize(int argc, char const *argv[])
 	    ("tsne-perplexity,p", boost::program_options::value<unsigned>(), "T-SNE perplexity (overrides automatic estimation)")
 	    ("tsne-theta,t", boost::program_options::value<float>()->default_value(0.5), "T-SNE parameter 'theta' of the underlying Barnes-Hut approximation")
 	    ("window-kmer-length,k", boost::program_options::value<unsigned>()->default_value(4), "Length of the k-mers in the sequence vectorizer window")
-	    ("window-width,w", boost::program_options::value<unsigned>()->default_value(1000), "Width of the sliding sequence vectorizer window")
-	    ("window-step,s", boost::program_options::value<unsigned>()->default_value(500), "Step of the sliding sequence vectorizer window")
+	    ("window-width,w", boost::program_options::value<unsigned>(), "Width of the sliding sequence vectorizer window (overrides automatic estimation using number of target points)")
+	    ("window-step,s", boost::program_options::value<unsigned>(), "Step of the sliding sequence vectorizer window (overrides automatic estimation using number of target points)")
+	    ("target-num-points,n", boost::program_options::value<unsigned>()->default_value(1000), "Approximate number of target points for estimating window parameters")
 	    ;
 	
 	boost::program_options::variables_map vm;
@@ -47,8 +48,15 @@ void Opts::initialize(int argc, char const *argv[])
 	}
 	_tsneTheta = vm["tsne-theta"].as<float>();
 	_windowKmerLength = vm["window-kmer-length"].as<unsigned>();
-	_windowWidth = vm["window-width"].as<unsigned>();
-	_windowStep = vm["window-step"].as<unsigned>();	
+	if (vm.count("window-width"))
+	{
+		_windowWidth = vm["window-width"].as<unsigned>();
+	}
+	if (vm.count("window-step"))
+	{
+		_windowStep = vm["window-step"].as<unsigned>();
+	}	
+	_targetNumPoints = vm["target-num-points"].as<unsigned>();
 }
 
 bool Opts::needsHelp() const
@@ -94,4 +102,9 @@ unsigned Opts::windowWidth() const
 unsigned Opts::windowStep() const
 {
 	return _windowStep;
+}
+
+unsigned Opts::targetNumPoints() const
+{
+	return _targetNumPoints;
 }

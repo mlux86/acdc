@@ -23,6 +23,8 @@ public:
 
 	static unsigned estimateTsnePerplexity(const Eigen::MatrixXd & mat);
 
+	static unsigned long long getFileSizeBytes(const std::string & filename);
+
 };
 
 

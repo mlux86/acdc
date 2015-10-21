@@ -6,34 +6,41 @@
 #include <set>
 #include <map>
 #include <string>
+#include "Opts.h"
 
 class SequenceVectorizer
 {
 protected:
-	unsigned kmerLength;
-	unsigned windowSize;
-	unsigned windowStep;
+	std::string inputFASTA = "";
+
+	unsigned kmerLength = 0;
+	unsigned windowWidth = 0;
+	unsigned windowStep = 0;
 
 	std::map<std::string, unsigned> kmerIndexes;
 	std::set<std::string> uniqueKmers;
 
 	bool normalize;
 
+	void buildParams(const Opts & opts);
+	void buildFeatureKmers();
+
 public:
-	SequenceVectorizer(const unsigned kmerLength_, const unsigned windowSize_, const unsigned windowStep_);
+	SequenceVectorizer(const unsigned kmerLength, const unsigned windowWidth, const unsigned windowStep);
+	SequenceVectorizer(const Opts & opts);
 	~SequenceVectorizer();
 
 	unsigned getDim() const;
 	std::set<std::string> getFeatures() const;
 	unsigned getKmerLength() const;
-	unsigned getWindowSize() const;
+	unsigned getWindowWidth() const;
 	unsigned getWindowStep() const;
 
 	void setNormalize(const bool normalize_);
 	bool getNormalize() const;
 
 	Eigen::MatrixXd vectorize(seqan::Dna5String & sequence) const;
-	std::pair< Eigen::MatrixXd, std::vector<std::string> > vectorize(const std::string & fasta) const;
+	std::pair< Eigen::MatrixXd, std::vector<std::string> > vectorize() const;
 	
 };
 

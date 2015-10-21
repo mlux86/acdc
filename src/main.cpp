@@ -7,7 +7,6 @@
 
 int main(int argc, char const *argv[])
 {
-
 	std::unique_ptr<Opts> opts;
 
 	try 
@@ -33,13 +32,12 @@ int main(int argc, char const *argv[])
 	}
 
 
-	SequenceVectorizer sv(opts->windowKmerLength(), opts->windowWidth(), opts->windowStep());
-
-	auto dat = sv.vectorize(opts->inputFASTA());
+	SequenceVectorizer sv(*opts);
+	auto dat = sv.vectorize();
 
 	auto reduced = BarnesHutSNEBridge::runBarnesHutSNE(dat.first, *opts);
 
 	Util::saveMatrix(reduced, "/tmp/reduced", ' ');
 
-	return 0;
+	return EXIT_SUCCESS;
 }
