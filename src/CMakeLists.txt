@@ -1,4 +1,5 @@
 add_library(mainprog
+	Opts.cpp
 	Util.cpp
 	BarnesHutSNEBridge.cpp
 	SequenceVectorizer.cpp

@@ -42,7 +42,6 @@ bool SequenceVectorizer::getNormalize() const { return normalize; }
 Eigen::MatrixXd SequenceVectorizer::vectorize(seqan::Dna5String & sequence) const
 {
 	unsigned n = ((int)(length(sequence) - (int)windowSize) / (int)windowStep) + 1;
-	std::cout << n << std::endl;
 	Eigen::MatrixXd mat = Eigen::MatrixXd::Zero(n, getDim());
 
 	for (unsigned i = 0; i < n; i++)
@@ -76,7 +75,7 @@ std::pair< Eigen::MatrixXd, std::vector<std::string> > SequenceVectorizer::vecto
 {
 	seqan::SeqFileIn seqFileIn(fasta.c_str());
 	seqan::StringSet<seqan::CharString> ids;
-	seqan::StringSet<seqan::Dna5String> seqs;
+	seqan::StringSet<seqan::String<seqan::Iupac> > seqs;
 
 	readRecords(ids, seqs, seqFileIn);
 
@@ -89,7 +88,7 @@ std::pair< Eigen::MatrixXd, std::vector<std::string> > SequenceVectorizer::vecto
 	{
 		std::string id;
 		move(id, ids[i]);
-		auto & seq = seqs[i];
+		seqan::Dna5String seq = seqs[i];
 
 		auto mat = vectorize(seq);
 		unsigned rows = mat.rows();

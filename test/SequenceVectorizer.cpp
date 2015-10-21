@@ -2,8 +2,6 @@
 
 #include "SequenceVectorizer.h"
 
-#include <iostream>
-
 TEST_CASE("Correct features", "[SequenceVectorizer]")
 {
 
@@ -132,7 +130,6 @@ TEST_CASE("Normalization", "[SequenceVectorizer]")
 		SequenceVectorizer sv(2, 5, 2); 
 		sv.setNormalize(true);		
 		auto mat = sv.vectorize(seq);
-		std::cout << mat << std::endl;
 		Eigen::MatrixXd target(2,10);
 		target << 0.25, 0, 0.25, 0, 0.25, 0, 0, 0.25, 0, 0, 
                   0.25, 0.25, 0, 0, 0, 0, 0.25, 0.25, 0, 0;

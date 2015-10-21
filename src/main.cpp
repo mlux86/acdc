@@ -3,18 +3,41 @@
 #include "SequenceVectorizer.h"
 #include "BarnesHutSNEBridge.h"
 #include "Util.h"
+#include "Opts.h"
 
-int main()
+int main(int argc, char const *argv[])
 {
 
-	SequenceVectorizer sv(4, 4000, 2000);
+	std::unique_ptr<Opts> opts;
 
-	auto dat = sv.vectorize("/home/mlux/downloads/contigs.fa");
+	try 
+	{
+		opts.reset(new Opts(argc, argv));
+	}
+	catch(const std::exception & e) 
+	{
+		std::cerr << e.what() << '\n';
+		return EXIT_FAILURE;
+	}
 
-	Eigen::MatrixXd m = dat.first.rowwise().maxCoeff().asDiagonal().inverse();
-	dat.first = m * dat.first; 	
+	if (opts->needsHelp())
+	{
+		std::cout << opts->helpDesc() << std::endl;
+		return EXIT_SUCCESS;
+	}
 
-	auto reduced = BarnesHutSNEBridge::runBarnesHutSNE(dat.first, 2, .5, 50);
+	if (opts->inputFASTA().empty())
+	{
+		std::cerr << "No input FASTA file given (--input-fasta,-i), aborting." << std::endl;
+		return EXIT_FAILURE;
+	}
+
+
+	SequenceVectorizer sv(opts->windowKmerLength(), opts->windowWidth(), opts->windowStep());
+
+	auto dat = sv.vectorize(opts->inputFASTA());
+
+	auto reduced = BarnesHutSNEBridge::runBarnesHutSNE(dat.first, opts->tsneDim(), opts->tsneTheta(), opts->tsnePerplexity());
 
 	Util::saveMatrix(reduced, "/tmp/reduced", ' ');
 
