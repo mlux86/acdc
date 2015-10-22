@@ -5,7 +5,7 @@ add_library(mainprog
 	SequenceVectorizer.cpp
 )
 
-include_directories(${CMAKE_SOURCE_DIR}/tsne)
+include_directories(${CMAKE_SOURCE_DIR}/libtsne)
 
 add_executable(main main.cpp)
 
