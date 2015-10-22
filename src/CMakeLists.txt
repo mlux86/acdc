@@ -3,6 +3,7 @@ add_library(mainprog
 	Util.cpp
 	BarnesHutSNEBridge.cpp
 	SequenceVectorizer.cpp
+	Clustering.cpp
 )
 
 include_directories(${CMAKE_SOURCE_DIR}/libtsne)

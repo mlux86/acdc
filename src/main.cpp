@@ -5,8 +5,7 @@ INITIALIZE_EASYLOGGINGPP
 #include "BarnesHutSNEBridge.h"
 #include "Util.h"
 #include "Opts.h"
-
-#include <iostream>
+#include "Clustering.h"
 
 // logging: VERBOSE 1: progress
 //          VERBOSE 2: parameters and more than progress
@@ -14,7 +13,7 @@ INITIALIZE_EASYLOGGINGPP
 
 int main(int argc, char const *argv[])
 {
-	START_EASYLOGGINGPP(argc, argv);
+	START_EASYLOGGINGPP(argc, argv);	
 
 	std::unique_ptr<Opts> opts;
 
@@ -46,9 +45,16 @@ int main(int argc, char const *argv[])
 	auto dat = sv.vectorize();
 
 	VLOG(1) << "Running t-SNE...";
-	auto reduced = BarnesHutSNEBridge::runBarnesHutSNE(dat.first, *opts);
-
+	Eigen::MatrixXd reduced = BarnesHutSNEBridge::runBarnesHutSNE(dat.first, *opts);
+	
 	Util::saveMatrix(reduced, "/tmp/reduced", ' ');
+
+
+	VLOG(1) << "Spectral clustering...";
+	Eigen::MatrixXd affinities = Util::knnAffinityMatrix(reduced, 7, false);
+	auto res = Clustering::spectralClustering(affinities);
+
+	VLOG(1) << "Estimated " << res.numClusters << " clusters.";
 
 	return EXIT_SUCCESS;
 }

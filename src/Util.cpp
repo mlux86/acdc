@@ -2,10 +2,12 @@
 
 #include <algorithm>
 #include <fstream>
+#include <sstream>
 #include <cstdlib>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
 #include <math.h>  
+#include "nanoflann.hpp"
 
 Util::Util()
 {
@@ -62,6 +64,28 @@ std::string Util::reverseComplement(const std::string & seq)
     }
 
     return revCompl;
+}
+
+void Util::matrixRemoveRow(Eigen::MatrixXd & matrix, unsigned int rowToRemove)
+{
+    unsigned int numRows = matrix.rows()-1;
+    unsigned int numCols = matrix.cols();
+
+    if( rowToRemove < numRows )
+        matrix.block(rowToRemove,0,numRows-rowToRemove,numCols) = matrix.block(rowToRemove+1,0,numRows-rowToRemove,numCols);
+
+    matrix.conservativeResize(numRows,numCols);
+}
+
+void Util::matrixRemoveColumn(Eigen::MatrixXd& matrix, unsigned int colToRemove)
+{
+    unsigned int numRows = matrix.rows();
+    unsigned int numCols = matrix.cols()-1;
+
+    if( colToRemove < numCols )
+        matrix.block(0,colToRemove,numRows,numCols-colToRemove) = matrix.block(0,colToRemove+1,numRows,numCols-colToRemove);
+
+    matrix.conservativeResize(numRows,numCols);
 }
 
 Eigen::MatrixXd Util::loadMatrix(std::string filename, char delimiter)
@@ -143,4 +167,65 @@ unsigned long long Util::getFileSizeBytes(const std::string & filename)
 {
     std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
     return in.tellg(); 
+}
+
+Eigen::MatrixXd Util::knnAffinityMatrix(const Eigen::MatrixXd & data, const unsigned k_, bool mutual)
+{
+    using RowMajorMatrixXd = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+    using EigenKdTree = nanoflann::KDTreeEigenMatrixAdaptor<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>;
+
+    RowMajorMatrixXd r = data; //convert to row-major for easy access to data points
+
+    const unsigned k = k_ + 1; // identical point is always included
+
+    unsigned n = r.rows();
+    unsigned dim = r.cols();
+
+    if (k > n)
+    {
+        std::stringstream ss;
+        ss << "Cannot find " << k << " neighbors in " << n << " data points!";
+        throw std::runtime_error(ss.str());
+    }
+
+    EigenKdTree tree(dim, r);
+    tree.index->buildIndex();
+
+    std::vector<size_t> indexes(k);
+    std::vector<double> dists(k);
+    nanoflann::KNNResultSet<double> resultSet(k);
+    resultSet.init(&indexes[0], &dists[0]);
+
+    Eigen::MatrixXd affinities = Eigen::MatrixXd::Zero(n, n);
+
+    for (unsigned i = 0; i < n; i++)
+    {
+        resultSet.init(&indexes[0], &dists[0]);
+        tree.index->findNeighbors(resultSet, r.data() + i*dim, nanoflann::SearchParams());
+        
+        for (unsigned j = 0; j < k; j++)
+        {
+            unsigned idx = indexes[j];
+            affinities(i, idx) = sqrt(dists[j]);
+            if (!mutual)
+            {
+                affinities(idx, i) = sqrt(dists[j]); // for normal k-nn
+            }
+        }
+    }
+
+    if (mutual)
+    {
+        for (unsigned i = 0; i < n; i++)
+        {
+            for (unsigned j = 0; j <= i; j++)
+            {
+                auto m = std::min(affinities(i, j), affinities(j, i));
+                affinities(i, j) = m;
+                affinities(j, i) = m;
+            }
+        }    
+    }
+
+    return affinities;
 }

@@ -22,6 +22,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SEQAN_CXX_FLAGS}")
 find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIRS})
 
-add_subdirectory(tsne)
+add_subdirectory(libtsne)
 add_subdirectory(src)
 add_subdirectory(test)

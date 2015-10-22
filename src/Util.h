@@ -18,12 +18,16 @@ public:
 	static std::vector<std::string> allKmers(const unsigned kmerLength);
 	static std::string reverseComplement(const std::string & seq);
 
+	static void matrixRemoveRow(Eigen::MatrixXd & matrix, unsigned int rowToRemove);
+	static void matrixRemoveColumn(Eigen::MatrixXd& matrix, unsigned int colToRemove);
 	static Eigen::MatrixXd loadMatrix(std::string filename, char delimiter = ' ');
 	static void saveMatrix(const Eigen::MatrixXd & mat, std::string filename, char delimiter = ' ');
 
 	static unsigned estimateTsnePerplexity(const Eigen::MatrixXd & mat);
 
 	static unsigned long long getFileSizeBytes(const std::string & filename);
+
+	static Eigen::MatrixXd knnAffinityMatrix(const Eigen::MatrixXd & data, const unsigned k, bool mutual = false);
 
 };
 
