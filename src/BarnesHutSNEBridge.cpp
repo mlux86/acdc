@@ -74,7 +74,11 @@ Eigen::MatrixXd BarnesHutSNEBridge::runBarnesHutSNE(const Eigen::MatrixXd & eige
 	}
     srand(time(NULL));
     
-    VLOG(2) << "targetDim=" << opts.tsneDim() << ", perplexity=" << perplexity << ", theta=" << opts.tsneTheta();
+    VLOG(2) << "n=" << N << "   " 
+            << "dim=" << D << "   " 
+            << "targetDim=" << opts.tsneDim() << "   "
+            << "perplexity=" << perplexity << "   "
+            << "theta=" << opts.tsneTheta();
 	tsne->run(data, N, D, Y, opts.tsneDim(), perplexity, opts.tsneTheta());
 	
 	// save the results

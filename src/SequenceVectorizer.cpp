@@ -39,7 +39,9 @@ void SequenceVectorizer::buildParams(const Opts & opts)
 		auto fileSize = Util::getFileSizeBytes(inputFASTA);
         windowStep = (unsigned) ceil((double)fileSize / (double)opts.targetNumPoints());
         windowWidth = 2 * windowStep;
-        VLOG(2) << "Estimated windowWidth=" << windowWidth << " and windowStep=" << windowStep;
+        VLOG(2) << "k=" << opts.windowKmerLength() << "   "
+                << "windowWidth=" << windowWidth << "   "
+                << "windowStep=" << windowStep;
 	}
 	
 	if(windowStep == 0)
