@@ -4,6 +4,7 @@ add_library(mainprog
 	BarnesHutSNEBridge.cpp
 	SequenceVectorizer.cpp
 	Clustering.cpp
+	TarjansAlgorithm.cpp
 )
 
 include_directories(${CMAKE_SOURCE_DIR}/libtsne)

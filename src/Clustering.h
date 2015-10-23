@@ -6,6 +6,7 @@
 struct ClusteringResult
 {
 	unsigned numClusters = 0;
+	std::vector<unsigned> labels;
 };
 
 class Clustering

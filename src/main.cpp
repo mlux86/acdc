@@ -6,6 +6,7 @@ INITIALIZE_EASYLOGGINGPP
 #include "Util.h"
 #include "Opts.h"
 #include "Clustering.h"
+#include "TarjansAlgorithm.h"
 
 // logging: VERBOSE 1: progress
 //          VERBOSE 2: parameters and more than progress
@@ -49,12 +50,11 @@ int main(int argc, char const *argv[])
 	
 	Util::saveMatrix(reduced, "/tmp/reduced", ' ');
 
-
-	VLOG(1) << "Spectral clustering...";
-	Eigen::MatrixXd affinities = Util::knnAffinityMatrix(reduced, 7, false);
-	auto res = Clustering::spectralClustering(affinities);
-
-	VLOG(1) << "Estimated " << res.numClusters << " clusters.";
+	VLOG(1) << "Counting connected components...";
+	Eigen::MatrixXd affinities = Util::knnAffinityMatrix(reduced, 9, false);
+	TarjansAlgorithm ta;
+	ClusteringResult res = ta.run(affinities);
+	VLOG(1) << "Found " << res.numClusters << " clusters.";
 
 	return EXIT_SUCCESS;
 }
