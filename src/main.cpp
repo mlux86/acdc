@@ -2,7 +2,7 @@
 INITIALIZE_EASYLOGGINGPP
 
 #include "SequenceVectorizer.h"
-#include "BarnesHutSNEBridge.h"
+#include "BarnesHutSNEAdapter.h"
 #include "Util.h"
 #include "Opts.h"
 #include "Clustering.h"
@@ -46,7 +46,7 @@ int main(int argc, char const *argv[])
 	auto dat = sv.vectorize();
 
 	VLOG(1) << "Running t-SNE...";
-	Eigen::MatrixXd reduced = BarnesHutSNEBridge::runBarnesHutSNE(dat.first, *opts);
+	Eigen::MatrixXd reduced = BarnesHutSNEAdapter::runBarnesHutSNE(dat.first, *opts);
 	
 	Util::saveMatrix(reduced, "/tmp/reduced", ' ');
 

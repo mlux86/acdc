@@ -1,17 +1,17 @@
 #include "easylogging++.h"
 
-#include "BarnesHutSNEBridge.h"
+#include "BarnesHutSNEAdapter.h"
 #include "Util.h"
 
-BarnesHutSNEBridge::BarnesHutSNEBridge()
+BarnesHutSNEAdapter::BarnesHutSNEAdapter()
 {
 }
 
-BarnesHutSNEBridge::~BarnesHutSNEBridge()
+BarnesHutSNEAdapter::~BarnesHutSNEAdapter()
 {
 }
 
-double * BarnesHutSNEBridge::loadData(const Eigen::MatrixXd & eigendata)
+double * BarnesHutSNEAdapter::loadData(const Eigen::MatrixXd & eigendata)
 {
 	int N = eigendata.rows();
 	int D = eigendata.cols();
@@ -30,7 +30,7 @@ double * BarnesHutSNEBridge::loadData(const Eigen::MatrixXd & eigendata)
     return data;
 }
 
-Eigen::MatrixXd BarnesHutSNEBridge::saveData(double* data, int N, int D)
+Eigen::MatrixXd BarnesHutSNEAdapter::saveData(double* data, int N, int D)
 {
 	Eigen::MatrixXd eigendata(N, D);
 
@@ -48,7 +48,7 @@ Eigen::MatrixXd BarnesHutSNEBridge::saveData(double* data, int N, int D)
 }
 
 // copied and modified from the original BH-SNE implementation
-Eigen::MatrixXd BarnesHutSNEBridge::runBarnesHutSNE(const Eigen::MatrixXd & eigendata, const Opts & opts)
+Eigen::MatrixXd BarnesHutSNEAdapter::runBarnesHutSNE(const Eigen::MatrixXd & eigendata, const Opts & opts)
 {
 
     TSNE* tsne = new TSNE();
@@ -64,7 +64,7 @@ Eigen::MatrixXd BarnesHutSNEBridge::runBarnesHutSNE(const Eigen::MatrixXd & eige
     }
 
     // read the parameters and the dataset
-	double * data = BarnesHutSNEBridge::loadData(eigendata);
+	double * data = BarnesHutSNEAdapter::loadData(eigendata);
 	
 	// fire up the SNE implementation
 	double * Y = (double*) malloc(N * opts.tsneDim() * sizeof(double));
@@ -82,7 +82,7 @@ Eigen::MatrixXd BarnesHutSNEBridge::runBarnesHutSNE(const Eigen::MatrixXd & eige
 	tsne->run(data, N, D, Y, opts.tsneDim(), perplexity, opts.tsneTheta());
 	
 	// save the results
-	Eigen::MatrixXd result = BarnesHutSNEBridge::saveData(Y, N, opts.tsneDim());
+	Eigen::MatrixXd result = BarnesHutSNEAdapter::saveData(Y, N, opts.tsneDim());
     
     // clean up
 	free(data); 

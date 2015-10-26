@@ -1,16 +1,16 @@
-#ifndef __BarnesHutSNEBridge__
-#define __BarnesHutSNEBridge__
+#ifndef __BarnesHutSNEAdapter__
+#define __BarnesHutSNEAdapter__
 
 #include <eigen3/Eigen/Dense>
 #include "Opts.h"
 #include "tsne.h"
 
-class BarnesHutSNEBridge
+class BarnesHutSNEAdapter
 {
 
 private:
-	BarnesHutSNEBridge();
-	~BarnesHutSNEBridge();
+	BarnesHutSNEAdapter();
+	~BarnesHutSNEAdapter();
 
 	static double * loadData(const Eigen::MatrixXd & eigendata);
 	static Eigen::MatrixXd saveData(double* data, int n, int d);

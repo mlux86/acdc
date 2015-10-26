@@ -1,7 +1,7 @@
 add_library(mainprog
 	Opts.cpp
 	Util.cpp
-	BarnesHutSNEBridge.cpp
+	BarnesHutSNEAdapter.cpp
 	SequenceVectorizer.cpp
 	Clustering.cpp
 	TarjansAlgorithm.cpp
@@ -11,4 +11,4 @@ include_directories(${CMAKE_SOURCE_DIR}/libtsne)
 
 add_executable(main main.cpp)
 
-target_link_libraries(main mainprog tsne ${Boost_LIBRARIES})
+target_link_libraries(main mainprog tsne ${Boost_LIBRARIES} ${SEQAN_LIBRARIES})

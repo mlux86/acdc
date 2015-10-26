@@ -8,6 +8,6 @@ add_executable(testmain
 	SequenceVectorizer.cpp
 )
 
-target_link_libraries(testmain mainprog tsne ${Boost_LIBRARIES})
+target_link_libraries(testmain mainprog tsne ${Boost_LIBRARIES} ${SEQAN_LIBRARIES})
 
 add_test(all testmain)
