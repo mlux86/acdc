@@ -1,13 +1,15 @@
 message(STATUS ${CMAKE_SOURCE_DIR})
 
+include_directories(${CMAKE_SOURCE_DIR}/libdip)
 include_directories(${CMAKE_SOURCE_DIR}/tsne)
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
 add_executable(testmain 
 	testmain.cpp
 	SequenceVectorizer.cpp
+	DipStatistic.cpp
 )
 
-target_link_libraries(testmain mainprog tsne ${Boost_LIBRARIES} ${SEQAN_LIBRARIES})
+target_link_libraries(testmain mainprog tsne dip ${Boost_LIBRARIES} ${SEQAN_LIBRARIES})
 
 add_test(all testmain)

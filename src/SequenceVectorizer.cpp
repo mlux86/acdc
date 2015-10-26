@@ -74,7 +74,7 @@ Eigen::MatrixXd SequenceVectorizer::vectorize(seqan::Dna5String & sequence) cons
 {
 
 	unsigned len = length(sequence);
-	unsigned n = (unsigned) (((int)len - (int)windowWidth) / (int)windowStep) + 2;
+	unsigned n = (unsigned) (((int)len - (int)windowWidth) / (int)windowStep) + 1;
 
 	Eigen::MatrixXd mat = Eigen::MatrixXd::Zero(n, getDim());
 

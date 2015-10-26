@@ -11,4 +11,4 @@ include_directories(${CMAKE_SOURCE_DIR}/libtsne)
 
 add_executable(main main.cpp)
 
-target_link_libraries(main mainprog tsne ${Boost_LIBRARIES} ${SEQAN_LIBRARIES})
+target_link_libraries(main mainprog tsne dip ${Boost_LIBRARIES} ${SEQAN_LIBRARIES})
