@@ -73,7 +73,7 @@ ClusteringResult TarjansAlgorithm::run(const Eigen::MatrixXd & adjacencies_)
 	stack = std::stack<Node*>();
 
 	ClusteringResult res;
-	res.labels.reserve(n);
+	res.labels = Eigen::MatrixXd(n, 1);
 
 	for (auto & node : nodes)
 	{
@@ -85,7 +85,7 @@ ClusteringResult TarjansAlgorithm::run(const Eigen::MatrixXd & adjacencies_)
 				res.numClusters++;				
 				for (unsigned idx : componentIndexes)
 				{
-					res.labels[idx] = res.numClusters;
+					res.labels(idx) = res.numClusters;
 				}
 			}
 		}
