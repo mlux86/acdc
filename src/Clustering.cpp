@@ -7,6 +7,8 @@
 #include <math.h>  
 #include <numeric>  
 #include <algorithm>
+#include <chrono>
+#include <random>
 #include <limits>
 
 Clustering::Clustering()
@@ -85,7 +87,6 @@ ClusteringResult Clustering::kMeans(const Eigen::MatrixXd & data, unsigned k, un
 	for (unsigned i = 0; i < numBootstraps; i++)
 	{
 		auto tmp = Clustering::kMeansIter(data, k);
-		VLOG(2) << tmp.second;
 		if (tmp.second < minMse)
 		{
 			minMse = tmp.second;
@@ -106,14 +107,93 @@ std::pair<ClusteringResult, double> Clustering::kMeansIter(const Eigen::MatrixXd
 	res.numClusters = k;
 
 	// initialize random means
+	// Eigen::MatrixXd means = Eigen::MatrixXd::Zero(k, dim);
+	// std::vector<unsigned> tmpIdx(n);
+	// std::iota(tmpIdx.begin(), tmpIdx.end(), 0);
+	// std::random_shuffle(tmpIdx.begin(), tmpIdx.end());
+	// for (unsigned j = 0; j < k; j++)
+	// {
+	// 	means.row(j) = data.row(tmpIdx[j]);
+	// }
+
+
+	///////
+	// initialize using kMeans++ algorithm
+	///////
+
+	std::vector<unsigned> meanIndexes;
+	// choose first mean uniformly at random
+	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+	std::mt19937 generator(seed);	
+	std::uniform_int_distribution<unsigned> distn(0, n-1);
+	meanIndexes.push_back(distn(generator));
+
+	// iteratively add more means
+	for (unsigned j = 0; j < k-1; j++)
+	{
+		// calculate probability distribution of data based on distances
+		std::vector<double> probs(n, 2); // default probabilities of 2
+		for (auto idx : meanIndexes) // set already chosen indexes to zero probability
+		{
+			probs[idx] = 0;
+		}
+		// calculate shortest distances to closes already chosen mean
+		std::vector<double> dists;
+		double sumDist = 0;
+		for (unsigned i = 0; i < n; i++) 
+		{
+			double minDist = std::numeric_limits<double>::max();
+			for (auto idx : meanIndexes)
+			{
+				double d = (data.row(i) - data.row(idx)).squaredNorm();
+				if (d < minDist)
+				{
+					minDist = d;
+				}
+			}
+			dists.push_back(minDist);
+			sumDist += minDist;
+		}
+		// populate probabilities		
+		for (unsigned i = 0; i < n; i++) 
+		{
+			if (probs[i] > 1.0) // uninitialized
+			{
+				probs[i] = dists[i] / sumDist;
+			}
+		}
+		// calculate cumulative probabilities
+		std::vector<double> cumProbs(n);
+		cumProbs[0] = probs[0];
+		for (unsigned i = 1; i < n; i++) 
+		{
+			cumProbs[i] = cumProbs[i-1] + probs[i];
+		}
+		// select next mean index based on cumulative probabilities
+		std::uniform_real_distribution<double> unif(0.0, 1.0);
+		double r = unif(generator);
+		for (unsigned i = 0; i < n; i++) 
+		{
+			if (r <= cumProbs[i])
+			{
+				meanIndexes.push_back(i);
+				break;
+			}
+		}
+	}
+
 	Eigen::MatrixXd means = Eigen::MatrixXd::Zero(k, dim);
-	std::vector<unsigned> tmpIdx(n);
-	std::iota(tmpIdx.begin(), tmpIdx.end(), 0);
-	std::random_shuffle(tmpIdx.begin(), tmpIdx.end());
 	for (unsigned j = 0; j < k; j++)
 	{
-		means.row(j) = data.row(tmpIdx[j]);
-	}
+		means.row(j) = data.row(meanIndexes[j]);
+	}	
+
+	///////
+	// done initializing means
+	///////		
+	
+
+
 
 	Eigen::MatrixXd oldMeans;
 	unsigned numEpsilonChanges = 0;

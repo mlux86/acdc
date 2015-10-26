@@ -16,52 +16,53 @@ int main(int argc, char const *argv[])
 {
 	START_EASYLOGGINGPP(argc, argv);	
 
-	// std::unique_ptr<Opts> opts;
+	std::unique_ptr<Opts> opts;
 
-	// try 
-	// {
-	// 	opts.reset(new Opts(argc, argv));
-	// }
-	// catch(const std::exception & e) 
-	// {
-	// 	std::cerr << e.what() << '\n';
-	// 	return EXIT_FAILURE;
-	// }
+	try 
+	{
+		opts.reset(new Opts(argc, argv));
+	}
+	catch(const std::exception & e) 
+	{
+		std::cerr << e.what() << '\n';
+		return EXIT_FAILURE;
+	}
 
-	// if (opts->needsHelp())
-	// {
-	// 	std::cout << opts->helpDesc() << std::endl;
-	// 	return EXIT_SUCCESS;
-	// }
+	if (opts->needsHelp())
+	{
+		std::cout << opts->helpDesc() << std::endl;
+		return EXIT_SUCCESS;
+	}
 
-	// if (opts->inputFASTA().empty())
-	// {
-	// 	std::cerr << "No input FASTA file given (--input-fasta,-i), aborting." << std::endl;
-	// 	return EXIT_FAILURE;
-	// }
+	if (opts->inputFASTA().empty())
+	{
+		std::cerr << "No input FASTA file given (--input-fasta,-i), aborting." << std::endl;
+		return EXIT_FAILURE;
+	}
 
 
-	// VLOG(1) << "Vectorizing contigs...";
-	// SequenceVectorizer sv(*opts);
-	// auto dat = sv.vectorize();
+	VLOG(1) << "Vectorizing contigs...";
+	SequenceVectorizer sv(*opts);
+	auto dat = sv.vectorize();
 
-	// VLOG(1) << "Running t-SNE...";
-	// Eigen::MatrixXd reduced = BarnesHutSNEAdapter::runBarnesHutSNE(dat.first, *opts);
+	VLOG(1) << "Running t-SNE...";
+	Eigen::MatrixXd reduced = BarnesHutSNEAdapter::runBarnesHutSNE(dat.first, *opts);
 	
-	// Util::saveMatrix(reduced, "/tmp/reduced", ' ');
+	Util::saveMatrix(reduced, "/tmp/reduced", ' ');
 
-	// VLOG(1) << "Counting connected components...";
-	// Eigen::MatrixXd affinities = Util::knnAffinityMatrix(reduced, 9, false);
-	// TarjansAlgorithm ta;
-	// ClusteringResult res = ta.run(affinities);
-	// VLOG(1) << "Found " << res.numClusters << " clusters.";
+	VLOG(1) << "Counting connected components...";
+	Eigen::MatrixXd affinities = Util::knnAffinityMatrix(reduced, 9, false);
+	TarjansAlgorithm ta;
+	ClusteringResult res = ta.run(affinities);
+	VLOG(1) << "Found " << res.numClusters << " clusters.";
 
-
-	Eigen::MatrixXd mat = Util::loadMatrix("/tmp/meh", ' ');
-
-	ClusteringResult kmeansRes = Clustering::kMeans(mat, 2);
-
+	VLOG(1) << "kMeans++...";
+	ClusteringResult kmeansRes = Clustering::kMeans(reduced, res.numClusters);
 	Util::saveMatrix(kmeansRes.labels, "/tmp/labels", ' ');
+
+	// Eigen::MatrixXd mat = Util::loadMatrix("/tmp/meh", ' ');
+	// ClusteringResult kmeansRes = Clustering::kMeans(mat, 2);
+	// Util::saveMatrix(kmeansRes.labels, "/tmp/labels", ' ');
 
 	return EXIT_SUCCESS;
 }

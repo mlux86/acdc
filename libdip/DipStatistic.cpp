@@ -6,13 +6,12 @@ extern "C"
 }
 
 #include <algorithm>
-
-#include <stdlib.h>
-#include <time.h>
+#include <chrono>
+#include <random>
 
 DipStatistic::DipStatistic()
 {
-	DipStatistic(time(NULL));
+	DipStatistic(std::chrono::system_clock::now().time_since_epoch().count());	
 }
 
 DipStatistic::DipStatistic(unsigned seed_)
@@ -45,18 +44,18 @@ DipResult DipStatistic::calculate(std::vector<double> pdf, const unsigned numBoo
 		delete[] discard_mj;
 	}
 
+	std::mt19937 generator(seed);
+	std::uniform_real_distribution<double> unif(0.0, 1.0);
 
-	unsigned bootDipsSmaller = 0;
+	unsigned bootDipSmaller = 0;
 	for (unsigned i = 0; i < numBootstraps; i++)
 	{
-
-		srand(seed + i);
 
 		// get dip from generated uniform [0,1] reference pdf set
 		std::vector<double> bootPdf(n);
 		for (unsigned j = 0; j < n; j++)
 		{
-			bootPdf[j] = ((double) rand() / (RAND_MAX)) + 1;
+			bootPdf[j] = unif(generator);
 		}
 
 		std::sort(bootPdf.begin(), bootPdf.end());
@@ -77,12 +76,12 @@ DipResult DipStatistic::calculate(std::vector<double> pdf, const unsigned numBoo
 
 		if (result.dip < bootDip)
 		{
-			bootDipsSmaller++;
+			bootDipSmaller++;
 		}
 	}
 
 	// calculate p-value
-	result.p = (double)bootDipsSmaller / (double)numBootstraps;
+	result.p = (double)bootDipSmaller / (double)numBootstraps;
 	
 	return result;
 }

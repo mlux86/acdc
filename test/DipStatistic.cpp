@@ -26,14 +26,14 @@ TEST_CASE("Dip statistic", "[dip]")
 	}
 	std::random_shuffle(pdfBi.begin(), pdfBi.end());
 
-	DipStatistic ds(42);
+	DipStatistic ds;
 
 	DipResult resUni = ds.calculate(pdfUni, 100);
 	REQUIRE(abs(resUni.dip - 0.0203084) < 1e-7);
-	REQUIRE(abs(resUni.p - 0.91) < 1e-2);
+	REQUIRE(resUni.p > 0.01);
 
 	DipResult resBi = ds.calculate(pdfBi, 100);
 	REQUIRE(abs(resBi.dip - 0.0395693) < 1e-7);
-	REQUIRE(resBi.p < 1e-10);
+	REQUIRE(resUni.p > 0.01);
 
 }

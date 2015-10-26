@@ -20,7 +20,7 @@ private:
 	
 public:
 	static ClusteringResult spectralClustering(Eigen::MatrixXd & adjacencies);
-	static ClusteringResult kMeans(const Eigen::MatrixXd & data, unsigned k, unsigned numBootstraps = 25);
+	static ClusteringResult kMeans(const Eigen::MatrixXd & data, unsigned k, unsigned numBootstraps = 5);
 
 };
 
