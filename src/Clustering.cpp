@@ -3,6 +3,7 @@
 #include "Clustering.h"
 #include "DipStatistic.h"
 #include "Util.h"
+#include "Kmeans.h"
 
 #include <Eigen/Eigenvalues>
 #include <math.h>  
@@ -81,22 +82,25 @@ ClusteringResult Clustering::spectralClustering(Eigen::MatrixXd & adjacencies)
 
 ClusteringResult Clustering::dipMeans(const Eigen::MatrixXd& data, double alpha, double splitThreshold)
 {
-    unsigned n = data.rows();
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    std::mt19937 generator(seed);
 
+    unsigned n = data.rows();
+    unsigned dim = data.cols();
+    
     Eigen::MatrixXd dist = Util::pdist(data);
 
-    unsigned k = 0;
-    unsigned kOld = 42;
+    unsigned k = 1;
     Eigen::VectorXd labels = Eigen::VectorXd::Zero(n);
 
-    while (k != kOld)
-    {
+    Eigen::MatrixXd means = data.colwise().sum() / n;
 
-        kOld = k;
+    while (true)
+    {
 
         std::vector<double> scores;
 
-        for (unsigned j = 0; j <= k; j++) // calculate scores for clusters c_j
+        for (unsigned j = 0; j < k; j++) // calculate scores for clusters c_j
         {
             // find indexes of cluster j
             std::vector<unsigned> clusterIdx;
@@ -141,12 +145,73 @@ ClusteringResult Clustering::dipMeans(const Eigen::MatrixXd& data, double alpha,
             }
         }
 
-        auto sortedScoreLabels = Util::sortIndexes(scores);
-        unsigned splitLabel = sortedScoreLabels.back();
+        // to split or not to split...
 
-        VLOG(2) << "split " << splitLabel << " with score=" << scores[splitLabel];
+        auto maxScoreIter = std::max_element(scores.begin(), scores.end());
+        if (*maxScoreIter > 0.0)
+        {
+            unsigned splitLabel = std::distance(scores.begin(), maxScoreIter);
+
+            VLOG(3) << "split " << splitLabel << " with score=" << scores[splitLabel];
+
+            // assemble data matrix with cluster members, split means
+
+            Eigen::MatrixXd members(0, dim);
+            for (unsigned i = 0; i < n; i++)
+            {
+                if (labels(i) == splitLabel)
+                {
+                    members.resize(members.rows()+1, dim);
+                    members.row(members.rows()-1) = data.row(i);
+                }
+            }
+
+            Eigen::VectorXd oldMean = means.row(splitLabel);
+            std::uniform_int_distribution<unsigned> distn(0, members.rows() - 1);
+
+            Eigen::MatrixXd locallyOptimizedMeans;
+
+            double minMse = std::numeric_limits<double>::max();
+            for (unsigned i = 0; i < 5; i++)
+            {
+                unsigned randIdx = distn(generator);
+                Eigen::MatrixXd splitMeans = Eigen::MatrixXd(2, dim);
+                splitMeans.row(0) = members.row(randIdx);
+                splitMeans.row(1) = oldMean - (members.row(randIdx).transpose() - oldMean);
+
+                Kmeans km(2);
+                km.initMeans(splitMeans);
+                auto tmp = km.iteration(members);
+                if (tmp.second < minMse)
+                {
+                    minMse = tmp.second;
+                    locallyOptimizedMeans = km.getMeans();
+                }
+            }
+
+            // refresh means
+            k++;
+            Util::matrixRemoveRow(means, splitLabel);
+            Eigen::MatrixXd newMeans(k, dim);
+            newMeans << means, 
+                        locallyOptimizedMeans;
+
+
+            // finally ... run k-means for refinement on full data set            
+            Kmeans km(k);
+            km.initMeans(newMeans);
+            ClusteringResult res = km.run(data);
+            labels = res.labels;
+            means = km.getMeans();
+
+        } else
+        {
+            break;
+        }
     }
 
     ClusteringResult res;
+    res.numClusters = k;
+    res.labels = labels;
     return res;       
 }

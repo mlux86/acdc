@@ -1,3 +1,4 @@
+#include "easylogging++.h"
 #include "Kmeans.h"
 
 #include <math.h>  
@@ -119,7 +120,10 @@ std::pair<ClusteringResult, double> Kmeans::iteration(const Eigen::MatrixXd & da
                     nk++;
                 }
             }
-            means.row(j) /= nk;
+            if (nk != 0)
+            {
+                means.row(j) /= nk;
+            }
         }
 
         // check for convergence

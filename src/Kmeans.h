@@ -16,7 +16,6 @@ private:
 	std::string init = "plusplus";
 	Eigen::MatrixXd means;
 
-	std::pair<ClusteringResult, double> iteration(const Eigen::MatrixXd & data);
 
 	void sampleInit(const Eigen::MatrixXd & data);
 	void plusPlusInit(const Eigen::MatrixXd & data);
@@ -25,14 +24,15 @@ public:
 	Kmeans(const unsigned k_);
 	~Kmeans();
 
+	void setNumBootstraps(const unsigned numBootstraps);
+	Eigen::MatrixXd getMeans();	
+	
 	void initSample();
 	void initPlusPlus();
 	void initMeans(const Eigen::MatrixXd & initMeans);
 
-	Eigen::MatrixXd getMeans();	
-
+	std::pair<ClusteringResult, double> iteration(const Eigen::MatrixXd & data);
 	ClusteringResult run(const Eigen::MatrixXd & data);
-	void setNumBootstraps(const unsigned numBootstraps);
 
 
 };

@@ -57,15 +57,17 @@ int main(int argc, char const *argv[])
 	ClusteringResult res = ta.run(affinities);
 	VLOG(1) << "Found " << res.numClusters << " clusters.";
 
-	// ClusteringResult meh = Clustering::dipMeans(reduced);
+	VLOG(1) << "dip-means...";
+	ClusteringResult meh = Clustering::dipMeans(reduced);
+	Util::saveMatrix(meh.labels, "/tmp/labels", ' ');
 
-	VLOG(1) << "kMeans++...";
-	Kmeans km(res.numClusters);
-	km.initSample();
-	km.setNumBootstraps(10000);
+	// VLOG(1) << "kMeans++...";
+	// Kmeans km(res.numClusters);
+	// km.initSample();
+	// km.setNumBootstraps(10000);
 
-	ClusteringResult kmeansRes = km.run(reduced);
-	Util::saveMatrix(kmeansRes.labels, "/tmp/labels", ' ');
+	// ClusteringResult kmeansRes = km.run(reduced);
+	// Util::saveMatrix(kmeansRes.labels, "/tmp/labels", ' ');
 
 	return EXIT_SUCCESS;
 }
