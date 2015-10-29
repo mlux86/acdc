@@ -17,10 +17,12 @@ private:
 	~Clustering();
 
 	static std::pair<ClusteringResult, double> kMeansIter(const Eigen::MatrixXd & data, unsigned k);
+        static Eigen::MatrixXd plusPlusMeans(const Eigen::MatrixXd & data, unsigned k);
 	
 public:
 	static ClusteringResult spectralClustering(Eigen::MatrixXd & adjacencies);
 	static ClusteringResult kMeans(const Eigen::MatrixXd & data, unsigned k, unsigned numBootstraps = 5);
+    static ClusteringResult dipMeans(const Eigen::MatrixXd& data, double alpha = 0.0, double splitThreshold = 0.01);    
 
 };
 

@@ -1,6 +1,7 @@
 #include "easylogging++.h"
 
 #include "Clustering.h"
+#include "DipStatistic.h"
 #include "Util.h"
 
 #include <Eigen/Eigenvalues>
@@ -21,234 +22,131 @@ Clustering::~Clustering()
 
 ClusteringResult Clustering::spectralClustering(Eigen::MatrixXd & adjacencies)
 {
-	unsigned n = adjacencies.rows();
-	if (n != adjacencies.cols())
-	{
-		throw std::runtime_error("Adjacency matrix must be quadratic!");
-	}
+    unsigned n = adjacencies.rows();
+    if (n != adjacencies.cols())
+    {
+        throw std::runtime_error("Adjacency matrix must be quadratic!");
+    }
 
-	Eigen::MatrixXd degreeMat = adjacencies.rowwise().sum().asDiagonal();
+    Eigen::MatrixXd degreeMat = adjacencies.rowwise().sum().asDiagonal();
 
-	// check for zero degree points and construct a smaller matrix if necessary
-	std::vector<unsigned> zeroDegreeIndexes;
-	for (unsigned i = 0; i < n; i++)
-	{
-		if (degreeMat(i,i) == 0)
-		{
-			zeroDegreeIndexes.push_back(i);
-		}
-	}
-	// reverse iterate because largest row to remove is at end
-	// otherwise, removing smaller rows will shift indexes
-	for (auto iter = zeroDegreeIndexes.rbegin(); iter != zeroDegreeIndexes.rend(); ++iter) 
-	{
-		auto idx = *iter;
-		Util::matrixRemoveRow(adjacencies, idx);
-		Util::matrixRemoveRow(degreeMat, idx);
-		Util::matrixRemoveColumn(adjacencies, idx);
-		Util::matrixRemoveColumn(degreeMat, idx);
-		n--;
-	}	 
+    // check for zero degree points and construct a smaller matrix if necessary
+    std::vector<unsigned> zeroDegreeIndexes;
+    for (unsigned i = 0; i < n; i++)
+    {
+        if (degreeMat(i, i) == 0)
+        {
+            zeroDegreeIndexes.push_back(i);
+        }
+    }
+    // reverse iterate because largest row to remove is at end
+    // otherwise, removing smaller rows will shift indexes
+    for (auto iter = zeroDegreeIndexes.rbegin(); iter != zeroDegreeIndexes.rend(); ++iter)
+    {
+        auto idx = *iter;
+        Util::matrixRemoveRow(adjacencies, idx);
+        Util::matrixRemoveRow(degreeMat, idx);
+        Util::matrixRemoveColumn(adjacencies, idx);
+        Util::matrixRemoveColumn(degreeMat, idx);
+        n--;
+    }
 
-	// square root of a diagonal matrix
-	for (unsigned i = 0; i < n; i++) 
-	{
-		degreeMat(i, i) = 1.0 / sqrt(degreeMat(i,i));
-	}
+    // square root of a diagonal matrix
+    for (unsigned i = 0; i < n; i++)
+    {
+        degreeMat(i, i) = 1.0 / sqrt(degreeMat(i, i));
+    }
 
-	Eigen::MatrixXd laplacian = degreeMat * adjacencies * degreeMat;
-	Eigen::MatrixXd eye = Eigen::MatrixXd::Identity(n, n);
-	laplacian += 0.000001 * eye;
+    Eigen::MatrixXd laplacian = degreeMat * adjacencies * degreeMat;
+    Eigen::MatrixXd eye = Eigen::MatrixXd::Identity(n, n);
+    laplacian += 0.000001 * eye;
 
-	Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> saes(laplacian, false);
+    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> saes(laplacian, false);
 
-	Eigen::VectorXd eigvals = saes.eigenvalues();
+    Eigen::VectorXd eigvals = saes.eigenvalues();
 
-	ClusteringResult res;
+    ClusteringResult res;
 
-	res.numClusters = 0;
-	for (unsigned i = 0; i< eigvals.size(); i++)
-	{
-		if (eigvals(i) > 1-0.0001 && eigvals(i) < 1+0.0001)
-		{
-			res.numClusters++;
-		}
-	}
+    res.numClusters = 0;
+    for (unsigned i = 0; i < eigvals.size(); i++)
+    {
+        if (eigvals(i) > 1 - 0.0001 && eigvals(i) < 1 + 0.0001)
+        {
+            res.numClusters++;
+        }
+    }
 
-	return res;
+    return res;
 }
 
-ClusteringResult Clustering::kMeans(const Eigen::MatrixXd & data, unsigned k, unsigned numBootstraps)
+ClusteringResult Clustering::dipMeans(const Eigen::MatrixXd& data, double alpha, double splitThreshold)
 {
+    unsigned n = data.rows();
 
-	ClusteringResult bestRes;
-	double minMse = std::numeric_limits<double>::max();
+    Eigen::MatrixXd dist = Util::pdist(data);
 
-	for (unsigned i = 0; i < numBootstraps; i++)
-	{
-		auto tmp = Clustering::kMeansIter(data, k);
-		if (tmp.second < minMse)
-		{
-			minMse = tmp.second;
-			bestRes = tmp.first;
-		}
-	}
+    unsigned k = 0;
+    unsigned kOld = 42;
+    Eigen::VectorXd labels = Eigen::VectorXd::Zero(n);
 
-	return bestRes;
-}
+    while (k != kOld)
+    {
 
-std::pair<ClusteringResult, double> Clustering::kMeansIter(const Eigen::MatrixXd & data, unsigned k)
-{
-	unsigned n = data.rows();
-	unsigned dim = data.cols();
+        kOld = k;
 
-	ClusteringResult res;
-	res.labels = Eigen::MatrixXd(n, 1);
-	res.numClusters = k;
+        std::vector<double> scores;
 
-	// initialize random means
-	// Eigen::MatrixXd means = Eigen::MatrixXd::Zero(k, dim);
-	// std::vector<unsigned> tmpIdx(n);
-	// std::iota(tmpIdx.begin(), tmpIdx.end(), 0);
-	// std::random_shuffle(tmpIdx.begin(), tmpIdx.end());
-	// for (unsigned j = 0; j < k; j++)
-	// {
-	// 	means.row(j) = data.row(tmpIdx[j]);
-	// }
+        for (unsigned j = 0; j <= k; j++) // calculate scores for clusters c_j
+        {
+            // find indexes of cluster j
+            std::vector<unsigned> clusterIdx;
+            for (unsigned i = 0; i < n; i++)
+            {
+                if (labels(i) == j)
+                {
+                    clusterIdx.push_back(i);
+                }
+            }
 
+            unsigned numSplitViewers = 0;
+            double splitScore = 0.0;
+            DipStatistic ds;
+            // for each cluster member, see if it is a split viewer
+            for (auto idx : clusterIdx)
+            {
+                std::vector<double> viewerDists;
+                for (auto idx2 : clusterIdx)
+                {
+                    if (idx != idx2)
+                    {
+                        viewerDists.push_back(dist(idx, idx2));
+                    }
+                }
+                auto dipRes = ds.calculate(viewerDists, 1000);
+                if (dipRes.p <= alpha)
+                {
+                    numSplitViewers++;
+                    splitScore += dipRes.dip;
+                }
+            }
+            splitScore /= numSplitViewers;
+            double splitPerc = (double)numSplitViewers / (double)clusterIdx.size(); 
 
-	///////
-	// initialize using kMeans++ algorithm
-	///////
+            if (splitPerc >= splitThreshold)
+            {
+                scores.push_back(splitScore);
+            } else
+            {
+                scores.push_back(0.0);
+            }
+        }
 
-	std::vector<unsigned> meanIndexes;
-	// choose first mean uniformly at random
-	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-	std::mt19937 generator(seed);	
-	std::uniform_int_distribution<unsigned> distn(0, n-1);
-	meanIndexes.push_back(distn(generator));
+        auto sortedScoreLabels = Util::sortIndexes(scores);
+        unsigned splitLabel = sortedScoreLabels.back();
 
-	// iteratively add more means
-	for (unsigned j = 0; j < k-1; j++)
-	{
-		// calculate probability distribution of data based on distances
-		std::vector<double> probs(n, 2); // default probabilities of 2
-		for (auto idx : meanIndexes) // set already chosen indexes to zero probability
-		{
-			probs[idx] = 0;
-		}
-		// calculate shortest distances to closes already chosen mean
-		std::vector<double> dists;
-		double sumDist = 0;
-		for (unsigned i = 0; i < n; i++) 
-		{
-			double minDist = std::numeric_limits<double>::max();
-			for (auto idx : meanIndexes)
-			{
-				double d = (data.row(i) - data.row(idx)).squaredNorm();
-				if (d < minDist)
-				{
-					minDist = d;
-				}
-			}
-			dists.push_back(minDist);
-			sumDist += minDist;
-		}
-		// populate probabilities		
-		for (unsigned i = 0; i < n; i++) 
-		{
-			if (probs[i] > 1.0) // uninitialized
-			{
-				probs[i] = dists[i] / sumDist;
-			}
-		}
-		// calculate cumulative probabilities
-		std::vector<double> cumProbs(n);
-		cumProbs[0] = probs[0];
-		for (unsigned i = 1; i < n; i++) 
-		{
-			cumProbs[i] = cumProbs[i-1] + probs[i];
-		}
-		// select next mean index based on cumulative probabilities
-		std::uniform_real_distribution<double> unif(0.0, 1.0);
-		double r = unif(generator);
-		for (unsigned i = 0; i < n; i++) 
-		{
-			if (r <= cumProbs[i])
-			{
-				meanIndexes.push_back(i);
-				break;
-			}
-		}
-	}
+        VLOG(2) << "split " << splitLabel << " with score=" << scores[splitLabel];
+    }
 
-	Eigen::MatrixXd means = Eigen::MatrixXd::Zero(k, dim);
-	for (unsigned j = 0; j < k; j++)
-	{
-		means.row(j) = data.row(meanIndexes[j]);
-	}	
-
-	///////
-	// done initializing means
-	///////		
-	
-
-
-
-	Eigen::MatrixXd oldMeans;
-	unsigned numEpsilonChanges = 0;
-	double mse = 0;
-
-	// start iterations
-	while (numEpsilonChanges < 10)
-	{
-
-		// assignment
-		mse = 0;
-		for (unsigned i = 0; i < n; i++)
-		{
-			double minNorm = std::numeric_limits<double>::max();
-			for (unsigned j = 0; j < k; j++)
-			{
-				double norm = (data.row(i) - means.row(j)).squaredNorm();
-				if (norm < minNorm)
-				{
-					minNorm = norm;
-					res.labels(i) = j;
-				}
-				mse += norm;
-			}
-		}
-		mse /= n;
-
-		// recalculate means
-		oldMeans = means;
-		means = Eigen::MatrixXd::Zero(k, dim);
-		for (unsigned j = 0; j < k; j++)
-		{
-			unsigned nk = 0;
-			for (unsigned i = 0; i < n; i++)
-			{
-				if (res.labels(i) == j)
-				{
-					means.row(j) += data.row(i);
-					nk++;
-				}
-			}
-			means.row(j) /= nk;
-		}
-
-		// check for convergence
-		double meansDiff = (oldMeans - means).cwiseAbs().sum();		
-		if (meansDiff < 1e-10)
-		{
-			numEpsilonChanges++;
-		} else
-		{
-			numEpsilonChanges = 0;
-		}
-
-	}
-	
-	return std::make_pair(res, mse);
+    ClusteringResult res;
+    return res;       
 }

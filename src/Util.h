@@ -31,6 +31,19 @@ public:
 
 	static Eigen::MatrixXd pca(const Eigen::MatrixXd & data, const unsigned ndims);
 	static Eigen::MatrixXd pdist(const Eigen::MatrixXd & data);
+	
+	template <typename T>
+	static std::vector<unsigned> sortIndexes(const std::vector<T> & v) 
+	{
+	    // initialize original index locations
+	    std::vector<unsigned> idx(v.size());
+	    for (unsigned i = 0; i != idx.size(); ++i) idx[i] = i;
+
+	    // sort indexes based on comparing values in v
+	    std::sort(idx.begin(), idx.end(), [&v](unsigned i1, unsigned i2) {return v[i1] < v[i2];});
+
+	    return idx;
+	}
 
 };
 

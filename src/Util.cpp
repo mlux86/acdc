@@ -237,7 +237,6 @@ Eigen::MatrixXd Util::pca(const Eigen::MatrixXd & data_, const unsigned ndims)
     Eigen::MatrixXd data = data_;
 
     unsigned n = data.rows();
-    unsigned dim = data.cols();
 
     // subtract mean
     Eigen::VectorXd mean = data.colwise().sum() / n;

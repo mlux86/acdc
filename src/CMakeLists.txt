@@ -5,9 +5,11 @@ add_library(mainprog
 	SequenceVectorizer.cpp
 	Clustering.cpp
 	TarjansAlgorithm.cpp
+	Kmeans.cpp
 )
 
 include_directories(${CMAKE_SOURCE_DIR}/libtsne)
+include_directories(${CMAKE_SOURCE_DIR}/libdip)
 
 add_executable(main main.cpp)
 

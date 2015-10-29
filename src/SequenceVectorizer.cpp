@@ -73,7 +73,7 @@ void SequenceVectorizer::buildFeatureKmers()
 Eigen::MatrixXd SequenceVectorizer::vectorize(seqan::Dna5String & sequence) const
 {
 
-	unsigned len = length(sequence);
+	unsigned len = seqan::length(sequence);
 	unsigned n = (unsigned) (((int)len - (int)windowWidth) / (int)windowStep) + 1;
 
 	Eigen::MatrixXd mat = Eigen::MatrixXd::Zero(n, getDim());
@@ -91,7 +91,7 @@ Eigen::MatrixXd SequenceVectorizer::vectorize(seqan::Dna5String & sequence) cons
 		seqan::Infix<seqan::Dna5String>::Type window = infix(sequence, from, to);
 
 		seqan::String<unsigned> counts;
-		countKmers(counts, window, kmerLength);
+		seqan::countKmers(counts, window, kmerLength);
 
 		auto kmerIter = kmerIndexes.cbegin();
 		for(const auto & cnt : counts)
@@ -123,9 +123,9 @@ std::pair< Eigen::MatrixXd, std::vector<std::string> > SequenceVectorizer::vecto
 	seqan::StringSet<seqan::CharString> ids;
 	seqan::StringSet<seqan::String<seqan::Iupac> > seqs;
 
-	readRecords(ids, seqs, seqFileIn);
+	seqan::readRecords(ids, seqs, seqFileIn);
 
-	unsigned n = length(ids);
+	unsigned n = seqan::length(ids);
 
 	Eigen::MatrixXd result(0, getDim());
 	std::vector<std::string> labels;

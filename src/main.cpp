@@ -4,6 +4,7 @@ INITIALIZE_EASYLOGGINGPP
 #include "SequenceVectorizer.h"
 #include "BarnesHutSNEAdapter.h"
 #include "Util.h"
+#include "Kmeans.h"
 #include "Opts.h"
 #include "Clustering.h"
 #include "TarjansAlgorithm.h"
@@ -56,13 +57,15 @@ int main(int argc, char const *argv[])
 	ClusteringResult res = ta.run(affinities);
 	VLOG(1) << "Found " << res.numClusters << " clusters.";
 
-	VLOG(1) << "kMeans++...";
-	ClusteringResult kmeansRes = Clustering::kMeans(reduced, res.numClusters);
-	Util::saveMatrix(kmeansRes.labels, "/tmp/labels", ' ');
+	// ClusteringResult meh = Clustering::dipMeans(reduced);
 
-	// Eigen::MatrixXd mat = Util::loadMatrix("/tmp/meh", ' ');
-	// ClusteringResult kmeansRes = Clustering::kMeans(mat, 2);
-	// Util::saveMatrix(kmeansRes.labels, "/tmp/labels", ' ');
+	VLOG(1) << "kMeans++...";
+	Kmeans km(res.numClusters);
+	km.initSample();
+	km.setNumBootstraps(10000);
+
+	ClusteringResult kmeansRes = km.run(reduced);
+	Util::saveMatrix(kmeansRes.labels, "/tmp/labels", ' ');
 
 	return EXIT_SUCCESS;
 }

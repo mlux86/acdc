@@ -82,11 +82,11 @@ ClusteringResult TarjansAlgorithm::run(const Eigen::MatrixXd & adjacencies_)
 			std::vector<unsigned> componentIndexes = strongConnect(node);
 			if (componentIndexes.size() > 0)
 			{
-				res.numClusters++;				
 				for (unsigned idx : componentIndexes)
 				{
 					res.labels(idx) = res.numClusters;
 				}
+				res.numClusters++;				
 			}
 		}
 	}
