@@ -50,21 +50,30 @@ Eigen::MatrixXd BarnesHutSNEAdapter::saveData(double* data, int N, int D)
 // copied and modified from the original BH-SNE implementation
 Eigen::MatrixXd BarnesHutSNEAdapter::runBarnesHutSNE(const Eigen::MatrixXd & eigendata, const Opts & opts)
 {
+    Eigen::MatrixXd tsneData;
+    if (eigendata.cols() > opts.tsnePcaDim())
+    {
+        VLOG(2) << "Initially reducing dimension to " << opts.tsnePcaDim() << " using PCA...";
+        tsneData = Util::pca(eigendata, opts.tsnePcaDim());
+    } else
+    {
+        tsneData = eigendata;
+    }
 
     TSNE* tsne = new TSNE();
 
-    int N = eigendata.rows();
-    int D = eigendata.cols();
+    int N = tsneData.rows();
+    int D = tsneData.cols();
     
     // estimate perplexity if necessary
     unsigned perplexity = opts.tsnePerplexity();
     if (perplexity == 0)
     {
-        perplexity = Util::estimateTsnePerplexity(eigendata);
+        perplexity = Util::estimateTsnePerplexity(tsneData);
     }
 
     // read the parameters and the dataset
-	double * data = BarnesHutSNEAdapter::loadData(eigendata);
+	double * data = BarnesHutSNEAdapter::loadData(tsneData);
 	
 	// fire up the SNE implementation
 	double * Y = (double*) malloc(N * opts.tsneDim() * sizeof(double));

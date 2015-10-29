@@ -9,6 +9,8 @@
 #include <math.h>  
 #include "nanoflann.hpp"
 
+#include <Eigen/Eigenvalues> 
+
 Util::Util()
 {
 }
@@ -228,4 +230,40 @@ Eigen::MatrixXd Util::knnAffinityMatrix(const Eigen::MatrixXd & data, const unsi
     }
 
     return affinities;
+}
+
+Eigen::MatrixXd Util::pca(const Eigen::MatrixXd & data_, const unsigned ndims)
+{
+    Eigen::MatrixXd data = data_;
+
+    unsigned n = data.rows();
+    unsigned dim = data.cols();
+
+    // subtract mean
+    Eigen::VectorXd mean = data.colwise().sum() / n;
+    data.rowwise() -= mean.transpose();
+
+    // covariance matrix
+    Eigen::MatrixXd cov = data.transpose() * data / (double) n;
+
+    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> saes(cov);
+    Eigen::MatrixXd eigvecs = saes.eigenvectors();
+
+    Eigen::MatrixXd proj = eigvecs.rightCols(ndims);
+
+    return data * proj;
+}
+
+Eigen::MatrixXd Util::pdist(const Eigen::MatrixXd & data)
+{
+    unsigned n = data.rows();
+
+    Eigen::MatrixXd distances(n, n);
+
+    for (unsigned i = 0; i < n; i++)
+    {
+        distances.row(i) = (data.rowwise() - data.row(i)).rowwise().norm();
+    }
+
+    return distances;
 }

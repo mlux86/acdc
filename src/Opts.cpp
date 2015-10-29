@@ -21,6 +21,7 @@ void Opts::initialize(int argc, char const *argv[])
 	    ("help,h", "Display this help message")
 	    ("input-fasta,i", boost::program_options::value<std::string>()->default_value(""), "Input FASTA file")
 	    ("tsne-dimension,d", boost::program_options::value<unsigned>()->default_value(2), "T-SNE dimension")
+	    ("tsne-pca-dimension,u", boost::program_options::value<unsigned>()->default_value(50), "T-SNE initial PCA dimension")
 	    ("tsne-perplexity,p", boost::program_options::value<unsigned>(), "T-SNE perplexity (overrides automatic estimation)")
 	    ("tsne-theta,t", boost::program_options::value<float>()->default_value(0.5), "T-SNE parameter 'theta' of the underlying Barnes-Hut approximation")
 	    ("window-kmer-length,k", boost::program_options::value<unsigned>()->default_value(4), "Length of the k-mers in the sequence vectorizer window")
@@ -42,6 +43,7 @@ void Opts::initialize(int argc, char const *argv[])
 	_inputFASTA = vm["input-fasta"].as<std::string>();
 	boost::algorithm::trim(_inputFASTA);
 	_tsneDim = vm["tsne-dimension"].as<unsigned>();
+	_tsnePcaDim = vm["tsne-pca-dimension"].as<unsigned>();
 	if (vm.count("tsne-perplexity"))
 	{
 		_tsnePerplexity = vm["tsne-perplexity"].as<unsigned>();
@@ -77,6 +79,11 @@ std::string Opts::inputFASTA() const
 unsigned Opts::tsneDim() const
 {
 	return _tsneDim;
+}
+
+unsigned Opts::tsnePcaDim() const
+{
+	return _tsnePcaDim;
 }
 
 unsigned Opts::tsnePerplexity() const

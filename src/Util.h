@@ -29,6 +29,9 @@ public:
 
 	static Eigen::MatrixXd knnAffinityMatrix(const Eigen::MatrixXd & data, const unsigned k, bool mutual = false);
 
+	static Eigen::MatrixXd pca(const Eigen::MatrixXd & data, const unsigned ndims);
+	static Eigen::MatrixXd pdist(const Eigen::MatrixXd & data);
+
 };
 
 

@@ -12,6 +12,7 @@ private:
 	std::string _inputFASTA = "";
 
 	unsigned _tsneDim = 0;
+	unsigned _tsnePcaDim = 0;
 	unsigned _tsnePerplexity = 0;
 	float _tsneTheta = 0.0;
 
@@ -32,6 +33,7 @@ public:
 	std::string helpDesc() const;
 	std::string inputFASTA() const;
 	unsigned tsneDim() const;
+	unsigned tsnePcaDim() const;
 	unsigned tsnePerplexity() const;
 	float tsneTheta() const;
 	unsigned windowKmerLength() const;
