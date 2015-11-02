@@ -1,5 +1,4 @@
-#include "easylogging++.h"
-
+#include "Logger.h"
 #include "Clustering.h"
 #include "DipStatistic.h"
 #include "Util.h"
@@ -152,7 +151,7 @@ ClusteringResult Clustering::dipMeans(const Eigen::MatrixXd& data, double alpha,
         {
             unsigned splitLabel = std::distance(scores.begin(), maxScoreIter);
 
-            VLOG(3) << "split " << splitLabel << " with score=" << scores[splitLabel];
+            DLOG << "split " << splitLabel << " with score=" << scores[splitLabel] << "\n";
 
             // assemble data matrix with cluster members, split means
 

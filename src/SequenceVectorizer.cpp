@@ -1,5 +1,4 @@
-#include "easylogging++.h"
-
+#include "Logger.h"
 #include "SequenceVectorizer.h"
 #include "Util.h"
 
@@ -39,9 +38,9 @@ void SequenceVectorizer::buildParams(const Opts & opts)
 		auto fileSize = Util::getFileSizeBytes(inputFASTA);
         windowStep = (unsigned) ceil((double)fileSize / (double)opts.targetNumPoints());
         windowWidth = 2 * windowStep;
-        VLOG(2) << "k=" << opts.windowKmerLength() << "   "
+        DLOG << "k=" << opts.windowKmerLength() << "   "
                 << "windowWidth=" << windowWidth << "   "
-                << "windowStep=" << windowStep;
+                << "windowStep=" << windowStep << "\n";
 	}
 	
 	if(windowStep == 0)
@@ -80,7 +79,7 @@ Eigen::MatrixXd SequenceVectorizer::vectorize(seqan::Dna5String & sequence) cons
 
 	if (len < windowWidth)
 	{
-		VLOG(3) << "Length of contig is smaller than window size.";
+		DLOG << "Length of contig is smaller than window size!\n";
 		return mat;
 	}
 

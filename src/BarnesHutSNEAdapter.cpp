@@ -1,5 +1,4 @@
-#include "easylogging++.h"
-
+#include "Logger.h"
 #include "BarnesHutSNEAdapter.h"
 #include "Util.h"
 
@@ -53,7 +52,7 @@ Eigen::MatrixXd BarnesHutSNEAdapter::runBarnesHutSNE(const Eigen::MatrixXd & eig
     Eigen::MatrixXd tsneData;
     if (eigendata.cols() > opts.tsnePcaDim())
     {
-        VLOG(2) << "Initially reducing dimension to " << opts.tsnePcaDim() << " using PCA...";
+        DLOG << "Initially reducing dimension to " << opts.tsnePcaDim() << " using PCA...\n";
         tsneData = Util::pca(eigendata, opts.tsnePcaDim());
     } else
     {
@@ -83,11 +82,11 @@ Eigen::MatrixXd BarnesHutSNEAdapter::runBarnesHutSNE(const Eigen::MatrixXd & eig
 	}
     srand(time(NULL));
     
-    VLOG(2) << "n=" << N << "   " 
+    DLOG << "n=" << N << "   " 
             << "dim=" << D << "   " 
             << "targetDim=" << opts.tsneDim() << "   "
             << "perplexity=" << perplexity << "   "
-            << "theta=" << opts.tsneTheta();
+            << "theta=" << opts.tsneTheta() << "\n";
 	tsne->run(data, N, D, Y, opts.tsneDim(), perplexity, opts.tsneTheta());
 	
 	// save the results

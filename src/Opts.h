@@ -8,6 +8,7 @@ class Opts
 private:
 	bool _needsHelp = false;
 	std::string _helpDesc = "";
+	int _logLevel = 0;
 
 	std::string _inputFASTA = "";
 
@@ -30,6 +31,7 @@ public:
 	~Opts();
 
 	bool needsHelp() const;
+	unsigned logLevel() const;
 	std::string helpDesc() const;
 	std::string inputFASTA() const;
 	unsigned tsneDim() const;

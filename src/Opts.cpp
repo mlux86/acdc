@@ -1,4 +1,6 @@
 #include "Opts.h"
+#include "OptsAccumulator.h"
+#include "Logger.h"
 
 #include <boost/program_options.hpp>
 #include <boost/algorithm/string/trim.hpp>
@@ -19,6 +21,8 @@ void Opts::initialize(int argc, char const *argv[])
 
 	description.add_options()
 	    ("help,h", "Display this help message")
+	    ("verbose,v", accumulator<int>(&_logLevel)->implicit_value(1), "Verbose output (use -vv for more)")
+	    ("quiet,q", "Quiet output")
 	    ("input-fasta,i", boost::program_options::value<std::string>()->default_value(""), "Input FASTA file")
 	    ("tsne-dimension,d", boost::program_options::value<unsigned>()->default_value(2), "T-SNE dimension")
 	    ("tsne-pca-dimension,u", boost::program_options::value<unsigned>()->default_value(50), "T-SNE initial PCA dimension")
@@ -38,6 +42,14 @@ void Opts::initialize(int argc, char const *argv[])
 	std::stringstream ss;
 	ss << description;
 	_helpDesc = ss.str();
+
+	if(vm.count("quiet")) 
+	{
+		_logLevel = -1;
+	} else
+	{
+		_logLevel = std::min(_logLevel, 3);
+	}
 
 	_needsHelp = vm.count("help");
 	_inputFASTA = vm["input-fasta"].as<std::string>();
@@ -64,6 +76,11 @@ void Opts::initialize(int argc, char const *argv[])
 bool Opts::needsHelp() const
 {
 	return _needsHelp;
+}
+
+unsigned Opts::logLevel() const
+{
+	return _logLevel;
 }
 
 std::string Opts::helpDesc() const

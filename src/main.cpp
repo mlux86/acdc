@@ -1,18 +1,10 @@
-#include "easylogging++.h"
-INITIALIZE_EASYLOGGINGPP
-
 #include "SequenceVectorizer.h"
 #include "Opts.h"
 #include "ClusterAnalysis.h"
-
-// logging: VERBOSE 1: progress
-//          VERBOSE 2: parameters and more than progress
-//          VERBOSE 3: t-SNE and more
+#include "Logger.h"
 
 int main(int argc, char const *argv[])
 {
-	START_EASYLOGGINGPP(argc, argv);	
-
 	std::unique_ptr<Opts> opts;
 
 	try 
@@ -21,7 +13,7 @@ int main(int argc, char const *argv[])
 	}
 	catch(const std::exception & e) 
 	{
-		std::cerr << e.what() << '\n';
+		ELOG << e.what() << '\n';
 		return EXIT_FAILURE;
 	}
 
@@ -31,14 +23,24 @@ int main(int argc, char const *argv[])
 		return EXIT_SUCCESS;
 	}
 
-	if (opts->inputFASTA().empty())
+	switch (opts->logLevel())
 	{
-		std::cerr << "No input FASTA file given (--input-fasta,-i), aborting." << std::endl;
-		return EXIT_FAILURE;
+		case -1: Logger::getInstance().setLevel(Off); break;
+		case 0: Logger::getInstance().setLevel(Error); break;
+		case 1: Logger::getInstance().setLevel(Info); break;
+		case 2: Logger::getInstance().setLevel(Verbose); break;
+		case 3: Logger::getInstance().setLevel(Debug); break;
+		default: throw std::runtime_error("Loglevel undefined!");
 	}
 
 
-	VLOG(1) << "Vectorizing contigs...";
+	if (opts->inputFASTA().empty())
+	{
+		ELOG << "No input FASTA file given (--input-fasta,-i), aborting.\n";
+		return EXIT_FAILURE;
+	}
+
+	ILOG << "Vectorizing contigs...\n";
 	SequenceVectorizer sv(*opts);
 	auto dat = sv.vectorize();
 
@@ -47,8 +49,8 @@ int main(int argc, char const *argv[])
 
 	for (const auto & res : results)
 	{
-		VLOG(1) << "CC k=" << res.resConnComponents.numClusters;
-		VLOG(1) << "DM k=" << res.resDipMeans.numClusters; 
+		ILOG << "CC k=" << res.resConnComponents.numClusters << "\n";
+		ILOG << "DM k=" << res.resDipMeans.numClusters << "\n"; 
 	}
 
 	return EXIT_SUCCESS;

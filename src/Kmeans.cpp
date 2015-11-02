@@ -1,4 +1,3 @@
-#include "easylogging++.h"
 #include "Kmeans.h"
 
 #include <math.h>  

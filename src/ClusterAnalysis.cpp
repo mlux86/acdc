@@ -1,5 +1,4 @@
-#include "easylogging++.h"
-
+#include "Logger.h"
 #include "ThreadPool.h"
 #include "ClusterAnalysis.h"
 #include "BarnesHutSNEAdapter.h"
@@ -18,17 +17,17 @@ ClusterAnalysis::~ClusterAnalysis()
 
 ClusterAnalysisResult ClusterAnalysis::analyze(const Eigen::MatrixXd & data, const Opts & opts)
 {
-	VLOG(1) << "Running t-SNE...";
+	ILOG << "Running t-SNE...\n";
 	Eigen::MatrixXd reduced = BarnesHutSNEAdapter::runBarnesHutSNE(data, opts);
 	
 	ClusterAnalysisResult res;
 
-	VLOG(1) << "Counting connected components...";
+	ILOG << "Counting connected components...\n";
 	Eigen::MatrixXd affinities = Util::knnAffinityMatrix(reduced, 9, false);
 	TarjansAlgorithm ta;
 	res.resConnComponents = ta.run(affinities);
 
-	VLOG(1) << "Running dipMeans...";
+	ILOG << "Running dipMeans...\n";
 	res.resDipMeans = Clustering::dipMeans(reduced);
 
 	return res;
@@ -51,11 +50,11 @@ std::vector<ClusterAnalysisResult> ClusterAnalysis::analyzeBootstraps(const Eige
 	unsigned concurentThreadsSupported = std::thread::hardware_concurrency();
 	if (concurentThreadsSupported == 0)
 	{
-		VLOG(2) << "Could not detect number of cores. Defaulting to one thread.";
+		ELOG << "Could not detect number of cores. Defaulting to one thread.\n";
 		concurentThreadsSupported = 1;
 	} else
 	{
-		VLOG(2) << "Detected " << concurentThreadsSupported << " cores.";
+		DLOG << "Detected " << concurentThreadsSupported << " cores.\n";
 	}
 
 	ThreadPool pool(concurentThreadsSupported);

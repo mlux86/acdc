@@ -38,11 +38,11 @@
 #include <stdio.h>
 #include <cstring>
 #include <time.h>
+#include <stdexcept>
 #include "vptree.h"
 #include "sptree.h"
 #include "tsne.h"
-
-#include "easylogging++.h"
+#include "Logger.h"
 
 using namespace std;
 
@@ -88,7 +88,7 @@ void TSNE::run(double* X, int N, int D, double* Y, int no_dims, double perplexit
     if(exact) {
         
         // Compute similarities
-        VLOG(3) << "[t-SNE] Using exact t-SNE...";
+        DLOG << "[t-SNE] Using exact t-SNE...\n";
         P = (double*) malloc(N * N * sizeof(double));
         if(P == NULL)
         { 
@@ -136,12 +136,12 @@ void TSNE::run(double* X, int N, int D, double* Y, int no_dims, double perplexit
 	// Perform main training loop
     if(exact) 
     {
-        VLOG(3) << "Input similarities computed in " << ((float) (end - start) / CLOCKS_PER_SEC) << " seconds!";
+        DLOG << "Input similarities computed in " << ((float) (end - start) / CLOCKS_PER_SEC) << " seconds!\n";
     } else 
     {
-        VLOG(3) << "Input similarities computed in " << ((float) (end - start) / CLOCKS_PER_SEC) << " seconds! Sparsity = " << (double) row_P[N] / ((double) N * (double) N);
+        DLOG << "Input similarities computed in " << ((float) (end - start) / CLOCKS_PER_SEC) << " seconds! Sparsity = " << (double) row_P[N] / ((double) N * (double) N) << "\n";
     }
-    VLOG(3) << "Learning embedding...";
+    DLOG << "Learning embedding...\n";
 
     start = clock();
 	for(int iter = 0; iter < max_iter; iter++) {
@@ -176,12 +176,12 @@ void TSNE::run(double* X, int N, int D, double* Y, int no_dims, double perplexit
             else      C = evaluateError(row_P, col_P, val_P, Y, N, no_dims, theta);  // doing approximate computation here!
             if(iter == 0)
             {
-                VLOG(3) << "Iteration " << (iter + 1) << ": error = " << C;
+                DLOG << "Iteration " << (iter + 1) << ": error = " << C << "\n";
             }
             else 
             {
                 total_time += (float) (end - start) / CLOCKS_PER_SEC;
-                VLOG(3) << "Iteration " << iter << ": error = " << C << " (50 iterations in " << ((float) (end - start) / CLOCKS_PER_SEC) << " seconds";
+                DLOG << "Iteration " << iter << ": error = " << C << " (50 iterations in " << ((float) (end - start) / CLOCKS_PER_SEC) << " seconds.\n";
             }
 			start = clock();
         }
@@ -198,7 +198,7 @@ void TSNE::run(double* X, int N, int D, double* Y, int no_dims, double perplexit
         free(col_P); col_P = NULL;
         free(val_P); val_P = NULL;
     }
-    VLOG(3) << "Fitting performed in " << total_time << " seconds.";
+    DLOG << "Fitting performed in " << total_time << " seconds.\n";
 }
 
 
@@ -436,7 +436,7 @@ void TSNE::computeGaussianPerplexity(double* X, int N, int D, unsigned int** _ro
     
     if(perplexity > K) 
     {
-        VLOG(3) << "Perplexity should be lower than K!";
+        DLOG << "Perplexity should be lower than K!\n";
     }
     
     // Allocate the memory we need
@@ -465,14 +465,14 @@ void TSNE::computeGaussianPerplexity(double* X, int N, int D, unsigned int** _ro
     tree->create(obj_X);
     
     // Loop over all points to find nearest neighbors
-    VLOG(3) << "Building tree...";
+    DLOG << "Building tree...\n";
     vector<DataPoint> indices;
     vector<double> distances;
     for(int n = 0; n < N; n++) {
         
         if(n % 10000 == 0)
         {
-            VLOG(3) << " - point " << n << " of " << N;
+            DLOG << " - point " << n << " of " << N << "\n";
         }
         
         // Find nearest neighbors

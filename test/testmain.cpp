@@ -1,5 +1,2 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.h"
-
-#include "easylogging++.h"
-INITIALIZE_EASYLOGGINGPP
