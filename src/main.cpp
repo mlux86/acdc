@@ -8,6 +8,7 @@ INITIALIZE_EASYLOGGINGPP
 #include "Opts.h"
 #include "Clustering.h"
 #include "TarjansAlgorithm.h"
+#include "ThreadPool.h"
 
 // logging: VERBOSE 1: progress
 //          VERBOSE 2: parameters and more than progress
@@ -60,14 +61,6 @@ int main(int argc, char const *argv[])
 	VLOG(1) << "dip-means...";
 	ClusteringResult meh = Clustering::dipMeans(reduced);
 	Util::saveMatrix(meh.labels, "/tmp/labels", ' ');
-
-	// VLOG(1) << "kMeans++...";
-	// Kmeans km(res.numClusters);
-	// km.initSample();
-	// km.setNumBootstraps(10000);
-
-	// ClusteringResult kmeansRes = km.run(reduced);
-	// Util::saveMatrix(kmeansRes.labels, "/tmp/labels", ' ');
 
 	return EXIT_SUCCESS;
 }
