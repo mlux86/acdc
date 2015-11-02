@@ -6,6 +6,7 @@ add_library(mainprog
 	Clustering.cpp
 	TarjansAlgorithm.cpp
 	Kmeans.cpp
+	ClusterAnalysis.cpp
 )
 
 include_directories(${CMAKE_SOURCE_DIR}/libtsne)

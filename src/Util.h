@@ -45,6 +45,8 @@ public:
 	    return idx;
 	}
 
+	static std::vector< std::vector<unsigned> > stratifiedSubsamplingIndices(const unsigned n, const unsigned k, const double ratio = 0.8);
+
 };
 
 

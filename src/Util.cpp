@@ -1,5 +1,6 @@
 #include "Util.h"
 
+#include <iostream>
 #include <algorithm>
 #include <fstream>
 #include <sstream>
@@ -8,6 +9,7 @@
 #include <boost/algorithm/string.hpp>
 #include <math.h>  
 #include "nanoflann.hpp"
+#include <numeric>
 
 #include <Eigen/Eigenvalues> 
 
@@ -265,4 +267,31 @@ Eigen::MatrixXd Util::pdist(const Eigen::MatrixXd & data)
     }
 
     return distances;
+}
+
+std::vector< std::vector<unsigned> > Util::stratifiedSubsamplingIndices(const unsigned n, const unsigned k, const double ratio)
+{
+    std::vector<unsigned> indices(n);
+    std::iota(indices.begin(), indices.end(), 0);
+    std::shuffle(indices.begin(), indices.end(), std::mt19937{std::random_device{}()});
+
+    unsigned m = (unsigned) ((double)n * ratio);
+    unsigned step = (n - m) / k;
+
+    std::vector< std::vector<unsigned> > result;
+
+    for (unsigned i = 0; i < k; i++)
+    {
+        unsigned from = i*step;
+        unsigned to = i*step + m;
+        if (i == k-1)
+        {
+            to = std::max(to, n);
+        }
+
+        std::vector<unsigned> e(indices.begin()+from, indices.begin()+to);
+        result.push_back(e); 
+    }
+
+    return result;
 }

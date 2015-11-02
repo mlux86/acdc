@@ -2,13 +2,8 @@
 INITIALIZE_EASYLOGGINGPP
 
 #include "SequenceVectorizer.h"
-#include "BarnesHutSNEAdapter.h"
-#include "Util.h"
-#include "Kmeans.h"
 #include "Opts.h"
-#include "Clustering.h"
-#include "TarjansAlgorithm.h"
-#include "ThreadPool.h"
+#include "ClusterAnalysis.h"
 
 // logging: VERBOSE 1: progress
 //          VERBOSE 2: parameters and more than progress
@@ -47,20 +42,14 @@ int main(int argc, char const *argv[])
 	SequenceVectorizer sv(*opts);
 	auto dat = sv.vectorize();
 
-	VLOG(1) << "Running t-SNE...";
-	Eigen::MatrixXd reduced = BarnesHutSNEAdapter::runBarnesHutSNE(dat.first, *opts);
-	
-	Util::saveMatrix(reduced, "/tmp/reduced", ' ');
+	// ClusterAnalysisResult car = ClusterAnalysis::analyze(dat.first, *opts);
+	auto results = ClusterAnalysis::analyzeBootstraps(dat.first, *opts, 8);
 
-	VLOG(1) << "Counting connected components...";
-	Eigen::MatrixXd affinities = Util::knnAffinityMatrix(reduced, 9, false);
-	TarjansAlgorithm ta;
-	ClusteringResult res = ta.run(affinities);
-	VLOG(1) << "Found " << res.numClusters << " clusters.";
-
-	VLOG(1) << "dip-means...";
-	ClusteringResult meh = Clustering::dipMeans(reduced);
-	Util::saveMatrix(meh.labels, "/tmp/labels", ' ');
+	for (const auto & res : results)
+	{
+		VLOG(1) << "CC k=" << res.resConnComponents.numClusters;
+		VLOG(1) << "DM k=" << res.resDipMeans.numClusters; 
+	}
 
 	return EXIT_SUCCESS;
 }
