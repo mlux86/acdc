@@ -23,6 +23,10 @@ private:
 
 	unsigned _targetNumPoints = 0;
 
+	unsigned _numThreads = 0;
+	unsigned _numBootstraps = 0;
+	double _bootstrapRatio = 0;
+
 	void initialize(int argc, char const *argv[]);
 
 
@@ -42,6 +46,9 @@ public:
 	unsigned windowWidth() const;
 	unsigned windowStep() const;
 	unsigned targetNumPoints() const;
+	unsigned numThreads() const;
+	unsigned numBootstraps() const;
+	double bootstrapRatio() const;
 	
 };
 

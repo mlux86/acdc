@@ -17,18 +17,18 @@ ClusterAnalysis::~ClusterAnalysis()
 
 ClusterAnalysisResult ClusterAnalysis::analyze(const Eigen::MatrixXd & data, const Opts & opts)
 {
-	ILOG << "Running t-SNE...\n";
+	VLOG << "Running t-SNE...\n";
 	Eigen::MatrixXd reduced = BarnesHutSNEAdapter::runBarnesHutSNE(data, opts);
 	
 	ClusterAnalysisResult res;
 
-	ILOG << "Counting connected components...\n";
+	VLOG << "Counting connected components...\n";
 	Eigen::MatrixXd affinities = Util::knnAffinityMatrix(reduced, 9, false);
 	TarjansAlgorithm ta;
 	res.resConnComponents = ta.run(affinities);
 
-	ILOG << "Running dipMeans...\n";
-	res.resDipMeans = Clustering::dipMeans(reduced);
+	VLOG << "Running dipMeans...\n";
+	res.resDipMeans = Clustering::dipMeans(reduced, 0, 0.01, 5);
 
 	return res;
 }
@@ -43,21 +43,11 @@ ClusterAnalysisResult ClusterAnalysis::bootstrapTask(const Eigen::MatrixXd & dat
 	return ClusterAnalysis::analyze(data, opts);
 }
 
-std::vector<ClusterAnalysisResult> ClusterAnalysis::analyzeBootstraps(const Eigen::MatrixXd & data, const Opts & opts, const unsigned numBootstraps)
+std::vector<ClusterAnalysisResult> ClusterAnalysis::analyzeBootstraps(const Eigen::MatrixXd & data, const Opts & opts)
 {
-	const std::vector< std::vector<unsigned> > bootstrapIndices = Util::stratifiedSubsamplingIndices(data.rows(), numBootstraps, 0.8);
+	const std::vector< std::vector<unsigned> > bootstrapIndices = Util::stratifiedSubsamplingIndices(data.rows(), opts.numBootstraps(), opts.bootstrapRatio());
 
-	unsigned concurentThreadsSupported = std::thread::hardware_concurrency();
-	if (concurentThreadsSupported == 0)
-	{
-		ELOG << "Could not detect number of cores. Defaulting to one thread.\n";
-		concurentThreadsSupported = 1;
-	} else
-	{
-		DLOG << "Detected " << concurentThreadsSupported << " cores.\n";
-	}
-
-	ThreadPool pool(concurentThreadsSupported);
+	ThreadPool pool(opts.numThreads());
 
 	std::vector< std::future<ClusterAnalysisResult> > futures;
 

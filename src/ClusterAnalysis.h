@@ -22,7 +22,7 @@ private:
 
 public:
 	static ClusterAnalysisResult analyze(const Eigen::MatrixXd & data, const Opts & opts);
-	static std::vector<ClusterAnalysisResult> analyzeBootstraps(const Eigen::MatrixXd & data, const Opts & opts, const unsigned numBootstraps);
+	static std::vector<ClusterAnalysisResult> analyzeBootstraps(const Eigen::MatrixXd & data, const Opts & opts);
 	
 };
 

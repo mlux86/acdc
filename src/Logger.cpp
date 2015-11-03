@@ -44,12 +44,15 @@ std::ostream & Logger::log(LogLevel lvl)
 			out = &nullOut; break;
 	}
 
-	std::hash<std::thread::id> hasher;
-	char buff[50];
-	snprintf(buff, sizeof(buff), "[thread %lx]", hasher(std::this_thread::get_id()));
-	std::string buffAsStdStr = buff;
+	if (this->level == Verbose || this->level == Debug)
+	{
+		std::hash<std::thread::id> hasher;
+		char buff[50];
+		snprintf(buff, sizeof(buff), "[thread %lx] ", hasher(std::this_thread::get_id()));
+		std::string buffAsStdStr = buff;
+		(*out) << buffAsStdStr;
+	}
 
-	(*out) << buffAsStdStr;
 	return *out;
 }
 

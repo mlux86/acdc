@@ -5,6 +5,7 @@
 #include <boost/program_options.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <sstream>
+#include <thread>
 
 Opts::Opts(int argc, char const *argv[])
 {
@@ -19,6 +20,16 @@ void Opts::initialize(int argc, char const *argv[])
 {
 	boost::program_options::options_description description("Usage", 250);
 
+	unsigned threads = std::thread::hardware_concurrency();
+	if (threads == 0)
+	{
+		ELOG << "Could not detect number of cores. Defaulting to one thread.\n";
+		threads = 1;
+	} else
+	{
+		DLOG << "Detected " << threads << " cores.\n";
+	}	
+
 	description.add_options()
 	    ("help,h", "Display this help message")
 	    ("verbose,v", accumulator<int>(&_logLevel)->implicit_value(1), "Verbose output (use -vv for more)")
@@ -32,6 +43,9 @@ void Opts::initialize(int argc, char const *argv[])
 	    ("window-width,w", boost::program_options::value<unsigned>(), "Width of the sliding sequence vectorizer window (overrides automatic estimation using number of target points)")
 	    ("window-step,s", boost::program_options::value<unsigned>(), "Step of the sliding sequence vectorizer window (overrides automatic estimation using number of target points)")
 	    ("target-num-points,n", boost::program_options::value<unsigned>()->default_value(1000), "Approximate number of target points for estimating window parameters")
+	    ("num-bootstraps,b", boost::program_options::value<unsigned>()->default_value(10), "Number of bootstraps")
+	    ("bootstrap-ratio,r", boost::program_options::value<double>()->default_value(0.75), "Bootstrap subsampling ratio")
+	    ("num-threads,T", boost::program_options::value<unsigned>()->default_value(threads), "Number of threads for bootstrap analysis  (default: detect number of cores)")
 	    ;
 	
 	boost::program_options::variables_map vm;
@@ -71,6 +85,11 @@ void Opts::initialize(int argc, char const *argv[])
 		_windowStep = vm["window-step"].as<unsigned>();
 	}	
 	_targetNumPoints = vm["target-num-points"].as<unsigned>();
+	_numThreads = vm["num-threads"].as<unsigned>();
+	_numThreads = std::max(1u, _numThreads);
+	_numBootstraps = vm["num-bootstraps"].as<unsigned>();
+	_numBootstraps = std::max(1u, _numBootstraps);
+	_bootstrapRatio = vm["bootstrap-ratio"].as<double>();
 }
 
 bool Opts::needsHelp() const
@@ -131,4 +150,19 @@ unsigned Opts::windowStep() const
 unsigned Opts::targetNumPoints() const
 {
 	return _targetNumPoints;
+}
+
+unsigned Opts::numThreads() const
+{
+	return _numThreads;
+}
+
+unsigned Opts::numBootstraps() const
+{
+	return _numBootstraps;
+}
+
+double Opts::bootstrapRatio() const
+{
+	return _bootstrapRatio;
 }

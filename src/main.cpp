@@ -44,8 +44,8 @@ int main(int argc, char const *argv[])
 	SequenceVectorizer sv(*opts);
 	auto dat = sv.vectorize();
 
-	// ClusterAnalysisResult car = ClusterAnalysis::analyze(dat.first, *opts);
-	auto results = ClusterAnalysis::analyzeBootstraps(dat.first, *opts, 8);
+	ILOG << "Starting bootstrap analysis...\n";
+	auto results = ClusterAnalysis::analyzeBootstraps(dat.first, *opts);
 
 	for (const auto & res : results)
 	{

@@ -79,7 +79,7 @@ ClusteringResult Clustering::spectralClustering(Eigen::MatrixXd & adjacencies)
     return res;
 }
 
-ClusteringResult Clustering::dipMeans(const Eigen::MatrixXd& data, double alpha, double splitThreshold)
+ClusteringResult Clustering::dipMeans(const Eigen::MatrixXd& data, double alpha, double splitThreshold, unsigned maxClusters)
 {
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     std::mt19937 generator(seed);
@@ -96,6 +96,10 @@ ClusteringResult Clustering::dipMeans(const Eigen::MatrixXd& data, double alpha,
 
     while (true)
     {
+        if (maxClusters > 0 && k == maxClusters)
+        {
+            break;
+        }
 
         std::vector<double> scores;
 
