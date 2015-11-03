@@ -1,6 +1,7 @@
 #include "Logger.h"
 
 #include <thread>
+#include <sstream>
 
 Logger::Logger()
 {
@@ -44,11 +45,11 @@ std::ostream & Logger::log(LogLevel lvl)
 	}
 
 	std::hash<std::thread::id> hasher;
-	char buff[100];
-	snprintf(buff, sizeof(buff), "%lx", hasher(std::this_thread::get_id()));
+	char buff[50];
+	snprintf(buff, sizeof(buff), "[thread %lx]", hasher(std::this_thread::get_id()));
 	std::string buffAsStdStr = buff;
 
-	(*out) << "[thread " << buffAsStdStr << "] ";
+	(*out) << buffAsStdStr;
 	return *out;
 }
 

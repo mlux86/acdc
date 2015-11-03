@@ -1,4 +1,5 @@
 #include "Kmeans.h"
+#include "Logger.h"
 
 #include <math.h>  
 #include <numeric> 
@@ -8,6 +9,7 @@
 #include <chrono>
 #include <random>
 #include <limits>
+#include <sstream>
 
 Kmeans::Kmeans(const unsigned k_) : k(k_)
 {
@@ -30,6 +32,10 @@ void Kmeans::initPlusPlus()
 void Kmeans::initMeans(const Eigen::MatrixXd & initMeans)
 {
 	init = "means";
+    if (initMeans.rows() != k)
+    {
+        throw std::runtime_error("Inititial means must have k rows!");
+    }
 	means = initMeans;
 }
 
@@ -102,12 +108,12 @@ std::pair<ClusteringResult, double> Kmeans::iteration(const Eigen::MatrixXd & da
                 }
                 mse += norm;
             }
-        }
+        }        
         mse /= n;
 
         // recalculate means
         oldMeans = means;
-        means = Eigen::MatrixXd::Zero(k, dim);
+        means = Eigen::MatrixXd::Zero(k, dim);        
         for (unsigned j = 0; j < k; j++)
         {
             unsigned nk = 0;

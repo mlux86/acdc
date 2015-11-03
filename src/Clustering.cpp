@@ -160,7 +160,7 @@ ClusteringResult Clustering::dipMeans(const Eigen::MatrixXd& data, double alpha,
             {
                 if (labels(i) == splitLabel)
                 {
-                    members.resize(members.rows()+1, dim);
+                    members.conservativeResize(members.rows()+1, dim);
                     members.row(members.rows()-1) = data.row(i);
                 }
             }

@@ -8,7 +8,6 @@
 
 #include <iostream>
 #include <fstream>
-#include <mutex>
 
 enum LogLevel
 {
