@@ -1,3 +1,5 @@
+#include "crow.h"
+
 #include "SequenceVectorizer.h"
 #include "Opts.h"
 #include "ClusterAnalysis.h"
@@ -9,6 +11,12 @@
 
 int main(int argc, char const *argv[])
 {
+	crow::SimpleApp app;
+	CROW_ROUTE(app, "/")([](){
+        return "Hello world";
+    });	
+    app.port(18080).multithreaded();
+
 	std::unique_ptr<Opts> opts;
 
 	std::string banner = "";

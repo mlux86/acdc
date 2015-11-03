@@ -1,7 +1,5 @@
 message(STATUS ${CMAKE_SOURCE_DIR})
 
-include_directories(${CMAKE_SOURCE_DIR}/libdip)
-include_directories(${CMAKE_SOURCE_DIR}/tsne)
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
 add_executable(acdc-test 
