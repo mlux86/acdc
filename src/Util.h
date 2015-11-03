@@ -1,5 +1,4 @@
-#ifndef __Util__
-#define __Util__
+#pragma once
 
 #include <vector>
 #include <string>
@@ -35,6 +34,3 @@ public:
 	static std::vector< std::vector<unsigned> > stratifiedSubsamplingIndices(const unsigned n, const unsigned k, const double ratio = 0.8);
 
 };
-
-
-#endif

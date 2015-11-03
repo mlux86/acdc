@@ -4,8 +4,7 @@
 //  Software License, Version 1.0. (See accompanying file
 //  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef PROGRAM_OPTIONS_ACCUMULATOR_HPP
-#define PROGRAM_OPTIONS_ACCUMULATOR_HPP
+#pragma once
 
 #include <boost/program_options/value_semantic.hpp>
 #include <boost/any.hpp>
@@ -96,5 +95,3 @@ template<typename T>
 accumulator_type<T>* accumulator(T* store) {
     return new accumulator_type<T>(store);
 }
-
-#endif

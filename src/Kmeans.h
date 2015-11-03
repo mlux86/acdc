@@ -1,5 +1,4 @@
-#ifndef __Kmeans__
-#define __Kmeans__
+#pragma once
 
 #include <eigen3/Eigen/Dense>
 #include <string>
@@ -36,5 +35,3 @@ public:
 
 
 };
-
-#endif 

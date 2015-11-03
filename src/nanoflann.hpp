@@ -42,8 +42,7 @@
   *   - <a href="https://github.com/jlblancoc/nanoflann" >Online README</a>
   */
 
-#ifndef  NANOFLANN_HPP_
-#define  NANOFLANN_HPP_
+#pragma once
 
 #include <vector>
 #include <cassert>
@@ -1392,6 +1391,3 @@ namespace nanoflann
 
 /** @} */ // end of grouping
 } // end of NS
-
-
-#endif /* NANOFLANN_HPP_ */

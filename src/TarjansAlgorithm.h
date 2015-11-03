@@ -1,5 +1,4 @@
-#ifndef __TarjansAlgorithm__
-#define __TarjansAlgorithm__
+#pragma once
 
 #include <stack>
 #include <vector>
@@ -33,5 +32,3 @@ public:
 	ClusteringResult run(const Eigen::MatrixXd & adjacencies);
 
 };
-
-#endif

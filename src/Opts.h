@@ -1,5 +1,4 @@
-#ifndef __Opts__
-#define __Opts__
+#pragma once
 
 #include <string>
 
@@ -51,5 +50,3 @@ public:
 	double bootstrapRatio() const;
 	
 };
-
-#endif 

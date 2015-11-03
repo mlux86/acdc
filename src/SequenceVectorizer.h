@@ -1,5 +1,4 @@
-#ifndef __SequenceVectorizer__
-#define __SequenceVectorizer__
+#pragma once
 
 #include <seqan/sequence.h> 
 #include <eigen3/Eigen/Dense>
@@ -43,5 +42,3 @@ public:
 	std::pair< Eigen::MatrixXd, std::vector<std::string> > vectorize() const;
 	
 };
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef __ClusterAnalysis__
-#define __ClusterAnalysis__
+#pragma once 
 
 #include <vector>
 #include "Clustering.h"
@@ -25,5 +24,3 @@ public:
 	static std::vector<ClusterAnalysisResult> analyzeBootstraps(const Eigen::MatrixXd & data, const Opts & opts);
 	
 };
-
-#endif 

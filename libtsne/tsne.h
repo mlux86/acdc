@@ -30,10 +30,7 @@
  *
  */
 
-
-#ifndef TSNE_H
-#define TSNE_H
-
+#pragma once
 
 static inline double sign(double x) { return (x == .0 ? .0 : (x < .0 ? -1.0 : 1.0)); }
 
@@ -58,6 +55,4 @@ private:
     void computeSquaredEuclideanDistance(double* X, int N, int D, double* DD);
     double randn();
 };
-
-#endif
 

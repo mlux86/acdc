@@ -42,8 +42,7 @@
 #include <cmath>
 
 
-#ifndef VPTREE_H
-#define VPTREE_H
+#pragma once
 
 class DataPoint
 {
@@ -268,5 +267,3 @@ private:
         }
     }
 };
-            
-#endif

@@ -1,5 +1,4 @@
-#ifndef __BarnesHutSNEAdapter__
-#define __BarnesHutSNEAdapter__
+#pragma once
 
 #include <eigen3/Eigen/Dense>
 #include "Opts.h"
@@ -19,5 +18,3 @@ public:
 	static Eigen::MatrixXd runBarnesHutSNE(const Eigen::MatrixXd & eigendata, const Opts & opts);
 	
 };
-
-#endif

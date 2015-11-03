@@ -1,5 +1,4 @@
-#ifndef __ThreadPool__
-#define __ThreadPool__
+#pragma once
 
 #include <vector>
 #include <queue>
@@ -110,5 +109,3 @@ inline ThreadPool::~ThreadPool()
         worker.join();
     }
 }
-
-#endif

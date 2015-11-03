@@ -1,5 +1,4 @@
-#ifndef __DipStatistic__
-#define __DipStatistic__
+#pragma once
 
 #include <vector>
 
@@ -23,5 +22,3 @@ public:
 	DipResult calculate(std::vector<double> pdf, const unsigned numBootstraps = 100);
 
 };
-
-#endif

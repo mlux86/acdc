@@ -1,5 +1,4 @@
-#ifndef __Clustering__
-#define __Clustering__
+#pragma once
 
 #include <eigen3/Eigen/Dense>
 
@@ -21,6 +20,3 @@ public:
     static ClusteringResult dipMeans(const Eigen::MatrixXd& data, double alpha = 0.0, double splitThreshold = 0.01, unsigned maxClusters = 0);    
 
 };
-
-
-#endif 

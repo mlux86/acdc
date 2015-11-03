@@ -1,5 +1,4 @@
-#ifndef __Logger__
-#define __Logger__
+#pragma once
 
 #define ELOG Logger::getInstance().error()
 #define ILOG Logger::getInstance().info()
@@ -43,5 +42,3 @@ public:
 	std::ostream & debug();
 
 };
-
-#endif 
