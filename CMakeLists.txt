@@ -1,11 +1,10 @@
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
-project(unnamed)
+project(acdc)
 enable_testing()
 
 set(CMAKE_BUILD_TYPE Debug)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O2 -std=c++11")
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
 
 # Boost
 set(Boost_USE_STATIC_LIBS OFF) 
@@ -24,6 +23,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SEQAN_CXX_FLAGS}")
 # Eigen
 find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIRS})
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 add_subdirectory(libdip)
 add_subdirectory(libtsne)

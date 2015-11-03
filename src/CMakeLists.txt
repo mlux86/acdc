@@ -13,6 +13,6 @@ add_library(mainprog
 include_directories(${CMAKE_SOURCE_DIR}/libtsne)
 include_directories(${CMAKE_SOURCE_DIR}/libdip)
 
-add_executable(main main.cpp)
+add_executable(acdc main.cpp)
 
-target_link_libraries(main mainprog tsne dip ${Boost_LIBRARIES} ${SEQAN_LIBRARIES})
+target_link_libraries(acdc mainprog tsne dip ${Boost_LIBRARIES} ${SEQAN_LIBRARIES})

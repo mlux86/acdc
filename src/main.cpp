@@ -3,13 +3,23 @@
 #include "ClusterAnalysis.h"
 #include "Logger.h"
 
+#include <string>
+#include <fstream>
+#include <streambuf>
+
 int main(int argc, char const *argv[])
 {
 	std::unique_ptr<Opts> opts;
 
+	std::string banner = "";
+
 	try 
 	{
 		opts.reset(new Opts(argc, argv));
+
+		std::ifstream ifs("../banner.txt");
+		banner = std::string((std::istreambuf_iterator<char>(ifs)),
+		                 std::istreambuf_iterator<char>());
 	}
 	catch(const std::exception & e) 
 	{
@@ -19,6 +29,7 @@ int main(int argc, char const *argv[])
 
 	if (opts->needsHelp())
 	{
+		std::cout << banner << std::endl;
 		std::cout << opts->helpDesc() << std::endl;
 		return EXIT_SUCCESS;
 	}
@@ -32,7 +43,6 @@ int main(int argc, char const *argv[])
 		case 3: Logger::getInstance().setLevel(Debug); break;
 		default: throw std::runtime_error("Loglevel undefined!");
 	}
-
 
 	if (opts->inputFASTA().empty())
 	{
