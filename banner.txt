@@ -1,7 +1,9 @@
-             ▗▖     
-             ▐▌     
- ▟██▖ ▟██▖ ▟█▟▌ ▟██▖  (a)utomated 
- ▘▄▟▌▐▛  ▘▐▛ ▜▌▐▛  ▘  (c)ontamination 
-▗█▀▜▌▐▌   ▐▌ ▐▌▐▌     (d)etection and 
-▐▙▄█▌▝█▄▄▌▝█▄█▌▝█▄▄▌  (c)onfidence estimation for NGS data
- ▀▀▝▘ ▝▀▀  ▝▀▝▘ ▝▀▀ 
+        ,/    
+      ,'/                  ▗▖     
+    ,' /                   ▐▌     
+  ,'  /_____,  ▟██▖ ▟██▖ ▟█▟▌ ▟██▖  (a)utomated 
+.'____    ,'   ▘▄▟▌▐▛  ▘▐▛ ▜▌▐▛  ▘  (c)ontamination 
+     /  ,'    ▗█▀▜▌▐▌   ▐▌ ▐▌▐▌     (d)etection and 
+    / ,'      ▐▙▄█▌▝█▄▄▌▝█▄█▌▝█▄▄▌  (c)onfidence estimation for NGS data
+   /,'         ▀▀▝▘ ▝▀▀  ▝▀▝▘ ▝▀▀ 
+  /'          
