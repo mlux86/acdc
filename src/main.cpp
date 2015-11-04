@@ -1,16 +1,25 @@
-#include "crow.h"
-
 #include "SequenceVectorizer.h"
 #include "Opts.h"
 #include "ClusterAnalysis.h"
 #include "Logger.h"
+#include "VisualizationServer.h"
+
+#include "Controller.h"
+#include "WebServer.h"
 
 #include <string>
 #include <fstream>
 #include <streambuf>
+#include <future>
 
 int main(int argc, char const *argv[])
 {
+
+	std::thread vst([]()
+	{
+		VisualizationServer::getInstance().run(4242);
+	});
+
 	std::unique_ptr<Opts> opts;
 
 	std::string banner = "";
@@ -64,6 +73,10 @@ int main(int argc, char const *argv[])
 		ILOG << "CC k=" << res.resConnComponents.numClusters << "\n";
 		ILOG << "DM k=" << res.resDipMeans.numClusters << "\n"; 
 	}
+
+	ILOG << "Waiting for visualization server to stop...\n";
+	VisualizationServer::getInstance().stop();
+	vst.join();
 
 	return EXIT_SUCCESS;
 }

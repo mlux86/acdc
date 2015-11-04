@@ -24,18 +24,23 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SEQAN_CXX_FLAGS}")
 find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIRS})
 
-# Crow
-include_directories(SYSTEM "libcrow")
-
 # t-SNE
 include_directories(SYSTEM "libtsne")
 
 # Dip statistic
 include_directories(SYSTEM "libdip")
 
+# libmicrohttpd
+find_package(LibMicroHTTPD REQUIRED)
+include_directories(${MHD_INCLUDE_DIRS})
+
+# Web server
+include_directories("libwebserver")
+
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 add_subdirectory(libdip)
 add_subdirectory(libtsne)
+add_subdirectory(libwebserver)
 add_subdirectory(src)
 add_subdirectory(test)
