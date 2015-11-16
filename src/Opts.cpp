@@ -46,6 +46,7 @@ void Opts::initialize(int argc, char const *argv[])
 	    ("num-bootstraps,b", boost::program_options::value<unsigned>()->default_value(10), "Number of bootstraps")
 	    ("bootstrap-ratio,r", boost::program_options::value<double>()->default_value(0.75), "Bootstrap subsampling ratio")
 	    ("num-threads,T", boost::program_options::value<unsigned>()->default_value(threads), "Number of threads for bootstrap analysis  (default: detect number of cores)")
+	    ("port,p", boost::program_options::value<unsigned>()->default_value(4242), "Visualization server port")
 	    ;
 	
 	boost::program_options::variables_map vm;
@@ -90,6 +91,7 @@ void Opts::initialize(int argc, char const *argv[])
 	_numBootstraps = vm["num-bootstraps"].as<unsigned>();
 	_numBootstraps = std::max(1u, _numBootstraps);
 	_bootstrapRatio = vm["bootstrap-ratio"].as<double>();
+	_port = vm["port"].as<unsigned>();
 }
 
 bool Opts::needsHelp() const
@@ -165,4 +167,9 @@ unsigned Opts::numBootstraps() const
 double Opts::bootstrapRatio() const
 {
 	return _bootstrapRatio;
+}
+
+unsigned Opts::port() const
+{
+	return _port;
 }

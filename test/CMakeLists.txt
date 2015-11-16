@@ -8,6 +8,6 @@ add_executable(acdc-test
 	DipStatistic.cpp
 )
 
-target_link_libraries(acdc-test mainprog tsne dip ${Boost_LIBRARIES} ${SEQAN_LIBRARIES})
+target_link_libraries(acdc-test mainprog tsne dip ${Boost_LIBRARIES} ${SEQAN_LIBRARIES} ${JSONCPP_LIBRARY})
 
 add_test(all acdc-test)

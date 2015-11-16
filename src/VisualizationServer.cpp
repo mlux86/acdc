@@ -17,11 +17,14 @@ VisualizationServer & VisualizationServer::getInstance()
 
 void VisualizationServer::run(unsigned port)
 {
-	std::string path = "/";
-    HelloController c(path);
+    DatasetController c("/json", this);
+    StaticController s("/", "../scatter.html");
+    StaticController cjs("/canvasjs", "../canvasjs.min.js");
 
-    server = new WebServer(port);
+    server.reset(new WebServer(port));
     server->addController(& c);
+    server->addController(& s);
+    server->addController(& cjs);
     server->start();
 }
 
@@ -30,11 +33,23 @@ void VisualizationServer::stop()
 	server->stop();
 }
 
-void VisualizationServer::serveDataset()
+void VisualizationServer::addClustering(const Eigen::MatrixXd & data_, const ClusteringResult & clust_, const std::string & name)
 {
+    dataMtx.lock();
+
+    Eigen::MatrixXd * data = new Eigen::MatrixXd;
+    *data = data_;
+    ClusteringResult * clust = new ClusteringResult;
+    *clust = clust_;
+    datasets[name] = std::make_pair(std::unique_ptr<Eigen::MatrixXd>(data), std::unique_ptr<ClusteringResult>(clust));
+
+    DLOG << "Added data set to visualization server: " << name << "\n";
+    
+    dataMtx.unlock();
 }
 
-void VisualizationServer::addClustering(const Eigen::MatrixXd & data, const ClusteringResult & clust, const std::string & name)
+std::pair<const Eigen::MatrixXd *, const ClusteringResult*> VisualizationServer::getClustering(const std::string & name) 
 {
-	datasets[name] = std::make_pair(&data, &clust);
+    auto & v = datasets.at(name);
+	return std::make_pair(v.first.get(), v.second.get());
 }

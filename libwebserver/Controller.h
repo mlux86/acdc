@@ -2,6 +2,8 @@
 
 #include <microhttpd.h>
 #include <sstream>
+#include <map>
+#include <string>
 
 class Controller
 {
@@ -38,15 +40,17 @@ private:
 
 public:
     SimpleGetController(const std::string path_);
-    ~SimpleGetController();
+    virtual ~SimpleGetController();
 
-    bool validPath(const char * path, const char * method);
+    virtual bool validPath(const char * path, const char * method);
 
-    void createResponse(struct MHD_Connection * connection,
+    virtual void createResponse(struct MHD_Connection * connection,
                                 const char * url, const char * method, 
                                 const char * upload_data, size_t * upload_data_size, 
                                 std::stringstream & response);
 
-    virtual void respond(std::stringstream & response) = 0;
+    virtual void respond(std::stringstream & response, const std::map<std::string, std::string> params) = 0;
+
+    static int MHDCollectParams(void * cls, enum MHD_ValueKind kind, const char * key, const char * value);
 };
 

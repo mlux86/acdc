@@ -1,0 +1,71 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>  
+	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+	<script type="text/javascript" src="/canvasjs"></script>
+
+	<script type="text/javascript">
+
+		function updateChart(dataset)
+		{
+			$.getJSON("http://localhost:4242/json?data=" + dataset, function(result)
+			{
+
+				var chart = new CanvasJS.Chart("chartContainer",
+				{			
+					axisX:
+					{
+						// minimum: -50,
+						// maximum: 50,
+						gridThickness: 0,
+						labelFontSize: 10
+					},
+					axisY:
+					{
+						// minimum: -50,
+						// maximum: 50,
+						gridThickness: 0,
+						labelFontSize: 10
+					},
+					data: [
+					{        
+						markerSize: 3,
+						type: "scatter",  
+						dataPoints: result.mat,
+					}
+					],
+					zoomEnabled: true,
+					zoomType: "xy"
+					
+				});				
+
+				chart.render();
+
+			});
+		}
+
+		$( document ).ready(function() 
+		{
+
+			$( "#datasetForm" ).submit(function(evt) 
+			{
+				updateChart($("#dataset").val())
+				evt.preventDefault();
+			});
+
+		});		
+
+	</script>
+
+</head>
+<body>
+	<form id="datasetForm" action="#">
+	<label for="dataset">Data set: </label><input type="text" name="dataset" id="dataset" value="oneshot-cc" />
+	<input type="submit" id="datasetSubmit" value="Show">
+	</form>
+	<div id="chartContainer" style="width: 500px; height: 500px;">
+	</div>
+</body>
+
+</html>

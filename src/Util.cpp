@@ -11,8 +11,6 @@
 #include "nanoflann.hpp"
 #include <numeric>
 
-#include <Eigen/Eigenvalues> 
-
 Util::Util()
 {
 }
@@ -294,4 +292,24 @@ std::vector< std::vector<unsigned> > Util::stratifiedSubsamplingIndices(const un
     }
 
     return result;
+}
+
+Json::Value Util::clusteringToJson(const Eigen::MatrixXd & mat, const ClusteringResult & clust)
+{
+    unsigned n = mat.rows();
+
+    std::vector<std::string> colors = {"#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33", "#a65628", "#f781bf", "#999999"};
+    auto jsonMat = Json::Value(Json::arrayValue);
+    
+    for(unsigned i = 0; i < n; i++)
+    {
+        auto jsonMatPt = Json::Value();
+        jsonMatPt["x"] = mat(i, 0);
+        jsonMatPt["y"] = mat(i, 1);
+        unsigned colorIdx = (unsigned)clust.labels(i) % colors.size();
+        jsonMatPt["color"] = colors[colorIdx];
+        jsonMat.append(jsonMatPt);
+    }
+
+    return jsonMat;
 }

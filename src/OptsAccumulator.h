@@ -46,6 +46,7 @@ public:
     /// There are no tokens for an accumulator_type
     virtual unsigned min_tokens() const { return 0; }
     virtual unsigned max_tokens() const { return 0; }
+    virtual bool adjacent_tokens_only() const { return false; }
 
     /// Accumulating from different sources is silly.
     virtual bool is_composing() const { return false; }

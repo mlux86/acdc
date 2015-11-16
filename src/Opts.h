@@ -26,6 +26,8 @@ private:
 	unsigned _numBootstraps = 0;
 	double _bootstrapRatio = 0;
 
+	unsigned _port = 0;
+
 	void initialize(int argc, char const *argv[]);
 
 
@@ -48,5 +50,6 @@ public:
 	unsigned numThreads() const;
 	unsigned numBootstraps() const;
 	double bootstrapRatio() const;
+	unsigned port() const;
 	
 };

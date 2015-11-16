@@ -3,6 +3,8 @@
 #include "ClusterAnalysis.h"
 #include "Logger.h"
 #include "VisualizationServer.h"
+#include "TarjansAlgorithm.h"
+#include "BarnesHutSNEAdapter.h"
 
 #include "Controller.h"
 #include "WebServer.h"
@@ -14,11 +16,6 @@
 
 int main(int argc, char const *argv[])
 {
-
-	std::thread vst([]()
-	{
-		VisualizationServer::getInstance().run(4242);
-	});
 
 	std::unique_ptr<Opts> opts;
 
@@ -61,11 +58,28 @@ int main(int argc, char const *argv[])
 		return EXIT_FAILURE;
 	}
 
+	const unsigned port = opts->port();
+	std::thread vst([port]()
+	{
+		VisualizationServer::getInstance().run(port);
+	});
+
 	ILOG << "Vectorizing contigs...\n";
 	SequenceVectorizer sv(*opts);
 	auto dat = sv.vectorize();
 
-	ILOG << "Starting bootstrap analysis...\n";
+	ILOG << "One-shot analysis...\n";
+	// Eigen::MatrixXd reduced = BarnesHutSNEAdapter::runBarnesHutSNE(dat.first, *opts);
+	// Eigen::MatrixXd affinities = Util::knnAffinityMatrix(reduced, 9, false);
+	// TarjansAlgorithm ta;
+	// auto res = ta.run(affinities);
+	// VisualizationServer::getInstance().addClustering(reduced, res, "oneshot-cc");
+	// auto res2 = Clustering::dipMeans(reduced, 0, 0.01, 5);
+	// VisualizationServer::getInstance().addClustering(reduced, res2, "oneshot-dm");
+
+	auto res = ClusterAnalysis::analyze(dat.first, *opts, "oneshot");
+
+	ILOG << "Bootstrap analysis...\n";
 	auto results = ClusterAnalysis::analyzeBootstraps(dat.first, *opts);
 
 	for (const auto & res : results)
@@ -74,8 +88,8 @@ int main(int argc, char const *argv[])
 		ILOG << "DM k=" << res.resDipMeans.numClusters << "\n"; 
 	}
 
-	ILOG << "Waiting for visualization server to stop...\n";
-	VisualizationServer::getInstance().stop();
+	// ILOG << "Waiting for visualization server to stop...\n";
+	// VisualizationServer::getInstance().stop();
 	vst.join();
 
 	return EXIT_SUCCESS;

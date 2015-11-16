@@ -4,6 +4,8 @@
 #include <string>
 
 #include <eigen3/Eigen/Dense>
+#include <json/json.h>
+#include "Clustering.h"
 
 class Util
 {
@@ -32,5 +34,7 @@ public:
 	static Eigen::MatrixXd pdist(const Eigen::MatrixXd & data);
 
 	static std::vector< std::vector<unsigned> > stratifiedSubsamplingIndices(const unsigned n, const unsigned k, const double ratio = 0.8);
+
+	static Json::Value clusteringToJson(const Eigen::MatrixXd & mat, const ClusteringResult & clust);
 
 };

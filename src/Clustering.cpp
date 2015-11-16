@@ -4,7 +4,6 @@
 #include "Util.h"
 #include "Kmeans.h"
 
-#include <Eigen/Eigenvalues>
 #include <math.h>  
 #include <numeric>  
 #include <algorithm>

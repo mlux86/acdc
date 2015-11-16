@@ -17,10 +17,10 @@ class ClusterAnalysis
 private:
 	ClusterAnalysis();
 	~ClusterAnalysis();
-	static ClusterAnalysisResult bootstrapTask(const Eigen::MatrixXd & data, const Opts & opts, const std::vector<unsigned> indices);
+	static ClusterAnalysisResult bootstrapTask(const unsigned taskId, const Eigen::MatrixXd & data, const Opts & opts, const std::vector<unsigned> indices);
 
 public:
-	static ClusterAnalysisResult analyze(const Eigen::MatrixXd & data, const Opts & opts);
+	static ClusterAnalysisResult analyze(const Eigen::MatrixXd & data, const Opts & opts, const std::string & descPrefix);
 	static std::vector<ClusterAnalysisResult> analyzeBootstraps(const Eigen::MatrixXd & data, const Opts & opts);
 	
 };

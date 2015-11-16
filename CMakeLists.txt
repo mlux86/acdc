@@ -10,7 +10,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O2 -std=c++11")
 set(Boost_USE_STATIC_LIBS OFF) 
 set(Boost_USE_MULTITHREADED ON)  
 set(Boost_USE_STATIC_RUNTIME OFF) 
-find_package(Boost 1.55.0 COMPONENTS program_options system REQUIRED)
+find_package(Boost 1.59.0 COMPONENTS program_options system REQUIRED)
 include_directories(${Boost_INCLUDE_DIR})
 
 # SeqAn
@@ -36,6 +36,10 @@ include_directories(${MHD_INCLUDE_DIRS})
 
 # Web server
 include_directories("libwebserver")
+
+# Json library
+find_package(JsonCpp REQUIRED)
+include_directories(${JSONCPP_INCLUDE_DIR})
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 

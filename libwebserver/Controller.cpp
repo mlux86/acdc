@@ -1,6 +1,9 @@
 #include "Controller.h"
 
 #include <cstring>
+#include <map>
+#include <string>
+#include <iostream>
 
 int DynamicController::handleRequest(  struct MHD_Connection * connection,
                             const char * url, const char * method, 
@@ -40,6 +43,16 @@ void SimpleGetController::createResponse(	struct MHD_Connection * connection,
                                 			const char * upload_data, size_t * upload_data_size, 
                                 			std::stringstream & response)
 {
-	respond(response);
+    std::map<std::string, std::string> params;
+    MHD_get_connection_values(connection, MHD_GET_ARGUMENT_KIND, MHDCollectParams, &params);
+	respond(response, params);
 }
 
+int SimpleGetController::MHDCollectParams(void * cls, enum MHD_ValueKind kind, const char * key, const char * value)
+{
+    std::map<std::string, std::string> * params = static_cast< std::map<std::string, std::string> * >(cls);
+    std::string k(key);
+    std::string v(value);
+    (*params)[k] = v;
+    return MHD_YES;
+}
