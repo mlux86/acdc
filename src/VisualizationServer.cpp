@@ -13,7 +13,7 @@ void DatasetController::respond(std::stringstream & response, const std::map<std
 {
     Json::Value root;
 
-    if (params.find("data") == params.end() || params.find("labels") == params.end())
+    if (params.find("data") == params.end() || params.find("labels") == params.end() || params.find("reduction") == params.end())
     {
         response << root;
         return;
@@ -21,17 +21,30 @@ void DatasetController::respond(std::stringstream & response, const std::map<std
 
     const std::string key = params.at("data");
     const std::string labels = params.at("labels");
+    const std::string reduction = params.at("reduction");
 
     try 
     {
         const VisualizationData * vdat = VisualizationServer::getInstance().getClustering(key);
 
+        const Eigen::MatrixXd * shownData;
+        if (reduction == "pca")
+        {
+            shownData = &(vdat->dataPca);
+        } else
+        {
+            shownData = &(vdat->dataSne);
+        }
+
         if (labels == "cc")
         {
-            root["mat"] = Util::clusteringToJson(vdat->data, vdat->clustRes.resConnComponents);
+            root["mat"] = Util::clusteringToJson(*shownData, vdat->clustRes.resConnComponents.labels, vdat->labels);
         } else if (labels == "dip")
         {
-            root["mat"] = Util::clusteringToJson(vdat->data, vdat->clustRes.resDipMeans);
+            root["mat"] = Util::clusteringToJson(*shownData, vdat->clustRes.resDipMeans.labels, vdat->labels);
+        } else if (labels == "orig")
+        {
+            root["mat"] = Util::clusteringToJson(*shownData, Util::numericLabels(vdat->labels), vdat->labels);
         }
         
         response << root; 
@@ -82,13 +95,17 @@ void VisualizationServer::stop()
 
 void VisualizationServer::addClustering(
         const std::string & key,
-        const Eigen::MatrixXd & data, 
+        const Eigen::MatrixXd & dataPca,
+        const Eigen::MatrixXd & dataSne, 
+        const std::vector<std::string> & labels,
         const ClusterAnalysisResult & clustRes)
 {
     dataMtx.lock();
 
     std::unique_ptr<VisualizationData> dat(new VisualizationData);
-    dat->data = data;
+    dat->dataPca = dataPca;
+    dat->dataSne = dataSne;
+    dat->labels = labels;
     dat->clustRes = clustRes;
     datasets[key] = std::move(dat);    
 

@@ -24,7 +24,9 @@ public:
 
 struct VisualizationData
 {
-	Eigen::MatrixXd data;
+	Eigen::MatrixXd dataPca;
+	Eigen::MatrixXd dataSne;
+	std::vector<std::string> labels;	
 	ClusterAnalysisResult clustRes;
 };
 
@@ -49,7 +51,9 @@ public:
 	void stop();
 	void addClustering(
 		const std::string & key,
-		const Eigen::MatrixXd & data, 
+		const Eigen::MatrixXd & dataPca,
+		const Eigen::MatrixXd & dataSne, 
+		const std::vector<std::string> & labels, 
 		const ClusterAnalysisResult & ClusterAnalysisResult);
 	const VisualizationData * getClustering(const std::string & name);
 	

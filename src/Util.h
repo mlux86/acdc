@@ -35,6 +35,7 @@ public:
 
 	static std::vector< std::vector<unsigned> > stratifiedSubsamplingIndices(const unsigned n, const unsigned k, const double ratio = 0.8);
 
-	static Json::Value clusteringToJson(const Eigen::MatrixXd & mat, const ClusteringResult & clust);
+	static Json::Value clusteringToJson(const Eigen::MatrixXd & mat, const Eigen::VectorXd & labels, const std::vector<std::string> & tooltips);
+	static Eigen::VectorXd numericLabels(const std::vector<std::string> & labels);
 
 };

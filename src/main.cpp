@@ -70,10 +70,11 @@ int main(int argc, char const *argv[])
 
 	ILOG << "One-shot analysis...\n";
 	auto res = ClusterAnalysis::analyze(dat.first, *opts);
-	VisualizationServer::getInstance().addClustering("oneshot", res.first, res.second);
+	auto dataPca = Util::pca(dat.first, opts->tsneDim());
+	VisualizationServer::getInstance().addClustering("oneshot", dataPca, res.first, dat.second, res.second);
 
 	ILOG << "Bootstrap analysis...\n";
-	auto results = ClusterAnalysis::analyzeBootstraps(dat.first, *opts);
+	auto results = ClusterAnalysis::analyzeBootstraps(dat.first, dat.second, *opts);
 
 	for (const auto & res : results)
 	{
