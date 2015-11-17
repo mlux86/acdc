@@ -69,15 +69,8 @@ int main(int argc, char const *argv[])
 	auto dat = sv.vectorize();
 
 	ILOG << "One-shot analysis...\n";
-	// Eigen::MatrixXd reduced = BarnesHutSNEAdapter::runBarnesHutSNE(dat.first, *opts);
-	// Eigen::MatrixXd affinities = Util::knnAffinityMatrix(reduced, 9, false);
-	// TarjansAlgorithm ta;
-	// auto res = ta.run(affinities);
-	// VisualizationServer::getInstance().addClustering(reduced, res, "oneshot-cc");
-	// auto res2 = Clustering::dipMeans(reduced, 0, 0.01, 5);
-	// VisualizationServer::getInstance().addClustering(reduced, res2, "oneshot-dm");
-
-	auto res = ClusterAnalysis::analyze(dat.first, *opts, "oneshot");
+	auto res = ClusterAnalysis::analyze(dat.first, *opts);
+	VisualizationServer::getInstance().addClustering("oneshot", res.first, res.second);
 
 	ILOG << "Bootstrap analysis...\n";
 	auto results = ClusterAnalysis::analyzeBootstraps(dat.first, *opts);

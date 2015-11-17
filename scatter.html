@@ -7,24 +7,20 @@
 
 	<script type="text/javascript">
 
-		function updateChart(dataset)
+		function updateChart(dataset, labels)
 		{
-			$.getJSON("http://localhost:4242/json?data=" + dataset, function(result)
+			$.getJSON("http://localhost:4242/json?data=" + dataset + "&labels=" + labels, function(result)
 			{
 
 				var chart = new CanvasJS.Chart("chartContainer",
 				{			
 					axisX:
 					{
-						// minimum: -50,
-						// maximum: 50,
 						gridThickness: 0,
 						labelFontSize: 10
 					},
 					axisY:
 					{
-						// minimum: -50,
-						// maximum: 50,
 						gridThickness: 0,
 						labelFontSize: 10
 					},
@@ -50,7 +46,7 @@
 
 			$( "#datasetForm" ).submit(function(evt) 
 			{
-				updateChart($("#dataset").val())
+				updateChart($("#dataset").val(), $("#labels").val())
 				evt.preventDefault();
 			});
 
@@ -61,7 +57,8 @@
 </head>
 <body>
 	<form id="datasetForm" action="#">
-	<label for="dataset">Data set: </label><input type="text" name="dataset" id="dataset" value="oneshot-cc" />
+	<label for="dataset">Data set: </label><input type="text" name="dataset" id="dataset" value="oneshot" /><br/>
+	<label for="labels">Labels: </label><input type="text" name="labels" id="labels" value="cc" /><br/>
 	<input type="submit" id="datasetSubmit" value="Show">
 	</form>
 	<div id="chartContainer" style="width: 500px; height: 500px;">

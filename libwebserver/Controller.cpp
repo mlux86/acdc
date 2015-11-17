@@ -3,7 +3,9 @@
 #include <cstring>
 #include <map>
 #include <string>
-#include <iostream>
+#include <fstream>
+#include <streambuf>
+
 
 int DynamicController::handleRequest(  struct MHD_Connection * connection,
                             const char * url, const char * method, 
@@ -55,4 +57,20 @@ int SimpleGetController::MHDCollectParams(void * cls, enum MHD_ValueKind kind, c
     std::string v(value);
     (*params)[k] = v;
     return MHD_YES;
+}
+
+void StaticController::respond(std::stringstream & response, const std::map<std::string, std::string> params)
+{
+    std::ifstream t(filename);
+    std::string str((std::istreambuf_iterator<char>(t)),
+                     std::istreambuf_iterator<char>());     
+    response << str;
+}
+
+StaticController::StaticController(const std::string path_, const std::string f) : SimpleGetController(path_), filename(f)
+{
+}
+
+StaticController::~StaticController()
+{
 }

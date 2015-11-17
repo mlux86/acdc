@@ -20,7 +20,7 @@ private:
 	static ClusterAnalysisResult bootstrapTask(const unsigned taskId, const Eigen::MatrixXd & data, const Opts & opts, const std::vector<unsigned> indices);
 
 public:
-	static ClusterAnalysisResult analyze(const Eigen::MatrixXd & data, const Opts & opts, const std::string & descPrefix);
+	static std::pair<Eigen::MatrixXd, ClusterAnalysisResult> analyze(const Eigen::MatrixXd & data, const Opts & opts);
 	static std::vector<ClusterAnalysisResult> analyzeBootstraps(const Eigen::MatrixXd & data, const Opts & opts);
 	
 };

@@ -16,12 +16,12 @@ ClusterAnalysis::~ClusterAnalysis()
 
 }
 
-ClusterAnalysisResult ClusterAnalysis::analyze(const Eigen::MatrixXd & data, const Opts & opts, const std::string & descPrefix)
+std::pair<Eigen::MatrixXd, ClusterAnalysisResult> ClusterAnalysis::analyze(const Eigen::MatrixXd & data, const Opts & opts)
 {
-	VLOG << "Running t-SNE...\n";
-	Eigen::MatrixXd reduced = BarnesHutSNEAdapter::runBarnesHutSNE(data, opts);
-	
 	ClusterAnalysisResult res;
+
+	VLOG << "Running t-SNE...\n";
+	auto reduced = BarnesHutSNEAdapter::runBarnesHutSNE(data, opts);
 
 	VLOG << "Counting connected components...\n";
 	Eigen::MatrixXd affinities = Util::knnAffinityMatrix(reduced, 9, false);
@@ -31,10 +31,7 @@ ClusterAnalysisResult ClusterAnalysis::analyze(const Eigen::MatrixXd & data, con
 	VLOG << "Running dipMeans...\n";
 	res.resDipMeans = Clustering::dipMeans(reduced, 0, 0.01, 5);
 
-	VisualizationServer::getInstance().addClustering(reduced, res.resConnComponents, descPrefix + "-cc");
-	VisualizationServer::getInstance().addClustering(reduced, res.resDipMeans, descPrefix + "-dm");
-
-	return res;
+	return std::make_pair(reduced, res);
 }
 
 ClusterAnalysisResult ClusterAnalysis::bootstrapTask(const unsigned taskId, const Eigen::MatrixXd & dataOrig, const Opts & opts, const std::vector<unsigned> indices)
@@ -44,9 +41,14 @@ ClusterAnalysisResult ClusterAnalysis::bootstrapTask(const unsigned taskId, cons
 	{
 		data.row(i) = dataOrig.row(indices[i]);
 	}
+	auto res = ClusterAnalysis::analyze(data, opts);
+
 	std::stringstream ss;
-	ss << "bootstrap" << taskId;
-	return ClusterAnalysis::analyze(data, opts, ss.str());
+	ss << "boot" << taskId;
+
+	VisualizationServer::getInstance().addClustering(ss.str(), res.first, res.second);
+	
+	return res.second;
 }
 
 std::vector<ClusterAnalysisResult> ClusterAnalysis::analyzeBootstraps(const Eigen::MatrixXd & data, const Opts & opts)
