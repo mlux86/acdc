@@ -10,7 +10,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O2 -std=c++11")
 set(Boost_USE_STATIC_LIBS OFF) 
 set(Boost_USE_MULTITHREADED ON)  
 set(Boost_USE_STATIC_RUNTIME OFF) 
-find_package(Boost 1.59.0 COMPONENTS program_options system REQUIRED)
+find_package(Boost 1.59.0 COMPONENTS program_options system filesystem REQUIRED)
 include_directories(${Boost_INCLUDE_DIR})
 
 # SeqAn

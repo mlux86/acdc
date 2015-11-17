@@ -29,7 +29,7 @@
 		}		
 	</style>
 	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
-	<script type="text/javascript" src="/canvasjs"></script>
+	<script type="text/javascript" src="/canvas.min.js"></script>
 	<script type="text/javascript">		
 
 		defaultDataset = 'oneshot';
@@ -79,7 +79,7 @@
 				if (result.datasets.length == 0)
 				{
 					$('#datasetForm').hide();
-					$('#info').html('No data to show, Please wait...');
+					$('#info').html('No data to show, Please wait... <img src="/ajax-loader.gif" alt="Loading..."/>');
 					setTimeout(updateForm, 1000);
 					return;
 				}
@@ -133,7 +133,7 @@
 			});
 
 			updateForm();
-			
+
 			updateChart(defaultDataset, defaultLabels, defaultReduction);
 
 		});		
@@ -142,7 +142,7 @@
 
 </head>
 <body>
-	<div id="info" style="width: 500px; height: 50px;"></div>
+	<div id="info" style="width: 500px; height: 50px; font-size: 16pt;"></div>
 	<form id="datasetForm" action="#">
 		<label for="dataset">Data set: </label><select class="param" id="dataset" name="dataset"></select> <br/>
 		<label for="labels">Labels: </label><select class="param" id="labels" name="labels"></select> <br/>

@@ -4,6 +4,9 @@
 #include <thread>
 #include <chrono>
 
+#include "boost/filesystem/operations.hpp"
+#include "boost/filesystem/path.hpp"
+
 DatasetController::DatasetController(const std::string path_) : SimpleGetController(path_)
 {
 }
@@ -104,14 +107,30 @@ VisualizationServer & VisualizationServer::getInstance()
 
 void VisualizationServer::run(unsigned port)
 {
-    DatasetController c("/json");
-    StaticController s("/", "../scatter.html");
-    StaticController cjs("/canvasjs", "../canvasjs.min.js");
+    std::vector<std::unique_ptr<Controller>> controllers;
+
+    controllers.emplace_back(new DatasetController("/json"));
 
     server.reset(new WebServer(port));
-    server->addController(& c);
-    server->addController(& s);
-    server->addController(& cjs);
+
+    if (boost::filesystem::is_directory("../assets"))
+    {
+        boost::filesystem::directory_iterator end_iter;
+        for (boost::filesystem::directory_iterator dir_itr("../assets"); dir_itr != end_iter; ++dir_itr)
+        {
+            if (boost::filesystem::is_regular_file(dir_itr->status()))
+            {
+                std::string fname = dir_itr->path().filename().string();
+                controllers.emplace_back(new StaticController("/" + fname, "../assets/" + fname));
+            }
+        }
+    }
+
+    for (const auto & c : controllers)
+    {
+        server->addController(c.get());
+    }
+
     server->start();
 }
 
@@ -163,8 +182,6 @@ const VisualizationData * VisualizationServer::getClustering(const std::string &
     }
 
 	return res;
-
-    // return datasets.at(name).get();
 }
 
 const std::vector<std::string> VisualizationServer::getClusteringNames()
