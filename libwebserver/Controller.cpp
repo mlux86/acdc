@@ -5,6 +5,7 @@
 #include <string>
 #include <fstream>
 #include <streambuf>
+#include <vector>
 
 
 int DynamicController::handleRequest(  struct MHD_Connection * connection,
@@ -59,18 +60,38 @@ int SimpleGetController::MHDCollectParams(void * cls, enum MHD_ValueKind kind, c
     return MHD_YES;
 }
 
-void StaticController::respond(std::stringstream & response, const std::map<std::string, std::string> params)
-{
-    std::ifstream t(filename);
-    std::string str((std::istreambuf_iterator<char>(t)),
-                     std::istreambuf_iterator<char>());     
-    response << str;
-}
-
-StaticController::StaticController(const std::string path_, const std::string f) : SimpleGetController(path_), filename(f)
+StaticController::StaticController(const std::string path_, const std::string f) : path(path_), filename(f)
 {
 }
 
 StaticController::~StaticController()
 {
+}
+
+bool StaticController::validPath(const char * path_, const char * method_)
+{
+    return strcmp(path_, this->path.c_str()) == 0 && strcmp("GET", method_) == 0;
+}
+
+int StaticController::handleRequest(  struct MHD_Connection * connection,
+                            const char * url, const char * method, 
+                            const char * upload_data, size_t * upload_data_size)
+{
+    // read file
+    std::ifstream input(filename, std::ios::binary);
+    std::vector<char> buffer((
+            std::istreambuf_iterator<char>(input)), 
+            (std::istreambuf_iterator<char>()));
+
+    //Send response.
+    struct MHD_Response * response = MHD_create_response_from_buffer(
+        buffer.size(),
+        (void *)buffer.data(), 
+        MHD_RESPMEM_MUST_COPY);
+
+    int ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+    
+    MHD_destroy_response(response);
+    
+    return ret;
 }

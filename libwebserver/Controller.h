@@ -52,15 +52,21 @@ public:
     static int MHDCollectParams(void * cls, enum MHD_ValueKind kind, const char * key, const char * value);
 };
 
-class StaticController : public SimpleGetController
+class StaticController : public Controller
 {
 private:
+    std::string path;
     std::string filename;
 
 public:
     StaticController(const std::string path_, const std::string f);
     virtual ~StaticController();
 
-    virtual void respond(std::stringstream & response, const std::map<std::string, std::string> params);
+public:
+    virtual bool validPath(const char * path, const char * method);
+
+    virtual int handleRequest(  struct MHD_Connection * connection,
+                                const char * url, const char * method, 
+                                const char * upload_data, size_t * upload_data_size);
 };
 

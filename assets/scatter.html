@@ -6,6 +6,7 @@
 		body {
 			background-color: #eeeeee
 		}
+
 		label {
 			display: inline-block;
 			float: left;
@@ -13,13 +14,31 @@
 			width: 100px;
 			text-align: right;
 		}
+
 		select {
 			display: inline-block;
 			float: left;
 		}
+
 		label, select {
 			margin: 5px;
 		}
+
+		#info {
+			width: 500px;
+			display: inline-block;
+		}
+
+		#info > img {
+			vertical-align: middle;
+		}
+
+		#info > span {			
+			font-size: 16pt;
+			display: inline-block;
+  			vertical-align: middle;
+		}
+
 		.clearfix:after {
 			content: " "; /* Older browser do not support empty content */
 			visibility: hidden;
@@ -29,7 +48,7 @@
 		}		
 	</style>
 	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
-	<script type="text/javascript" src="/canvas.min.js"></script>
+	<script type="text/javascript" src="/canvasjs.min.js"></script>
 	<script type="text/javascript">		
 
 		defaultDataset = 'oneshot';
@@ -74,12 +93,19 @@
 		function updateForm()
 		{
 			$.getJSON("http://localhost:4242/json?info=1", function(result)
-			{
+			{				
 
 				if (result.datasets.length == 0)
 				{
 					$('#datasetForm').hide();
-					$('#info').html('No data to show, Please wait... <img src="/ajax-loader.gif" alt="Loading..."/>');
+					$('#info').html('<span>No data to show, Please wait...</span> <img src="/ajax-loader.gif" alt="Loading..."/>');
+					setTimeout(updateForm, 1000);
+					return;
+				}				
+
+				var curNumDatasets = $('select#dataset').children().length;
+				if (result.datasets.length <= curNumDatasets)
+				{
 					setTimeout(updateForm, 1000);
 					return;
 				}
@@ -118,6 +144,8 @@
 
 				$('#datasetForm').show();
 
+				$('select#dataset').fadeIn(100).fadeOut(100).fadeIn(100).fadeOut(100).fadeIn(100).fadeOut(100).fadeIn(100);
+
 				setTimeout(updateForm, 1000);
 
 			});
@@ -142,7 +170,8 @@
 
 </head>
 <body>
-	<div id="info" style="width: 500px; height: 50px; font-size: 16pt;"></div>
+	<div id="info">
+	</div>
 	<form id="datasetForm" action="#">
 		<label for="dataset">Data set: </label><select class="param" id="dataset" name="dataset"></select> <br/>
 		<label for="labels">Labels: </label><select class="param" id="labels" name="labels"></select> <br/>
