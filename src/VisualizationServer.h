@@ -14,6 +14,17 @@
 
 class DatasetController : public SimpleGetController
 {
+private:
+	const std::string ParamInfo = "info";
+	const std::string ParamData = "data";
+	const std::string ParamLabels = "labels";
+	const std::string ParamReduction = "reduction";
+	const std::string LabelsOrig = "orig";
+	const std::string LabelsDip = "dip";
+	const std::string LabelsConnComp = "cc";
+	const std::string ReductionPca = "pca";
+	const std::string ReductionSne = "sne";
+
 
 public:
 	DatasetController(const std::string path_);
@@ -56,5 +67,6 @@ public:
 		const std::vector<std::string> & labels, 
 		const ClusterAnalysisResult & ClusterAnalysisResult);
 	const VisualizationData * getClustering(const std::string & name);
+	const std::vector<std::string> getClusteringNames();
 	
 };

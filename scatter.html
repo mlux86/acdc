@@ -2,18 +2,48 @@
 <html>
 
 <head>  
+	<style type="text/css">
+		body {
+			background-color: #eeeeee
+		}
+		label {
+			display: inline-block;
+			float: left;
+			clear: left;
+			width: 100px;
+			text-align: right;
+		}
+		select {
+			display: inline-block;
+			float: left;
+		}
+		label, select {
+			margin: 5px;
+		}
+		.clearfix:after {
+			content: " "; /* Older browser do not support empty content */
+			visibility: hidden;
+			display: block;
+			height: 0;
+			clear: both;
+		}		
+	</style>
 	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
 	<script type="text/javascript" src="/canvasjs"></script>
+	<script type="text/javascript">		
 
-	<script type="text/javascript">
+		defaultDataset = 'oneshot';
+		defaultLabels = 'cc';
+		defaultReduction = 'sne'; 
 
-		function updateChart(dataset, reduction, labels)
+		function updateChart(dataset, labels, reduction)
 		{
 			$.getJSON("http://localhost:4242/json?data=" + dataset + "&labels=" + labels + "&reduction=" + reduction, function(result)
 			{
 
 				var chart = new CanvasJS.Chart("chartContainer",
 				{			
+					backgroundColor: "#eeeeee",
 					axisX:
 					{
 						gridThickness: 0,
@@ -41,14 +71,70 @@
 			});
 		}
 
-		$( document ).ready(function() 
+		function updateForm()
 		{
-
-			$( "#datasetForm" ).submit(function(evt) 
+			$.getJSON("http://localhost:4242/json?info=1", function(result)
 			{
-				updateChart($("#dataset").val(), $("#reduction").val(), $("#labels").val())
-				evt.preventDefault();
+
+				if (result.datasets.length == 0)
+				{
+					$('#datasetForm').hide();
+					$('#info').html('No data to show, Please wait...');
+					setTimeout(updateForm, 1000);
+					return;
+				}
+
+				$('#info').html('');
+
+				var oldVal = $('select#dataset').val();
+				if (!oldVal)
+					oldVal = defaultDataset;
+				$('select#dataset').html('');
+				for (var i in result.datasets)
+				{
+					$('select#dataset').append('<option value="' + result.datasets[i] + '">' + result.datasets[i] + '</option>');					
+				}
+				$('select#dataset').val(oldVal);
+
+				var oldVal = $('select#labels').val();
+				if (!oldVal)
+					oldVal = defaultLabels;				
+				$('select#labels').html('');
+				for (var i in result.labels)
+				{
+					$('select#labels').append('<option value="' + result.labels[i] + '">' + result.labels[i] + '</option>');
+				}
+				$('select#labels').val(oldVal);
+
+				var oldVal = $('select#reductions').val();
+				if (!oldVal)
+					oldVal = defaultReduction;				
+				$('select#reductions').html('');
+				for (var i in result.reductions)
+				{
+					$('select#reductions').append('<option value="' + result.reductions[i] + '">' + result.reductions[i] + '</option>');
+				}
+				$('select#reductions').val(oldVal);
+
+				$('#datasetForm').show();
+
+				setTimeout(updateForm, 1000);
+
 			});
+		}
+
+		$( document ).ready(function() 
+		{	
+			$('#datasetForm').hide();
+
+			$(".param").on('change', function(evt) 
+			{
+				updateChart($("select#dataset").val(), $("select#labels").val(), $("select#reductions").val());
+			});
+
+			updateForm();
+			
+			updateChart(defaultDataset, defaultLabels, defaultReduction);
 
 		});		
 
@@ -56,12 +142,13 @@
 
 </head>
 <body>
+	<div id="info" style="width: 500px; height: 50px;"></div>
 	<form id="datasetForm" action="#">
-	<label for="dataset">Data set: </label><input type="text" name="dataset" id="dataset" value="oneshot" /><br/>
-	<label for="labels">Labels: </label><input type="text" name="labels" id="labels" value="cc" /><br/>
-	<label for="reduction">Reduction: </label><input type="text" name="reduction" id="reduction" value="sne" /><br/>
-	<input type="submit" id="datasetSubmit" value="Show">
+		<label for="dataset">Data set: </label><select class="param" id="dataset" name="dataset"></select> <br/>
+		<label for="labels">Labels: </label><select class="param" id="labels" name="labels"></select> <br/>
+		<label for="reductions">Reductions: </label><select class="param" id="reductions" name="reductions"></select> <br/>
 	</form>
+	<div class="clearfix"></div>
 	<div id="chartContainer" style="width: 500px; height: 500px;">
 	</div>
 </body>

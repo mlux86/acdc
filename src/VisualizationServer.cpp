@@ -1,6 +1,9 @@
 #include "Logger.h"
 #include "VisualizationServer.h"
 
+#include <thread>
+#include <chrono>
+
 DatasetController::DatasetController(const std::string path_) : SimpleGetController(path_)
 {
 }
@@ -13,22 +16,46 @@ void DatasetController::respond(std::stringstream & response, const std::map<std
 {
     Json::Value root;
 
-    if (params.find("data") == params.end() || params.find("labels") == params.end() || params.find("reduction") == params.end())
+    if (params.find(ParamInfo) != params.end())
+    {
+        Json::Value availData = Json::Value(Json::arrayValue);
+        for (const auto & name : VisualizationServer::getInstance().getClusteringNames())
+        {
+            availData.append(name);
+        }
+        root["datasets"] = availData;
+
+        Json::Value availLabels = Json::Value(Json::arrayValue);
+        availLabels.append(LabelsConnComp);
+        availLabels.append(LabelsDip);
+        availLabels.append(LabelsOrig);
+        root["labels"] = availLabels;
+
+        Json::Value availReductions = Json::Value(Json::arrayValue);
+        availReductions.append(ReductionSne);
+        availReductions.append(ReductionPca);
+        root["reductions"] = availReductions;
+
+        response << root;
+        return;
+    }
+
+    if (params.find(ParamData) == params.end() || params.find(ParamLabels) == params.end() || params.find(ParamReduction) == params.end())
     {
         response << root;
         return;
     }
 
-    const std::string key = params.at("data");
-    const std::string labels = params.at("labels");
-    const std::string reduction = params.at("reduction");
+    const std::string key = params.at(ParamData);
+    const std::string labels = params.at(ParamLabels);
+    const std::string reduction = params.at(ParamReduction);
 
     try 
     {
         const VisualizationData * vdat = VisualizationServer::getInstance().getClustering(key);
 
         const Eigen::MatrixXd * shownData;
-        if (reduction == "pca")
+        if (reduction == ReductionPca)
         {
             shownData = &(vdat->dataPca);
         } else
@@ -36,13 +63,13 @@ void DatasetController::respond(std::stringstream & response, const std::map<std
             shownData = &(vdat->dataSne);
         }
 
-        if (labels == "cc")
+        if (labels == LabelsConnComp)
         {
             root["mat"] = Util::clusteringToJson(*shownData, vdat->clustRes.resConnComponents.labels, vdat->labels);
-        } else if (labels == "dip")
+        } else if (labels == LabelsDip)
         {
             root["mat"] = Util::clusteringToJson(*shownData, vdat->clustRes.resDipMeans.labels, vdat->labels);
-        } else if (labels == "orig")
+        } else if (labels == LabelsOrig)
         {
             root["mat"] = Util::clusteringToJson(*shownData, Util::numericLabels(vdat->labels), vdat->labels);
         }
@@ -116,5 +143,39 @@ void VisualizationServer::addClustering(
 
 const VisualizationData * VisualizationServer::getClustering(const std::string & name) 
 {
-	return datasets.at(name).get();
+    VisualizationData * res = nullptr;
+
+    while (true)
+    {
+        dataMtx.lock();
+        if (datasets.find(name) != datasets.end())
+        {
+            res = datasets.at(name).get();            
+        }
+        dataMtx.unlock();
+        if(res == nullptr)
+        {
+            std::this_thread::sleep_for(std::chrono::seconds(1));        
+        } else
+        {
+            break;
+        }
+    }
+
+	return res;
+
+    // return datasets.at(name).get();
+}
+
+const std::vector<std::string> VisualizationServer::getClusteringNames()
+{
+    dataMtx.lock();
+    std::vector<std::string> res;
+    for (const auto & it : datasets)
+    {
+        res.push_back(it.first);
+    }
+    dataMtx.unlock();
+    std::sort(res.begin(), res.end());
+    return res;
 }
