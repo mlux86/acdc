@@ -110,6 +110,7 @@ void VisualizationServer::run(unsigned port)
     std::vector<std::unique_ptr<Controller>> controllers;
 
     controllers.emplace_back(new DatasetController("/json"));
+    controllers.emplace_back(new StatsController("/stats"));
 
     server.reset(new WebServer(port));
 
@@ -122,6 +123,10 @@ void VisualizationServer::run(unsigned port)
             {
                 std::string fname = dir_itr->path().filename().string();
                 controllers.emplace_back(new StaticController("/" + fname, "../assets/" + fname));
+                if (fname == "index.html")
+                {
+                    controllers.emplace_back(new StaticController("/", "../assets/" + fname));
+                }
             }
         }
     }
@@ -195,4 +200,93 @@ const std::vector<std::string> VisualizationServer::getClusteringNames()
     dataMtx.unlock();
     std::sort(res.begin(), res.end());
     return res;
+}
+
+StatsController::StatsController(const std::string path_) : SimpleGetController(path_)
+{
+}
+
+StatsController::~StatsController()
+{
+}
+
+void StatsController::respond(std::stringstream & response, const std::map<std::string, std::string> params)
+{
+    Json::Value root;
+
+    const std::vector<std::string> clusts = {"cc", "dip"};
+
+    for (const auto & clust : clusts)
+    {
+
+        const std::map<unsigned, double> confs = getClusterConfidences(clust);
+        Json::Value confsJson = Json::Value(Json::arrayValue);
+
+        for (const auto & it : confs)
+        {
+            unsigned numClusters = it.first;
+            double confidence = it.second;
+
+            Json::Value v;
+            v["numClusters"] = numClusters;
+            v["confidence"] = confidence;
+
+            confsJson.append(v);
+        }
+
+        root["confidences_" + clust] = confsJson;
+    }
+
+    response << root;
+
+}
+
+std::map<unsigned, double> StatsController::getClusterConfidences(const std::string & clust)
+{
+    if (clust != "cc" && clust != "dip")
+    {
+        throw std::runtime_error("Unknown clustering!");
+    }
+
+    std::map<unsigned, double> confs;
+
+    VisualizationServer & vs = VisualizationServer::getInstance();
+
+    std::vector<std::string> datasetNames = vs.getClusteringNames();
+
+    unsigned n = 0;
+
+    for (const auto & name : datasetNames)
+    {
+        if (name.find("boot") != 0)
+        {
+            continue;
+        }
+
+        const VisualizationData & vsd = *(vs.getClustering(name));
+
+        unsigned numClusters;
+
+        if (clust == "dip")
+        {
+            numClusters = vsd.clustRes.resDipMeans.numClusters;
+        } else 
+        {
+            numClusters = vsd.clustRes.resConnComponents.numClusters;
+        }
+
+        if (confs.find(numClusters) == confs.end())
+        {
+            confs[numClusters] = 0;
+        }
+        confs[numClusters]++;
+        n++;
+    }
+
+    for (auto & it : confs)
+    {
+        it.second /= n;
+    }
+
+    return confs;
 }

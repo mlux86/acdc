@@ -25,12 +25,21 @@ private:
 	const std::string ReductionPca = "pca";
 	const std::string ReductionSne = "sne";
 
-
 public:
 	DatasetController(const std::string path_);
 	virtual ~DatasetController();
     virtual void respond(std::stringstream & response, const std::map<std::string, std::string> params);
 
+};
+
+class StatsController : public SimpleGetController
+{
+public:
+	StatsController(const std::string path_);
+	virtual ~StatsController();
+	virtual void respond(std::stringstream & response, const std::map<std::string, std::string> params);	
+
+	std::map<unsigned, double> getClusterConfidences(const std::string & clust);
 };
 
 struct VisualizationData

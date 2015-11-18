@@ -46,6 +46,11 @@
 			height: 0;
 			clear: both;
 		}		
+
+		.confidences {
+			float:left; 
+			margin: 10px;
+		}
 	</style>
 	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
 	<script type="text/javascript" src="/canvasjs.min.js"></script>
@@ -142,7 +147,7 @@
 				}
 				$('select#reductions').val(oldVal);
 
-				$('#datasetForm').show();
+				$('#datasetForm').show();				
 
 				$('select#dataset').fadeIn(100).fadeOut(100).fadeIn(100).fadeOut(100).fadeIn(100).fadeOut(100).fadeIn(100);
 
@@ -151,9 +156,45 @@
 			});
 		}
 
+		function updateConfidences()
+		{
+			$.getJSON("http://localhost:4242/stats", function(result)
+			{	
+				if (result.confidences_cc.length > 0)
+				{
+					$('#confidences-cc').show();
+					$('#confidences-cc').html('');
+					$('#confidences-cc').append("Connected components:<br>")
+					for (var i in result.confidences_cc)
+					{
+						var k = result.confidences_cc[i].numClusters;	
+						var c = result.confidences_cc[i].confidence;
+						$('#confidences-cc').append("p(k = " + k + ") = " + c + "<br>");
+					}
+				}
+
+				if (result.confidences_dip.length > 0)
+				{
+					$('#confidences-dip').show();
+					$('#confidences-dip').html('');
+					$('#confidences-dip').append("Dip-Means:<br>")
+					for (var i in result.confidences_dip)
+					{
+						var k = result.confidences_dip[i].numClusters;	
+						var c = result.confidences_dip[i].confidence;
+						$('#confidences-dip').append("p(k = " + k + ") = " + c + "<br>");
+					}
+				}
+
+				setTimeout(updateConfidences, 1000);
+
+			});
+		}
+
 		$( document ).ready(function() 
 		{	
 			$('#datasetForm').hide();
+			$('.confidences').hide();
 
 			$(".param").on('change', function(evt) 
 			{
@@ -161,7 +202,7 @@
 			});
 
 			updateForm();
-
+			updateConfidences();
 			updateChart(defaultDataset, defaultLabels, defaultReduction);
 
 		});		
@@ -172,6 +213,11 @@
 <body>
 	<div id="info">
 	</div>
+	<div class="confidences" id="confidences-cc">
+	</div>
+	<div class="confidences" id="confidences-dip">
+	</div>		
+	<div class="clearfix"></div>
 	<form id="datasetForm" action="#">
 		<label for="dataset">Data set: </label><select class="param" id="dataset" name="dataset"></select> <br/>
 		<label for="labels">Labels: </label><select class="param" id="labels" name="labels"></select> <br/>
