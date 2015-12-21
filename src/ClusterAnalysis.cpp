@@ -45,12 +45,12 @@ std::pair<Eigen::MatrixXd, ClusterAnalysisResult> ClusterAnalysis::analyze(const
 	auto datSne = BarnesHutSNEAdapter::runBarnesHutSNE(data, opts);
 
 	VLOG << "Counting connected components...\n";
-	Eigen::MatrixXd affinities = Util::knnAffinityMatrix(datSne, 9, false);
+	Eigen::MatrixXd affinities = Util::knnAffinityMatrix(datSne, 7, false);
 	TarjansAlgorithm ta;
 	res.resConnComponents = ta.run(affinities);
 
 	VLOG << "Running dipMeans...\n";
-	res.resDipMeans = Clustering::dipMeans(datSne, 0, 0.01, 5);
+	// res.resDipMeans = Clustering::dipMeans(datSne, 0, 0.01, 5);
 
 	return std::make_pair(datSne, res);
 }

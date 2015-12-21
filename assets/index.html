@@ -24,17 +24,17 @@
 			margin: 5px;
 		}
 
-		#info {
+		#loading {
 			width: 500px;
 			display: inline-block;
 		}
 
-		#info > img {
+		#loading > img {
 			vertical-align: middle;
 		}
 
-		#info > span {			
-			font-size: 16pt;
+		#loading > span {			
+			font-size: 28pt;
 			display: inline-block;
   			vertical-align: middle;
 		}
@@ -51,8 +51,12 @@
 			float:left; 
 			margin: 10px;
 		}
+
+		.hidden {
+			display: none;
+		}
 	</style>
-	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+	<script type="text/javascript" src="/jquery.min.js"></script>
 	<script type="text/javascript" src="/canvasjs.min.js"></script>
 	<script type="text/javascript">		
 
@@ -70,13 +74,17 @@
 					backgroundColor: "#eeeeee",
 					axisX:
 					{
+						lineThickness: 0,
+						tickThickness: 0,
 						gridThickness: 0,
-						labelFontSize: 10
+						valueFormatString: " "
 					},
 					axisY:
 					{
+						lineThickness: 0,
+						tickThickness: 0,
 						gridThickness: 0,
-						labelFontSize: 10
+						valueFormatString: " "					
 					},
 					data: [
 					{        
@@ -103,10 +111,11 @@
 				if (result.datasets.length == 0)
 				{
 					$('#datasetForm').hide();
-					$('#info').html('<span>No data to show, Please wait...</span> <img src="/ajax-loader.gif" alt="Loading..."/>');
+					$('#loading').show();
 					setTimeout(updateForm, 1000);
 					return;
-				}				
+				}
+
 
 				var curNumDatasets = $('select#dataset').children().length;
 				if (result.datasets.length <= curNumDatasets)
@@ -115,7 +124,7 @@
 					return;
 				}
 
-				$('#info').html('');
+				$('#loading').hide('');
 
 				var oldVal = $('select#dataset').val();
 				if (!oldVal)
@@ -211,7 +220,8 @@
 
 </head>
 <body>
-	<div id="info">
+	<div id="loading">
+		<span>No data to show, yet.<br/><img id="bb" src="/bb.gif" alt="Please wait..."/><br/>Please wait...</span>
 	</div>
 	<div class="confidences" id="confidences-cc">
 	</div>

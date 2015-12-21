@@ -39,6 +39,7 @@ void Opts::initialize(int argc, char const *argv[])
 	    ("tsne-pca-dimension,u", boost::program_options::value<unsigned>()->default_value(50), "T-SNE initial PCA dimension")
 	    ("tsne-perplexity,p", boost::program_options::value<unsigned>(), "T-SNE perplexity (overrides automatic estimation)")
 	    ("tsne-theta,t", boost::program_options::value<float>()->default_value(0.5), "T-SNE parameter 'theta' of the underlying Barnes-Hut approximation")
+	    ("min-contig-length,m", boost::program_options::value<unsigned>()->default_value(500), "Minimal length of contigs to consider for analysis")
 	    ("window-kmer-length,k", boost::program_options::value<unsigned>()->default_value(4), "Length of the k-mers in the sequence vectorizer window")
 	    ("window-width,w", boost::program_options::value<unsigned>(), "Width of the sliding sequence vectorizer window (overrides automatic estimation using number of target points)")
 	    ("window-step,s", boost::program_options::value<unsigned>(), "Step of the sliding sequence vectorizer window (overrides automatic estimation using number of target points)")
@@ -76,6 +77,8 @@ void Opts::initialize(int argc, char const *argv[])
 		_tsnePerplexity = vm["tsne-perplexity"].as<unsigned>();
 	}
 	_tsneTheta = vm["tsne-theta"].as<float>();
+	_minContigLength = vm["min-contig-length"].as<unsigned>();
+	_minContigLength = std::max(100u, _minContigLength);
 	_windowKmerLength = vm["window-kmer-length"].as<unsigned>();
 	if (vm.count("window-width"))
 	{
@@ -132,6 +135,11 @@ unsigned Opts::tsnePerplexity() const
 float Opts::tsneTheta() const
 {
 	return _tsneTheta;
+}
+
+unsigned Opts::minContigLength() const
+{
+	return _minContigLength;
 }
 
 unsigned Opts::windowKmerLength() const

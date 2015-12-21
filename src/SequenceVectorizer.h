@@ -12,6 +12,7 @@ class SequenceVectorizer
 protected:
 	std::string inputFASTA = "";
 
+	unsigned minContigLength = 0;
 	unsigned kmerLength = 0;
 	unsigned windowWidth = 0;
 	unsigned windowStep = 0;
@@ -19,7 +20,7 @@ protected:
 	std::map<std::string, unsigned> kmerIndexes;
 	std::set<std::string> uniqueKmers;
 
-	bool normalize;
+	bool normalize = true;
 
 	void buildParams(const Opts & opts);
 	void buildFeatureKmers();

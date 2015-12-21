@@ -16,6 +16,7 @@ private:
 	unsigned _tsnePerplexity = 0;
 	float _tsneTheta = 0.0;
 
+	unsigned _minContigLength = 0;
 	unsigned _windowKmerLength = 0;
 	unsigned _windowWidth = 0;
 	unsigned _windowStep = 0;
@@ -43,6 +44,7 @@ public:
 	unsigned tsnePcaDim() const;
 	unsigned tsnePerplexity() const;
 	float tsneTheta() const;
+	unsigned minContigLength() const;
 	unsigned windowKmerLength() const;
 	unsigned windowWidth() const;
 	unsigned windowStep() const;

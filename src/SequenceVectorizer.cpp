@@ -28,6 +28,7 @@ SequenceVectorizer::~SequenceVectorizer() {}
 void SequenceVectorizer::buildParams(const Opts & opts)
 {
 	inputFASTA = opts.inputFASTA();
+	minContigLength = opts.minContigLength();
 	kmerLength = opts.windowKmerLength();
 	windowWidth = opts.windowWidth();
 	windowStep = opts.windowStep();
@@ -73,15 +74,18 @@ Eigen::MatrixXd SequenceVectorizer::vectorize(seqan::Dna5String & sequence) cons
 {
 
 	unsigned len = seqan::length(sequence);
-	unsigned n = (unsigned) (((int)len - (int)windowWidth) / (int)windowStep) + 1;
+	unsigned n = (unsigned) (((int)len - (int)windowWidth) / (int)windowStep) + 1;	
+
+	// if (len < windowWidth)
+	// {
+		// throw std::runtime_error("Length of contig is smaller than window size!");
+	// }
+	if (n == 0) // include contigs smaller than window width
+	{
+		n++;
+	}
 
 	Eigen::MatrixXd mat = Eigen::MatrixXd::Zero(n, getDim());
-
-	if (len < windowWidth)
-	{
-		DLOG << "Length of contig is smaller than window size!\n";
-		return mat;
-	}
 
 	for (unsigned i = 0; i < n; i++)
 	{
@@ -113,10 +117,6 @@ Eigen::MatrixXd SequenceVectorizer::vectorize(seqan::Dna5String & sequence) cons
 
 std::pair< Eigen::MatrixXd, std::vector<std::string> > SequenceVectorizer::vectorize() const
 {
-	if(inputFASTA.empty())
-	{
-		throw std::runtime_error("Input FASTA not set! Use Opts constructor.");
-	}
 
 	seqan::SeqFileIn seqFileIn(inputFASTA.c_str());
 	seqan::StringSet<seqan::CharString> ids;
@@ -134,19 +134,33 @@ std::pair< Eigen::MatrixXd, std::vector<std::string> > SequenceVectorizer::vecto
 		std::string id;
 		move(id, ids[i]);
 		seqan::Dna5String seq = seqs[i];
+		unsigned len = seqan::length(seq);
 
-		auto mat = vectorize(seq);
-		unsigned rows = mat.rows();
-
-		// concatenate matrices TODO that's quite expensive
-		auto tmp = result;
-		result = Eigen::MatrixXd(tmp.rows() + mat.rows(), getDim());
-		result << tmp, mat;
-		
-		for (unsigned j = 0; j < rows; j++)
+		if (len < minContigLength)
 		{
-			labels.push_back(id);
+			continue;
 		}
+
+		try 
+		{
+			Eigen::MatrixXd mat = vectorize(seq);
+			unsigned rows = mat.rows();
+
+			// concatenate matrices TODO that's quite expensive
+			auto tmp = result;
+			result = Eigen::MatrixXd(tmp.rows() + mat.rows(), getDim());
+			result << tmp, mat;
+			
+			for (unsigned j = 0; j < rows; j++)
+			{
+				labels.push_back(id);
+			}
+		}
+		catch(const std::exception& e) 
+		{
+			DLOG << e.what() << '\n';
+		}
+
 	}
 	
 	return std::make_pair(result, labels);
