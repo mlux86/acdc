@@ -17,8 +17,9 @@ SequenceVectorizer::SequenceVectorizer(const unsigned kmerLength_, const unsigne
 }
 
 
-SequenceVectorizer::SequenceVectorizer(const Opts & opts)
+SequenceVectorizer::SequenceVectorizer(const std::string & fasta, const Opts & opts)
 {
+	inputFasta = fasta;
 	buildParams(opts);
 	buildFeatureKmers();
 }
@@ -27,7 +28,6 @@ SequenceVectorizer::~SequenceVectorizer() {}
 
 void SequenceVectorizer::buildParams(const Opts & opts)
 {
-	inputFASTA = opts.inputFASTA();
 	minContigLength = opts.minContigLength();
 	kmerLength = opts.windowKmerLength();
 	windowWidth = opts.windowWidth();
@@ -36,7 +36,7 @@ void SequenceVectorizer::buildParams(const Opts & opts)
 	if(windowWidth == 0)
 	{
 		// The file size in bytes is approximately the number of nucleotide (not accounting for ID strings)
-		auto fileSize = Util::getFileSizeBytes(inputFASTA);
+		auto fileSize = Util::getFileSizeBytes(inputFasta);
         windowStep = (unsigned) ceil((double)fileSize / (double)opts.targetNumPoints());
         windowWidth = 2 * windowStep;
         DLOG << "k=" << opts.windowKmerLength() << "   "
@@ -118,7 +118,7 @@ Eigen::MatrixXd SequenceVectorizer::vectorize(seqan::Dna5String & sequence) cons
 std::pair< Eigen::MatrixXd, std::vector<std::string> > SequenceVectorizer::vectorize() const
 {
 
-	seqan::SeqFileIn seqFileIn(inputFASTA.c_str());
+	seqan::SeqFileIn seqFileIn(inputFasta.c_str());
 	seqan::StringSet<seqan::CharString> ids;
 	seqan::StringSet<seqan::String<seqan::Iupac> > seqs;
 

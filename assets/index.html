@@ -47,10 +47,20 @@
 			clear: both;
 		}		
 
-		.confidences {
-			float:left; 
-			margin: 10px;
+		#confidences {
+			border-collapse: collapse;
 		}
+
+		#confidences, #confidences th, #confidences td {
+			border: 1px solid black;
+		}
+
+		#confidences th, #confidences td {
+			padding: 5px;
+		}
+
+		#confidences tr:nth-child(odd) { background-color:#f4f4f4; }
+		#confidences tr:nth-child(even) { background-color:#ffffff; }
 
 		.hidden {
 			display: none;
@@ -66,7 +76,7 @@
 
 		function updateChart(dataset, labels, reduction)
 		{
-			$.getJSON("http://localhost:4242/json?data=" + dataset + "&labels=" + labels + "&reduction=" + reduction, function(result)
+			$.getJSON("http://localhost:4242/json?data=" + encodeURIComponent(dataset) + "&labels=" + encodeURIComponent(labels) + "&reduction=" + encodeURIComponent(reduction) + "&oneshot=1", function(result)
 			{
 
 				var chart = new CanvasJS.Chart("chartContainer",
@@ -126,16 +136,6 @@
 
 				$('#loading').hide('');
 
-				var oldVal = $('select#dataset').val();
-				if (!oldVal)
-					oldVal = defaultDataset;
-				$('select#dataset').html('');
-				for (var i in result.datasets)
-				{
-					$('select#dataset').append('<option value="' + result.datasets[i] + '">' + result.datasets[i] + '</option>');					
-				}
-				$('select#dataset').val(oldVal);
-
 				var oldVal = $('select#labels').val();
 				if (!oldVal)
 					oldVal = defaultLabels;				
@@ -156,6 +156,22 @@
 				}
 				$('select#reductions').val(oldVal);
 
+				var oldVal = $('select#dataset').val();
+				$('select#dataset').html('');
+				for (var i in result.datasets)
+				{
+					$('select#dataset').append('<option value="' + result.datasets[i] + '">' + result.datasets[i] + '</option>');					
+				}
+				if (!oldVal)
+				{					
+					oldVal = $('select#dataset option:first').val();
+					$('select#dataset').val(oldVal);
+					updateChart($("select#dataset").val(), $("select#labels").val(), $("select#reductions").val());
+				} else
+				{
+					$('select#dataset').val(oldVal);
+				}
+
 				$('#datasetForm').show();				
 
 				$('select#dataset').fadeIn(100).fadeOut(100).fadeIn(100).fadeOut(100).fadeIn(100).fadeOut(100).fadeIn(100);
@@ -169,30 +185,29 @@
 		{
 			$.getJSON("http://localhost:4242/stats", function(result)
 			{	
-				if (result.confidences_cc.length > 0)
-				{
-					$('#confidences-cc').show();
-					$('#confidences-cc').html('');
-					$('#confidences-cc').append("Connected components:<br>")
-					for (var i in result.confidences_cc)
-					{
-						var k = result.confidences_cc[i].numClusters;	
-						var c = result.confidences_cc[i].confidence;
-						$('#confidences-cc').append("p(k = " + k + ") = " + c + "<br>");
-					}
-				}
+				$('#confToggle').show();
+				$('#confidences').html('<tr><th>Sample</th><th>Confidences CC</th><th>Confidences Dip-Means</th></tr>');
 
-				if (result.confidences_dip.length > 0)
+				for (var dataset in result)
 				{
-					$('#confidences-dip').show();
-					$('#confidences-dip').html('');
-					$('#confidences-dip').append("Dip-Means:<br>")
-					for (var i in result.confidences_dip)
+
+					var cc = '';
+					for (var i in result[dataset].cc)
 					{
-						var k = result.confidences_dip[i].numClusters;	
-						var c = result.confidences_dip[i].confidence;
-						$('#confidences-dip').append("p(k = " + k + ") = " + c + "<br>");
+						var k = result[dataset].cc[i].numClusters;	
+						var c = result[dataset].cc[i].confidence;
+						cc = cc + "p(k = " + k + ") = " + c + "<br/>";
 					}
+
+					var dip = '';
+					for (var i in result[dataset].dip)
+					{
+						var k = result[dataset].dip[i].numClusters;	
+						var c = result[dataset].dip[i].confidence;
+						dip = dip + "p(k = " + k + ") = " + c + "<br/>";
+					}
+
+					$('#confidences').append('<tr><td>' + dataset + '</td><td>' + cc + '</td><td>' + dip + '</td></tr>');
 				}
 
 				setTimeout(updateConfidences, 1000);
@@ -203,7 +218,7 @@
 		$( document ).ready(function() 
 		{	
 			$('#datasetForm').hide();
-			$('.confidences').hide();
+			$('#confToggle').hide();
 
 			$(".param").on('change', function(evt) 
 			{
@@ -212,29 +227,36 @@
 
 			updateForm();
 			updateConfidences();
-			updateChart(defaultDataset, defaultLabels, defaultReduction);
 
+			$('#confToggle').click(function() {
+				$('#confidences').toggle();
+			});
 		});		
 
 	</script>
 
 </head>
 <body>
-	<div id="loading">
-		<span>No data to show, yet.<br/><img id="bb" src="/bb.gif" alt="Please wait..."/><br/>Please wait...</span>
+	<div style="float:left;">
+		<a href="#" id="confToggle">Show/hide confidences</a>
+		<table id="confidences">
+			<tr><th>Sample</th><th>Confidence CC</th><th>Confidence Dip-Means</th></tr>
+		</table>
+		<br/>
+		<div id="loading">
+			<span>No data to show, yet.<br/><img id="bb" src="/bb.gif" alt="Please wait..."/><br/>Please wait...</span>
+		</div>
 	</div>
-	<div class="confidences" id="confidences-cc">
-	</div>
-	<div class="confidences" id="confidences-dip">
-	</div>		
-	<div class="clearfix"></div>
-	<form id="datasetForm" action="#">
-		<label for="dataset">Data set: </label><select class="param" id="dataset" name="dataset"></select> <br/>
-		<label for="labels">Labels: </label><select class="param" id="labels" name="labels"></select> <br/>
-		<label for="reductions">Reductions: </label><select class="param" id="reductions" name="reductions"></select> <br/>
-	</form>
-	<div class="clearfix"></div>
-	<div id="chartContainer" style="width: 500px; height: 500px;">
+	<!-- <div class="clearfix"></div> -->
+	<div style="float:left;">
+		<form id="datasetForm" action="#">
+			<label for="dataset">Data set: </label><select class="param" id="dataset" name="dataset"></select> <br/>
+			<label for="labels">Labels: </label><select class="param" id="labels" name="labels"></select> <br/>
+			<label for="reductions">Reductions: </label><select class="param" id="reductions" name="reductions"></select> <br/>
+		</form>
+		<div class="clearfix"></div>
+		<div id="chartContainer" style="width: 500px; height: 500px;">
+		</div>
 	</div>
 </body>
 

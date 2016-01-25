@@ -52,9 +52,9 @@ int main(int argc, char const *argv[])
 		default: throw std::runtime_error("Loglevel undefined!");
 	}
 
-	if (opts->inputFASTA().empty())
+	if (opts->inputFASTAs().empty())
 	{
-		ELOG << "No input FASTA file given (--input-fasta,-i), aborting.\n";
+		ELOG << "No input FASTA file(s) given (--input-fasta,-i), aborting.\n";
 		return EXIT_FAILURE;
 	}
 
@@ -64,23 +64,31 @@ int main(int argc, char const *argv[])
 		VisualizationServer::getInstance().run(port);
 	});
 
-	ILOG << "Vectorizing contigs...\n";
-	SequenceVectorizer sv(*opts);
-	auto dat = sv.vectorize();
 
-	ILOG << "One-shot analysis...\n";
-	auto res = ClusterAnalysis::analyze(dat.first, *opts);
-	auto dataPca = Util::pca(dat.first, opts->tsneDim());
-	VisualizationServer::getInstance().addClustering("oneshot", dataPca, res.first, dat.second, res.second);
-
-	ILOG << "Bootstrap analysis...\n";
-	auto results = ClusterAnalysis::analyzeBootstraps(dat.first, dat.second, *opts);
-
-	for (const auto & res : results)
+	for (const auto & fasta : opts->inputFASTAs())
 	{
-		ILOG << "CC k=" << res.resConnComponents.numClusters << "\n";
-		ILOG << "DM k=" << res.resDipMeans.numClusters << "\n"; 
+		
+		ILOG << "Vectorizing contigs...\n";
+		SequenceVectorizer sv(fasta, *opts);
+		auto dat = sv.vectorize();
+
+		ILOG << "One-shot analysis...\n";
+		auto res = ClusterAnalysis::analyze(dat.first, *opts);
+		auto dataPca = Util::pca(dat.first, opts->tsneDim());
+		VisualizationServer::getInstance().addClustering(fasta, true, dataPca, res.first, dat.second, res.second);
+
+		ILOG << "Bootstrap analysis...\n";
+		auto results = ClusterAnalysis::analyzeBootstraps(fasta, dat.first, dat.second, *opts);
+
+		for (const auto & res : results)
+		{
+			ILOG << fasta << ": CC k=" << res.resConnComponents.numClusters << "\n";
+			ILOG << fasta << ": DM k=" << res.resDipMeans.numClusters << "\n"; 
+		}
+
+		
 	}
+
 
 	// ILOG << "Waiting for visualization server to stop...\n";
 	// VisualizationServer::getInstance().stop();

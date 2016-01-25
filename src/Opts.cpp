@@ -35,6 +35,7 @@ void Opts::initialize(int argc, char const *argv[])
 	    ("verbose,v", accumulator<int>(&_logLevel)->implicit_value(1), "Verbose output (use -vv for more or -vvv for maximum verbosity)")
 	    ("quiet,q", "No output")
 	    ("input-fasta,i", boost::program_options::value<std::string>()->default_value(""), "Input FASTA file")
+	    ("input-list,I", boost::program_options::value<std::string>()->default_value(""), "File with a list of input FASTA files, one per line")
 	    ("tsne-dimension,d", boost::program_options::value<unsigned>()->default_value(2), "T-SNE dimension")
 	    ("tsne-pca-dimension,u", boost::program_options::value<unsigned>()->default_value(50), "T-SNE initial PCA dimension")
 	    ("tsne-perplexity,p", boost::program_options::value<unsigned>(), "T-SNE perplexity (overrides automatic estimation)")
@@ -68,8 +69,17 @@ void Opts::initialize(int argc, char const *argv[])
 	}
 
 	_needsHelp = vm.count("help");
-	_inputFASTA = vm["input-fasta"].as<std::string>();
-	boost::algorithm::trim(_inputFASTA);
+	if (vm.count("input-list"))
+	{
+		std::string fastaListFile = vm["input-list"].as<std::string>();
+		boost::algorithm::trim(fastaListFile);	
+		_inputFASTAs = Util::fileLinesToVec(fastaListFile);
+	} else if (vm.count("input-fasta"))
+	{
+		std::string singleFasta = vm["input-fasta"].as<std::string>();
+		boost::algorithm::trim(singleFasta);
+		_inputFASTAs.push_back(singleFasta);
+	}
 	_tsneDim = vm["tsne-dimension"].as<unsigned>();
 	_tsnePcaDim = vm["tsne-pca-dimension"].as<unsigned>();
 	if (vm.count("tsne-perplexity"))
@@ -112,9 +122,9 @@ std::string Opts::helpDesc() const
 	return _helpDesc;
 }
 
-std::string Opts::inputFASTA() const
+std::vector<std::string> Opts::inputFASTAs() const
 {
-	return _inputFASTA;
+	return _inputFASTAs;
 }
 
 unsigned Opts::tsneDim() const

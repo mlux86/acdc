@@ -24,6 +24,7 @@ private:
 	const std::string LabelsConnComp = "cc";
 	const std::string ReductionPca = "pca";
 	const std::string ReductionSne = "sne";
+	const std::string ParamOneshot = "oneshot";
 
 public:
 	DatasetController(const std::string path_);
@@ -39,15 +40,21 @@ public:
 	virtual ~StatsController();
 	virtual void respond(std::stringstream & response, const std::map<std::string, std::string> params);	
 
-	std::map<unsigned, double> getClusterConfidences(const std::string & clust);
+	std::map<unsigned, double> getClusterConfidences(const std::string & dataset, const std::string & clust);
 };
 
-struct VisualizationData
+struct VisualizationDataEntry
 {
 	Eigen::MatrixXd dataPca;
 	Eigen::MatrixXd dataSne;
 	std::vector<std::string> labels;	
 	ClusterAnalysisResult clustRes;
+};
+
+struct VisualizationData
+{
+	VisualizationDataEntry oneshot;
+	std::vector<VisualizationDataEntry> bootstraps;
 };
 
 class VisualizationServer
@@ -62,7 +69,7 @@ private:
     std::unique_ptr<WebServer> server;
     std::mutex dataMtx;
 
-	std::unordered_map< std::string, std::unique_ptr<VisualizationData> > datasets;
+    std::unordered_map< std::string, std::unique_ptr<VisualizationData>> datasets;
 
 public:
 	static VisualizationServer & getInstance();
@@ -71,6 +78,7 @@ public:
 	void stop();
 	void addClustering(
 		const std::string & key,
+		bool oneshot,
 		const Eigen::MatrixXd & dataPca,
 		const Eigen::MatrixXd & dataSne, 
 		const std::vector<std::string> & labels, 

@@ -38,4 +38,6 @@ public:
 	static Json::Value clusteringToJson(const Eigen::MatrixXd & mat, const Eigen::VectorXd & labels, const std::vector<std::string> & tooltips);
 	static Eigen::VectorXd numericLabels(const std::vector<std::string> & labels);
 
+	static std::vector<std::string> fileLinesToVec(const std::string & filename);
+
 };

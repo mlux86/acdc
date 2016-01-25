@@ -333,3 +333,19 @@ Eigen::VectorXd Util::numericLabels(const std::vector<std::string> & labels)
     }   
     return v;
 }
+
+std::vector<std::string> Util::fileLinesToVec(const std::string & filename)
+{
+    std::ifstream ifs(filename);
+    std::string str;
+    std::vector<std::string> result;
+    while (std::getline(ifs, str))
+    {
+        if(!str.empty())
+        {
+            result.push_back(str);
+        }
+    }     
+    ifs.close();
+    return result;
+}

@@ -52,29 +52,33 @@ void DatasetController::respond(std::stringstream & response, const std::map<std
     const std::string key = params.at(ParamData);
     const std::string labels = params.at(ParamLabels);
     const std::string reduction = params.at(ParamReduction);
+    bool oneshot = (params.find(ParamOneshot) != params.end());
 
     try 
     {
         const VisualizationData * vdat = VisualizationServer::getInstance().getClustering(key);
 
         const Eigen::MatrixXd * shownData;
-        if (reduction == ReductionPca)
-        {
-            shownData = &(vdat->dataPca);
-        } else
-        {
-            shownData = &(vdat->dataSne);
-        }
 
-        if (labels == LabelsConnComp)
+        if (oneshot)
         {
-            root["mat"] = Util::clusteringToJson(*shownData, vdat->clustRes.resConnComponents.labels, vdat->labels);
-        } else if (labels == LabelsDip)
-        {
-            root["mat"] = Util::clusteringToJson(*shownData, vdat->clustRes.resDipMeans.labels, vdat->labels);
-        } else if (labels == LabelsOrig)
-        {
-            root["mat"] = Util::clusteringToJson(*shownData, Util::numericLabels(vdat->labels), vdat->labels);
+            if (reduction == ReductionPca)
+            {
+                shownData = &(vdat->oneshot.dataPca);
+            } else
+            {
+                shownData = &(vdat->oneshot.dataSne);
+            }
+            if (labels == LabelsConnComp)
+            {
+                root["mat"] = Util::clusteringToJson(*shownData, vdat->oneshot.clustRes.resConnComponents.labels, vdat->oneshot.labels);
+            } else if (labels == LabelsDip)
+            {
+                root["mat"] = Util::clusteringToJson(*shownData, vdat->oneshot.clustRes.resDipMeans.labels, vdat->oneshot.labels);
+            } else if (labels == LabelsOrig)
+            {
+                root["mat"] = Util::clusteringToJson(*shownData, Util::numericLabels(vdat->oneshot.labels), vdat->oneshot.labels);
+            }
         }
         
         response << root; 
@@ -146,6 +150,7 @@ void VisualizationServer::stop()
 
 void VisualizationServer::addClustering(
         const std::string & key,
+        bool oneshot,
         const Eigen::MatrixXd & dataPca,
         const Eigen::MatrixXd & dataSne, 
         const std::vector<std::string> & labels,
@@ -153,12 +158,27 @@ void VisualizationServer::addClustering(
 {
     dataMtx.lock();
 
-    std::unique_ptr<VisualizationData> dat(new VisualizationData);
-    dat->dataPca = dataPca;
-    dat->dataSne = dataSne;
-    dat->labels = labels;
-    dat->clustRes = clustRes;
-    datasets[key] = std::move(dat);    
+    if (datasets.find(key) == datasets.end())
+    {
+        std::unique_ptr<VisualizationData> dat(new VisualizationData);
+        datasets[key] = std::move(dat);
+    }
+
+    VisualizationData * dat = datasets[key].get();
+    
+    VisualizationDataEntry vde;
+    vde.dataPca = dataPca;
+    vde.dataSne = dataSne;
+    vde.labels = labels;
+    vde.clustRes = clustRes;
+
+    if (oneshot)
+    {
+        dat->oneshot = vde;
+    } else
+    {
+        dat->bootstraps.push_back(vde);
+    }
 
     DLOG << "Added data set to visualization server: " << key << "\n";
     
@@ -216,32 +236,41 @@ void StatsController::respond(std::stringstream & response, const std::map<std::
 
     const std::vector<std::string> clusts = {"cc", "dip"};
 
-    for (const auto & clust : clusts)
+    for (const auto & dataset : VisualizationServer::getInstance().getClusteringNames())
     {
+        
+        Json::Value entry;
 
-        const std::map<unsigned, double> confs = getClusterConfidences(clust);
-        Json::Value confsJson = Json::Value(Json::arrayValue);
-
-        for (const auto & it : confs)
+        for (const auto & clust : clusts)
         {
-            unsigned numClusters = it.first;
-            double confidence = it.second;
 
-            Json::Value v;
-            v["numClusters"] = numClusters;
-            v["confidence"] = confidence;
+            const std::map<unsigned, double> confs = getClusterConfidences(dataset, clust);
+            Json::Value confsJson = Json::Value(Json::arrayValue);
 
-            confsJson.append(v);
+            for (const auto & it : confs)
+            {
+                unsigned numClusters = it.first;
+                double confidence = it.second;
+
+                Json::Value v;
+                v["numClusters"] = numClusters;
+                v["confidence"] = confidence;
+
+                confsJson.append(v);
+            }
+
+            entry[clust] = confsJson;
         }
 
-        root["confidences_" + clust] = confsJson;
+
+        root[dataset] = entry;
     }
 
     response << root;
 
 }
 
-std::map<unsigned, double> StatsController::getClusterConfidences(const std::string & clust)
+std::map<unsigned, double> StatsController::getClusterConfidences(const std::string & dataset, const std::string & clust)
 {
     if (clust != "cc" && clust != "dip")
     {
@@ -250,29 +279,20 @@ std::map<unsigned, double> StatsController::getClusterConfidences(const std::str
 
     std::map<unsigned, double> confs;
 
-    VisualizationServer & vs = VisualizationServer::getInstance();
-
-    std::vector<std::string> datasetNames = vs.getClusteringNames();
+    const VisualizationData & vd = *(VisualizationServer::getInstance().getClustering(dataset));
 
     unsigned n = 0;
 
-    for (const auto & name : datasetNames)
+    for (const auto & bs : vd.bootstraps)
     {
-        if (name.find("boot") != 0)
-        {
-            continue;
-        }
-
-        const VisualizationData & vsd = *(vs.getClustering(name));
-
         unsigned numClusters;
 
         if (clust == "dip")
         {
-            numClusters = vsd.clustRes.resDipMeans.numClusters;
+            numClusters = bs.clustRes.resDipMeans.numClusters;
         } else 
         {
-            numClusters = vsd.clustRes.resConnComponents.numClusters;
+            numClusters = bs.clustRes.resConnComponents.numClusters;
         }
 
         if (confs.find(numClusters) == confs.end())

@@ -1,6 +1,9 @@
 #pragma once
 
+#include <vector>
 #include <string>
+
+#include "Util.h"
 
 class Opts
 {
@@ -9,7 +12,7 @@ private:
 	std::string _helpDesc = "";
 	int _logLevel = 0;
 
-	std::string _inputFASTA = "";
+	std::vector<std::string> _inputFASTAs;
 
 	unsigned _tsneDim = 0;
 	unsigned _tsnePcaDim = 0;
@@ -39,7 +42,7 @@ public:
 	bool needsHelp() const;
 	unsigned logLevel() const;
 	std::string helpDesc() const;
-	std::string inputFASTA() const;
+	std::vector<std::string> inputFASTAs() const;
 	unsigned tsneDim() const;
 	unsigned tsnePcaDim() const;
 	unsigned tsnePerplexity() const;

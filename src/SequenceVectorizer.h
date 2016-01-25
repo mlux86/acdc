@@ -10,7 +10,7 @@
 class SequenceVectorizer
 {
 protected:
-	std::string inputFASTA = "";
+	std::string inputFasta = "";
 
 	unsigned minContigLength = 0;
 	unsigned kmerLength = 0;
@@ -27,7 +27,7 @@ protected:
 
 public:
 	SequenceVectorizer(const unsigned kmerLength, const unsigned windowWidth, const unsigned windowStep);
-	SequenceVectorizer(const Opts & opts);
+	SequenceVectorizer(const std::string & inputFasta, const Opts & opts);
 	~SequenceVectorizer();
 
 	unsigned getDim() const;
