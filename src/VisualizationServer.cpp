@@ -6,6 +6,7 @@
 
 #include "boost/filesystem/operations.hpp"
 #include "boost/filesystem/path.hpp"
+#include "boost/lexical_cast.hpp"
 
 DatasetController::DatasetController(const std::string path_) : SimpleGetController(path_)
 {
@@ -56,32 +57,47 @@ void DatasetController::respond(std::stringstream & response, const std::map<std
 
     try 
     {
+
         const VisualizationData * vdat = VisualizationServer::getInstance().getClustering(key);
-
-        const Eigen::MatrixXd * shownData;
-
+        const VisualizationDataEntry * vde;
         if (oneshot)
         {
-            if (reduction == ReductionPca)
+            vde = &(vdat->oneshot);
+        } else
+        {
+            if (params.find(ParamBootstrapId) == params.end())
             {
-                shownData = &(vdat->oneshot.dataPca);
-            } else
-            {
-                shownData = &(vdat->oneshot.dataSne);
-            }
-            if (labels == LabelsConnComp)
-            {
-                root["mat"] = Util::clusteringToJson(*shownData, vdat->oneshot.clustRes.resConnComponents.labels, vdat->oneshot.labels);
-            } else if (labels == LabelsDip)
-            {
-                root["mat"] = Util::clusteringToJson(*shownData, vdat->oneshot.clustRes.resDipMeans.labels, vdat->oneshot.labels);
-            } else if (labels == LabelsOrig)
-            {
-                root["mat"] = Util::clusteringToJson(*shownData, Util::numericLabels(vdat->oneshot.labels), vdat->oneshot.labels);
-            }
+                response << root;
+                return;
+            }            
+            unsigned bootstrapId = boost::lexical_cast<unsigned>(params.at(ParamBootstrapId));
+            bootstrapId = std::min(bootstrapId, (unsigned)(vdat->bootstraps.size()-1));
+            vde = &(vdat->bootstraps[bootstrapId-1]);
         }
-        
+
+        const Eigen::MatrixXd * shownData;
+        if (reduction == ReductionPca)
+        {
+            shownData = &(vde->dataPca);
+        } else
+        {
+            shownData = &(vde->dataSne);
+        }
+        if (labels == LabelsConnComp)
+        {
+            root["mat"] = Util::clusteringToJson(*shownData, vde->clustRes.resConnComponents.labels, vde->labels);
+        } else if (labels == LabelsDip)
+        {
+            root["mat"] = Util::clusteringToJson(*shownData, vde->clustRes.resDipMeans.labels, vde->labels);
+        } else if (labels == LabelsOrig)
+        {
+            root["mat"] = Util::clusteringToJson(*shownData, Util::numericLabels(vde->labels), vde->labels);
+        }
+
+        root["numBootstraps"] = (unsigned) vdat->bootstraps.size();
+
         response << root; 
+
     }
     catch(const std::out_of_range & oor) 
     {

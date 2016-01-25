@@ -25,6 +25,7 @@ private:
 	const std::string ReductionPca = "pca";
 	const std::string ReductionSne = "sne";
 	const std::string ParamOneshot = "oneshot";
+	const std::string ParamBootstrapId = "bootstrapId";
 
 public:
 	DatasetController(const std::string path_);

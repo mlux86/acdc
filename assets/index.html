@@ -19,6 +19,10 @@
 			background-color: #fc8d59;
 		}
 
+		.bold {
+			font-weight: bolder;
+		}
+
 		.clean {
 			background-color: #99d594;
 		}
@@ -51,7 +55,7 @@
 		#confidences tr:nth-child(even) { background-color:#ffffff; }
 
 		.hidden {
-			display: none;
+			display: none;			
 		}
 	</style>
 	<script type="text/javascript" src="/jquery.min.js"></script>
@@ -69,13 +73,24 @@
 		    return "#"+(0x1000000+(Math.round((R2-R1)*p)+R1)*0x10000+(Math.round((G2-G1)*p)+G1)*0x100+(Math.round((B2-B1)*p)+B1)).toString(16).slice(1);
 		}		
 
-		function updateChart()
+		function updateChart(updateBootstraps)
 		{
 			var dataset = $('#curData').val();
 			var labels = $('#curLabels').val();
 			var reduction = $('#curReduction').val();
+			var bootstrapId = $('#bootstrapId').val();
 
-			$.getJSON("http://localhost:4242/json?data=" + encodeURIComponent(dataset) + "&labels=" + encodeURIComponent(labels) + "&reduction=" + encodeURIComponent(reduction) + "&oneshot=1", function(result)
+			var url = "http://localhost:4242/json?data=" + encodeURIComponent(dataset) + "&labels=" + encodeURIComponent(labels) + "&reduction=" + encodeURIComponent(reduction);
+
+			if (!bootstrapId)
+			{
+				url = url + "&oneshot=1";
+			} else
+			{
+				url = url + "&bootstrapId=" + bootstrapId;
+			}
+
+			$.getJSON(url, function(result)
 			{
 
 				var chart = new CanvasJS.Chart("chartContainer",
@@ -109,6 +124,19 @@
 
 				chart.render();
 
+				if (updateBootstraps)
+				{
+					$('#bootstrapId').html('');
+					$('#bootstrapId').append('<option value="">One shot</option>');
+					for (var i = 1; i <= result.numBootstraps; i++) 
+					{
+						$('#bootstrapId').append($('<option>', {
+						    value: i,
+						    text: 'Bootstrap' + i
+						}));
+					}
+				}
+
 			});
 		}
 
@@ -137,7 +165,6 @@
 							cleanVal = result[dataset].cc[i].confidence;
 						}
 					}
-					// ccColor = (clean && conta) ? shadeColor('#fc8d59', cleanVal) : (clean ? '#99d594' : '#fc8d59');
 					ccColor = blendColors('#f46d43', '#abdda4', cleanVal);
 
 					clean = false;
@@ -156,29 +183,34 @@
 							cleanVal = result[dataset].dip[i].confidence;
 						}						
 					}
-					// dipColor = (clean && conta) ? shadeColor('#fc8d59', cleanVal) : (clean ? '#99d594' : '#fc8d59');
 					dipColor = blendColors('#f46d43', '#abdda4', cleanVal);
 
 					$('#confidences').append('<tr><td class="dataConf">' + dataset + '</td><td class="ccConf" style="background-color:' + ccColor + '">' + cc + '</td><td class="dipConf" style="background-color:' + dipColor + '">' + dip + '</td></tr>');
 				}
 
 				$('.dataConf').click(function() {
+					$('.bold').removeClass('bold');
 					var dataset = $(this).html();
+					$(this).addClass('bold');
 					$('#curData').val(dataset);
 					$('#curLabels').val('orig');
-					updateChart();
+					updateChart(true);
 				});
 				$('.ccConf').click(function() {
+					$('.bold').removeClass('bold');
 					var dataset = $(this).parent().find('td.dataConf').html();
+					$(this).addClass('bold');
 					$('#curData').val(dataset);
 					$('#curLabels').val('cc');
-					updateChart();
+					updateChart(true);
 				});
 				$('.dipConf').click(function() {
+					$('.bold').removeClass('bold');
 					var dataset = $(this).parent().find('td.dataConf').html();
+					$(this).addClass('bold');
 					$('#curData').val(dataset);
 					$('#curLabels').val('dip');					
-					updateChart();
+					updateChart(true);
 				});
 
 				// setTimeout(updateConfidences, 1000);
@@ -195,8 +227,11 @@
 			});
 			$('.radioReduction').click(function() {
 				$('#curReduction').val($(this).val());
-				updateChart();
-			});			
+				updateChart(false);
+			});
+			$('#bootstrapId').change(function() {
+				updateChart(false);
+			});
 		});		
 
 	</script>
@@ -216,6 +251,9 @@
 		<input type="hidden" id="curReduction" name="curReduction" value="sne">
 		<input type="radio" class="radioReduction" name="radioReduction" value="sne" checked> BH-SNE
 		<input type="radio" class="radioReduction" name="radioReduction" value="pca"> PCA
+		<select id="bootstrapId">
+			<option value="">One shot</option>
+		</select>
 		<div id="chartContainer" style="width: 500px; height: 500px;">
 		</div>
 	</div>
