@@ -7,38 +7,6 @@
 			background-color: #eeeeee
 		}
 
-		label {
-			display: inline-block;
-			float: left;
-			clear: left;
-			width: 100px;
-			text-align: right;
-		}
-
-		select {
-			display: inline-block;
-			float: left;
-		}
-
-		label, select {
-			margin: 5px;
-		}
-
-		#loading {
-			width: 500px;
-			display: inline-block;
-		}
-
-		#loading > img {
-			vertical-align: middle;
-		}
-
-		#loading > span {			
-			font-size: 28pt;
-			display: inline-block;
-  			vertical-align: middle;
-		}
-
 		.clearfix:after {
 			content: " "; /* Older browser do not support empty content */
 			visibility: hidden;
@@ -46,6 +14,22 @@
 			height: 0;
 			clear: both;
 		}		
+
+		.contaminated {
+			background-color: #fc8d59;
+		}
+
+		.clean {
+			background-color: #99d594;
+		}
+
+		.uncertain {
+			background-color: #ffffbf;
+		}
+
+		#chart {
+			padding: 50px;
+		}
 
 		#confidences {
 			border-collapse: collapse;
@@ -59,6 +43,10 @@
 			padding: 5px;
 		}
 
+		#confidences td {
+			cursor: pointer;			
+		}
+
 		#confidences tr:nth-child(odd) { background-color:#f4f4f4; }
 		#confidences tr:nth-child(even) { background-color:#ffffff; }
 
@@ -70,12 +58,23 @@
 	<script type="text/javascript" src="/canvasjs.min.js"></script>
 	<script type="text/javascript">		
 
-		defaultDataset = 'oneshot';
-		defaultLabels = 'cc';
-		defaultReduction = 'sne'; 
+		function shadeColor(color, percent) {   
+			console.log(percent)
+		    var f=parseInt(color.slice(1),16),t=percent<0?0:255,p=percent<0?percent*-1:percent,R=f>>16,G=f>>8&0x00FF,B=f&0x0000FF;
+		    return "#"+(0x1000000+(Math.round((t-R)*p)+R)*0x10000+(Math.round((t-G)*p)+G)*0x100+(Math.round((t-B)*p)+B)).toString(16).slice(1);
+		}
 
-		function updateChart(dataset, labels, reduction)
+		function blendColors(c0, c1, p) {
+		    var f=parseInt(c0.slice(1),16),t=parseInt(c1.slice(1),16),R1=f>>16,G1=f>>8&0x00FF,B1=f&0x0000FF,R2=t>>16,G2=t>>8&0x00FF,B2=t&0x0000FF;
+		    return "#"+(0x1000000+(Math.round((R2-R1)*p)+R1)*0x10000+(Math.round((G2-G1)*p)+G1)*0x100+(Math.round((B2-B1)*p)+B1)).toString(16).slice(1);
+		}		
+
+		function updateChart()
 		{
+			var dataset = $('#curData').val();
+			var labels = $('#curLabels').val();
+			var reduction = $('#curReduction').val();
+
 			$.getJSON("http://localhost:4242/json?data=" + encodeURIComponent(dataset) + "&labels=" + encodeURIComponent(labels) + "&reduction=" + encodeURIComponent(reduction) + "&oneshot=1", function(result)
 			{
 
@@ -113,124 +112,91 @@
 			});
 		}
 
-		function updateForm()
-		{
-			$.getJSON("http://localhost:4242/json?info=1", function(result)
-			{				
-
-				if (result.datasets.length == 0)
-				{
-					$('#datasetForm').hide();
-					$('#loading').show();
-					setTimeout(updateForm, 1000);
-					return;
-				}
-
-
-				var curNumDatasets = $('select#dataset').children().length;
-				if (result.datasets.length <= curNumDatasets)
-				{
-					setTimeout(updateForm, 1000);
-					return;
-				}
-
-				$('#loading').hide('');
-
-				var oldVal = $('select#labels').val();
-				if (!oldVal)
-					oldVal = defaultLabels;				
-				$('select#labels').html('');
-				for (var i in result.labels)
-				{
-					$('select#labels').append('<option value="' + result.labels[i] + '">' + result.labels[i] + '</option>');
-				}
-				$('select#labels').val(oldVal);
-
-				var oldVal = $('select#reductions').val();
-				if (!oldVal)
-					oldVal = defaultReduction;				
-				$('select#reductions').html('');
-				for (var i in result.reductions)
-				{
-					$('select#reductions').append('<option value="' + result.reductions[i] + '">' + result.reductions[i] + '</option>');
-				}
-				$('select#reductions').val(oldVal);
-
-				var oldVal = $('select#dataset').val();
-				$('select#dataset').html('');
-				for (var i in result.datasets)
-				{
-					$('select#dataset').append('<option value="' + result.datasets[i] + '">' + result.datasets[i] + '</option>');					
-				}
-				if (!oldVal)
-				{					
-					oldVal = $('select#dataset option:first').val();
-					$('select#dataset').val(oldVal);
-					updateChart($("select#dataset").val(), $("select#labels").val(), $("select#reductions").val());
-				} else
-				{
-					$('select#dataset').val(oldVal);
-				}
-
-				$('#datasetForm').show();				
-
-				$('select#dataset').fadeIn(100).fadeOut(100).fadeIn(100).fadeOut(100).fadeIn(100).fadeOut(100).fadeIn(100);
-
-				setTimeout(updateForm, 1000);
-
-			});
-		}
-
 		function updateConfidences()
 		{
 			$.getJSON("http://localhost:4242/stats", function(result)
 			{	
-				$('#confToggle').show();
 				$('#confidences').html('<tr><th>Sample</th><th>Confidences CC</th><th>Confidences Dip-Means</th></tr>');
 
 				for (var dataset in result)
 				{
 
+					var clean = false;
+					var conta = false;
+					var cleanVal = 0;
 					var cc = '';
 					for (var i in result[dataset].cc)
 					{
 						var k = result[dataset].cc[i].numClusters;	
 						var c = result[dataset].cc[i].confidence;
 						cc = cc + "p(k = " + k + ") = " + c + "<br/>";
+						clean = clean || k == 1;
+						conta = conta || k > 1;
+						if (k == 1)
+						{
+							cleanVal = result[dataset].cc[i].confidence;
+						}
 					}
+					// ccColor = (clean && conta) ? shadeColor('#fc8d59', cleanVal) : (clean ? '#99d594' : '#fc8d59');
+					ccColor = blendColors('#f46d43', '#abdda4', cleanVal);
 
+					clean = false;
+					conta = false;
+					cleanVal = 0;
 					var dip = '';
 					for (var i in result[dataset].dip)
 					{
 						var k = result[dataset].dip[i].numClusters;	
 						var c = result[dataset].dip[i].confidence;
 						dip = dip + "p(k = " + k + ") = " + c + "<br/>";
+						clean = clean || k == 1;
+						conta = conta || k > 1;						
+						if (k == 1)
+						{
+							cleanVal = result[dataset].dip[i].confidence;
+						}						
 					}
+					// dipColor = (clean && conta) ? shadeColor('#fc8d59', cleanVal) : (clean ? '#99d594' : '#fc8d59');
+					dipColor = blendColors('#f46d43', '#abdda4', cleanVal);
 
-					$('#confidences').append('<tr><td>' + dataset + '</td><td>' + cc + '</td><td>' + dip + '</td></tr>');
+					$('#confidences').append('<tr><td class="dataConf">' + dataset + '</td><td class="ccConf" style="background-color:' + ccColor + '">' + cc + '</td><td class="dipConf" style="background-color:' + dipColor + '">' + dip + '</td></tr>');
 				}
 
-				setTimeout(updateConfidences, 1000);
+				$('.dataConf').click(function() {
+					var dataset = $(this).html();
+					$('#curData').val(dataset);
+					$('#curLabels').val('orig');
+					updateChart();
+				});
+				$('.ccConf').click(function() {
+					var dataset = $(this).parent().find('td.dataConf').html();
+					$('#curData').val(dataset);
+					$('#curLabels').val('cc');
+					updateChart();
+				});
+				$('.dipConf').click(function() {
+					var dataset = $(this).parent().find('td.dataConf').html();
+					$('#curData').val(dataset);
+					$('#curLabels').val('dip');					
+					updateChart();
+				});
+
+				// setTimeout(updateConfidences, 1000);
 
 			});
 		}
 
 		$( document ).ready(function() 
 		{	
-			$('#datasetForm').hide();
-			$('#confToggle').hide();
-
-			$(".param").on('change', function(evt) 
-			{
-				updateChart($("select#dataset").val(), $("select#labels").val(), $("select#reductions").val());
-			});
-
-			updateForm();
 			updateConfidences();
 
 			$('#confToggle').click(function() {
 				$('#confidences').toggle();
 			});
+			$('.radioReduction').click(function() {
+				$('#curReduction').val($(this).val());
+				updateChart();
+			});			
 		});		
 
 	</script>
@@ -242,19 +208,14 @@
 		<table id="confidences">
 			<tr><th>Sample</th><th>Confidence CC</th><th>Confidence Dip-Means</th></tr>
 		</table>
-		<br/>
-		<div id="loading">
-			<span>No data to show, yet.<br/><img id="bb" src="/bb.gif" alt="Please wait..."/><br/>Please wait...</span>
-		</div>
+		<br />
 	</div>
-	<!-- <div class="clearfix"></div> -->
-	<div style="float:left;">
-		<form id="datasetForm" action="#">
-			<label for="dataset">Data set: </label><select class="param" id="dataset" name="dataset"></select> <br/>
-			<label for="labels">Labels: </label><select class="param" id="labels" name="labels"></select> <br/>
-			<label for="reductions">Reductions: </label><select class="param" id="reductions" name="reductions"></select> <br/>
-		</form>
-		<div class="clearfix"></div>
+	<div style="float:left;" id="chart">
+		<input type="hidden" id="curData" name="curData" value="">
+		<input type="hidden" id="curLabels" name="curLabels" value="">
+		<input type="hidden" id="curReduction" name="curReduction" value="sne">
+		<input type="radio" class="radioReduction" name="radioReduction" value="sne" checked> BH-SNE
+		<input type="radio" class="radioReduction" name="radioReduction" value="pca"> PCA
 		<div id="chartContainer" style="width: 500px; height: 500px;">
 		</div>
 	</div>
