@@ -1,4 +1,5 @@
 #include "TarjansAlgorithm.h"
+#include <iostream>
 
 TarjansAlgorithm::TarjansAlgorithm()
 {
@@ -73,7 +74,7 @@ ClusteringResult TarjansAlgorithm::run(const Eigen::MatrixXd & adjacencies_)
 	stack = std::stack<Node*>();
 
 	ClusteringResult res;
-	res.labels = Eigen::MatrixXd(n, 1);
+	res.labels.resize(n);
 
 	for (auto & node : nodes)
 	{
@@ -84,7 +85,7 @@ ClusteringResult TarjansAlgorithm::run(const Eigen::MatrixXd & adjacencies_)
 			{
 				for (unsigned idx : componentIndexes)
 				{
-					res.labels(idx) = res.numClusters;
+					res.labels[idx] = res.numClusters;
 				}
 				res.numClusters++;				
 			}

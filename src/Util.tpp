@@ -1,10 +1,10 @@
 #include <unordered_map>
 
 template<typename T>
-Eigen::VectorXd Util::numericLabels(const std::vector<T> & labels)
+std::vector<unsigned> Util::numericLabels(const std::vector<T> & labels)
 {
     unsigned n = labels.size();
-    Eigen::VectorXd v(n);
+    std::vector<unsigned> v(n, 0);
     std::unordered_map<T, unsigned> lblMap;
     unsigned cnt = 0;
     unsigned i = 0;
@@ -14,7 +14,7 @@ Eigen::VectorXd Util::numericLabels(const std::vector<T> & labels)
         {
             lblMap[lbl] = cnt++;
         }
-        v(i++) = lblMap[lbl];
+        v[i++] = lblMap[lbl];
     }   
     return v;	
 }

@@ -35,13 +35,14 @@ public:
 
 	static std::vector< std::vector<unsigned> > stratifiedSubsamplingIndices(const unsigned n, const unsigned k, const double ratio = 0.8);
 
-	static Json::Value clusteringToJson(const Eigen::MatrixXd & mat, const Eigen::VectorXd & labels, const std::vector<std::string> & tooltips);
+	static Json::Value clusteringToJson(const Eigen::MatrixXd & mat, const std::vector<unsigned> & labels, const std::vector<std::string> & tooltips);
 
 	template<typename T>
-	static Eigen::VectorXd numericLabels(const std::vector<T> & labels);
+	static std::vector<unsigned> numericLabels(const std::vector<T> & labels);
 
 	static std::vector<std::string> fileLinesToVec(const std::string & filename);
 
+	// TODO template
 	static std::vector<std::string> mutualLabels(const std::vector<std::string> & labels1, const std::vector<std::string> & labels2);
 
 	static Eigen::MatrixXd alignDataset(const Eigen::MatrixXd & reference, const Eigen::MatrixXd & toalign, const std::vector<std::string> & labelsReference, const std::vector<std::string> & labelsToalign);

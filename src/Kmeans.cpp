@@ -74,7 +74,7 @@ std::pair<ClusteringResult, double> Kmeans::iteration(const Eigen::MatrixXd & da
     unsigned dim = data.cols();
 
     ClusteringResult res;
-    res.labels = Eigen::VectorXd::Zero(n);
+    res.labels = std::vector<unsigned>(n);
     res.numClusters = k;
 
     if (init == "sample")
@@ -104,7 +104,7 @@ std::pair<ClusteringResult, double> Kmeans::iteration(const Eigen::MatrixXd & da
                 if (norm < minNorm)
                 {
                     minNorm = norm;
-                    res.labels(i) = j;
+                    res.labels[i] = j;
                 }
                 mse += norm;
             }
@@ -119,7 +119,7 @@ std::pair<ClusteringResult, double> Kmeans::iteration(const Eigen::MatrixXd & da
             unsigned nk = 0;
             for (unsigned i = 0; i < n; i++)
             {
-                if (res.labels(i) == j)
+                if (res.labels[i] == j)
                 {
                     means.row(j) += data.row(i);
                     nk++;

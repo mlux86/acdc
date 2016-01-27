@@ -295,7 +295,7 @@ std::vector< std::vector<unsigned> > Util::stratifiedSubsamplingIndices(const un
     return result;
 }
 
-Json::Value Util::clusteringToJson(const Eigen::MatrixXd & mat, const Eigen::VectorXd & labels, const std::vector<std::string> & tooltips)
+Json::Value Util::clusteringToJson(const Eigen::MatrixXd & mat, const std::vector<unsigned> & labels, const std::vector<std::string> & tooltips)
 {
     unsigned n = mat.rows();
 
@@ -307,7 +307,7 @@ Json::Value Util::clusteringToJson(const Eigen::MatrixXd & mat, const Eigen::Vec
         auto jsonMatPt = Json::Value();
         jsonMatPt["x"] = mat(i, 0);
         jsonMatPt["y"] = mat(i, 1);
-        unsigned colorIdx = (unsigned)labels(i) % colors.size();
+        unsigned colorIdx = labels.at(i) % colors.size();
         jsonMatPt["color"] = colors[colorIdx];
         jsonMatPt["toolTipContent"] = tooltips[i];
         jsonMat.append(jsonMatPt);
@@ -315,24 +315,6 @@ Json::Value Util::clusteringToJson(const Eigen::MatrixXd & mat, const Eigen::Vec
 
     return jsonMat;
 }
-
-// Eigen::VectorXd Util::numericLabels(const std::vector<std::string> & labels)
-// {
-//     unsigned n = labels.size();
-//     Eigen::VectorXd v(n);
-//     std::unordered_map<std::string, unsigned> lblMap;
-//     unsigned cnt = 0;
-//     unsigned i = 0;
-//     for (const auto & lbl : labels)
-//     {
-//         if(lblMap.find(lbl) == lblMap.end())
-//         {
-//             lblMap[lbl] = cnt++;
-//         }
-//         v(i++) = lblMap[lbl];
-//     }   
-//     return v;
-// }
 
 std::vector<std::string> Util::fileLinesToVec(const std::string & filename)
 {

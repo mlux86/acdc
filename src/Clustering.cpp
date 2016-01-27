@@ -10,6 +10,7 @@
 #include <chrono>
 #include <random>
 #include <limits>
+#include <vector>
 
 Clustering::Clustering()
 {
@@ -19,64 +20,64 @@ Clustering::~Clustering()
 {
 }
 
-ClusteringResult Clustering::spectralClustering(Eigen::MatrixXd & adjacencies)
-{
-    unsigned n = adjacencies.rows();
-    if (n != adjacencies.cols())
-    {
-        throw std::runtime_error("Adjacency matrix must be quadratic!");
-    }
+// ClusteringResult Clustering::spectralClustering(Eigen::MatrixXd & adjacencies)
+// {
+//     unsigned n = adjacencies.rows();
+//     if (n != adjacencies.cols())
+//     {
+//         throw std::runtime_error("Adjacency matrix must be quadratic!");
+//     }
 
-    Eigen::MatrixXd degreeMat = adjacencies.rowwise().sum().asDiagonal();
+//     Eigen::MatrixXd degreeMat = adjacencies.rowwise().sum().asDiagonal();
 
-    // check for zero degree points and construct a smaller matrix if necessary
-    std::vector<unsigned> zeroDegreeIndexes;
-    for (unsigned i = 0; i < n; i++)
-    {
-        if (degreeMat(i, i) == 0)
-        {
-            zeroDegreeIndexes.push_back(i);
-        }
-    }
-    // reverse iterate because largest row to remove is at end
-    // otherwise, removing smaller rows will shift indexes
-    for (auto iter = zeroDegreeIndexes.rbegin(); iter != zeroDegreeIndexes.rend(); ++iter)
-    {
-        auto idx = *iter;
-        Util::matrixRemoveRow(adjacencies, idx);
-        Util::matrixRemoveRow(degreeMat, idx);
-        Util::matrixRemoveColumn(adjacencies, idx);
-        Util::matrixRemoveColumn(degreeMat, idx);
-        n--;
-    }
+//     // check for zero degree points and construct a smaller matrix if necessary
+//     std::vector<unsigned> zeroDegreeIndexes;
+//     for (unsigned i = 0; i < n; i++)
+//     {
+//         if (degreeMat(i, i) == 0)
+//         {
+//             zeroDegreeIndexes.push_back(i);
+//         }
+//     }
+//     // reverse iterate because largest row to remove is at end
+//     // otherwise, removing smaller rows will shift indexes
+//     for (auto iter = zeroDegreeIndexes.rbegin(); iter != zeroDegreeIndexes.rend(); ++iter)
+//     {
+//         auto idx = *iter;
+//         Util::matrixRemoveRow(adjacencies, idx);
+//         Util::matrixRemoveRow(degreeMat, idx);
+//         Util::matrixRemoveColumn(adjacencies, idx);
+//         Util::matrixRemoveColumn(degreeMat, idx);
+//         n--;
+//     }
 
-    // square root of a diagonal matrix
-    for (unsigned i = 0; i < n; i++)
-    {
-        degreeMat(i, i) = 1.0 / sqrt(degreeMat(i, i));
-    }
+//     // square root of a diagonal matrix
+//     for (unsigned i = 0; i < n; i++)
+//     {
+//         degreeMat(i, i) = 1.0 / sqrt(degreeMat(i, i));
+//     }
 
-    Eigen::MatrixXd laplacian = degreeMat * adjacencies * degreeMat;
-    Eigen::MatrixXd eye = Eigen::MatrixXd::Identity(n, n);
-    laplacian += 0.000001 * eye;
+//     Eigen::MatrixXd laplacian = degreeMat * adjacencies * degreeMat;
+//     Eigen::MatrixXd eye = Eigen::MatrixXd::Identity(n, n);
+//     laplacian += 0.000001 * eye;
 
-    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> saes(laplacian, false);
+//     Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> saes(laplacian, false);
 
-    Eigen::VectorXd eigvals = saes.eigenvalues();
+//     Eigen::VectorXd eigvals = saes.eigenvalues();
 
-    ClusteringResult res;
+//     ClusteringResult res;
 
-    res.numClusters = 0;
-    for (unsigned i = 0; i < eigvals.size(); i++)
-    {
-        if (eigvals(i) > 1 - 0.0001 && eigvals(i) < 1 + 0.0001)
-        {
-            res.numClusters++;
-        }
-    }
+//     res.numClusters = 0;
+//     for (unsigned i = 0; i < eigvals.size(); i++)
+//     {
+//         if (eigvals(i) > 1 - 0.0001 && eigvals(i) < 1 + 0.0001)
+//         {
+//             res.numClusters++;
+//         }
+//     }
 
-    return res;
-}
+//     return res;
+// }
 
 ClusteringResult Clustering::dipMeans(const Eigen::MatrixXd& data, double alpha, double splitThreshold, unsigned maxClusters)
 {
@@ -89,7 +90,7 @@ ClusteringResult Clustering::dipMeans(const Eigen::MatrixXd& data, double alpha,
     Eigen::MatrixXd dist = Util::pdist(data);
 
     unsigned k = 1;
-    Eigen::VectorXd labels = Eigen::VectorXd::Zero(n);
+    std::vector<unsigned> labels(n, 0);
 
     Eigen::MatrixXd means = data.colwise().sum() / n;
 
@@ -108,7 +109,7 @@ ClusteringResult Clustering::dipMeans(const Eigen::MatrixXd& data, double alpha,
             std::vector<unsigned> clusterIdx;
             for (unsigned i = 0; i < n; i++)
             {
-                if (labels(i) == j)
+                if (labels.at(i) == j)
                 {
                     clusterIdx.push_back(i);
                 }
@@ -161,7 +162,7 @@ ClusteringResult Clustering::dipMeans(const Eigen::MatrixXd& data, double alpha,
             Eigen::MatrixXd members(0, dim);
             for (unsigned i = 0; i < n; i++)
             {
-                if (labels(i) == splitLabel)
+                if (labels.at(i) == splitLabel)
                 {
                     members.conservativeResize(members.rows()+1, dim);
                     members.row(members.rows()-1) = data.row(i);
