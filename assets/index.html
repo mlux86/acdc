@@ -80,7 +80,7 @@
 			var reduction = $('#curReduction').val();
 			var bootstrapId = $('#bootstrapId').val();
 
-			var url = "http://localhost:4242/json?data=" + encodeURIComponent(dataset) + "&labels=" + encodeURIComponent(labels) + "&reduction=" + encodeURIComponent(reduction);
+			var url = "/json?data=" + encodeURIComponent(dataset) + "&labels=" + encodeURIComponent(labels) + "&reduction=" + encodeURIComponent(reduction);
 
 			if (!bootstrapId)
 			{
@@ -128,7 +128,7 @@
 				{
 					$('#bootstrapId').html('');
 					$('#bootstrapId').append('<option value="">One shot</option>');
-					for (var i = 1; i <= result.numBootstraps; i++) 
+					for (var i = 0; i < result.numBootstraps; i++) 
 					{
 						$('#bootstrapId').append($('<option>', {
 						    value: i,
@@ -142,7 +142,7 @@
 
 		function updateConfidences()
 		{
-			$.getJSON("http://localhost:4242/stats", function(result)
+			$.getJSON("/stats", function(result)
 			{	
 				$('#confidences').html('<tr><th>Sample</th><th>Confidences CC</th><th>Confidences Dip-Means</th></tr>');
 

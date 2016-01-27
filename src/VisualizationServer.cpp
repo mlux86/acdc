@@ -72,26 +72,26 @@ void DatasetController::respond(std::stringstream & response, const std::map<std
             }            
             unsigned bootstrapId = boost::lexical_cast<unsigned>(params.at(ParamBootstrapId));
             bootstrapId = std::min(bootstrapId, (unsigned)(vdat->bootstraps.size()-1));
-            vde = &(vdat->bootstraps[bootstrapId-1]);
+            vde = &(vdat->bootstraps[bootstrapId]);
         }
 
-        const Eigen::MatrixXd * shownData;
+        Eigen::MatrixXd shownData;
         if (reduction == ReductionPca)
         {
-            shownData = &(vde->dataPca);
+            shownData = vde->dataPca;
         } else
         {
-            shownData = &(vde->dataSne);
+            shownData = Util::alignDataset(vdat->oneshot.dataSne, vde->dataSne, vdat->oneshot.labels, vde->labels);
         }
         if (labels == LabelsConnComp)
         {
-            root["mat"] = Util::clusteringToJson(*shownData, vde->clustRes.resConnComponents.labels, vde->labels);
+            root["mat"] = Util::clusteringToJson(shownData, vde->clustRes.resConnComponents.labels, vde->labels);
         } else if (labels == LabelsDip)
         {
-            root["mat"] = Util::clusteringToJson(*shownData, vde->clustRes.resDipMeans.labels, vde->labels);
+            root["mat"] = Util::clusteringToJson(shownData, vde->clustRes.resDipMeans.labels, vde->labels);
         } else if (labels == LabelsOrig)
         {
-            root["mat"] = Util::clusteringToJson(*shownData, Util::numericLabels(vde->labels), vde->labels);
+            root["mat"] = Util::clusteringToJson(shownData, Util::numericLabels(vde->labels), vde->labels);
         }
 
         root["numBootstraps"] = (unsigned) vdat->bootstraps.size();

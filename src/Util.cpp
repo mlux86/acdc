@@ -316,23 +316,23 @@ Json::Value Util::clusteringToJson(const Eigen::MatrixXd & mat, const Eigen::Vec
     return jsonMat;
 }
 
-Eigen::VectorXd Util::numericLabels(const std::vector<std::string> & labels)
-{
-    unsigned n = labels.size();
-    Eigen::VectorXd v(n);
-    std::unordered_map<std::string, unsigned> lblMap;
-    unsigned cnt = 0;
-    unsigned i = 0;
-    for (const auto & lbl : labels)
-    {
-        if(lblMap.find(lbl) == lblMap.end())
-        {
-            lblMap[lbl] = cnt++;
-        }
-        v(i++) = lblMap[lbl];
-    }   
-    return v;
-}
+// Eigen::VectorXd Util::numericLabels(const std::vector<std::string> & labels)
+// {
+//     unsigned n = labels.size();
+//     Eigen::VectorXd v(n);
+//     std::unordered_map<std::string, unsigned> lblMap;
+//     unsigned cnt = 0;
+//     unsigned i = 0;
+//     for (const auto & lbl : labels)
+//     {
+//         if(lblMap.find(lbl) == lblMap.end())
+//         {
+//             lblMap[lbl] = cnt++;
+//         }
+//         v(i++) = lblMap[lbl];
+//     }   
+//     return v;
+// }
 
 std::vector<std::string> Util::fileLinesToVec(const std::string & filename)
 {
@@ -348,4 +348,44 @@ std::vector<std::string> Util::fileLinesToVec(const std::string & filename)
     }     
     ifs.close();
     return result;
+}
+
+std::vector<std::string> Util::mutualLabels(const std::vector<std::string> & labels1, const std::vector<std::string> & labels2)
+{
+    auto l1 = labels1;
+    auto l2 = labels2;
+
+    std::sort(l1.begin(), l1.end());
+    std::sort(l2.begin(), l2.end());
+
+    std::vector<std::string> v(std::max(labels1.size(), labels2.size()));
+    auto it = std::set_intersection(l1.begin(), l1.end(), l2.begin(), l2.end(), v.begin());
+    v.resize(it - v.begin());
+
+    return v;
+}
+
+Eigen::MatrixXd Util::alignDataset(const Eigen::MatrixXd & reference, const Eigen::MatrixXd & toalign, const std::vector<std::string> & labelsReference, const std::vector<std::string> & labelsToalign)
+{
+    auto mutualLabels = Util::mutualLabels(labelsReference, labelsToalign);
+
+    unsigned n = mutualLabels.size();
+    unsigned dim = reference.cols();
+
+    Eigen::MatrixXd x = Eigen::MatrixXd::Zero(n, dim);
+    Eigen::MatrixXd y = Eigen::MatrixXd::Zero(n, dim);
+
+    unsigned i = 0;
+    for (const auto & lbl : mutualLabels)
+    {
+        unsigned idx1 = std::distance(labelsReference.begin(), std::find(labelsReference.begin(), labelsReference.end(), lbl));
+        x.row(i) = reference.row(idx1);
+        unsigned idx2 = std::distance(labelsToalign.begin(), std::find(labelsToalign.begin(), labelsToalign.end(), lbl));
+        y.row(i) = toalign.row(idx2);
+        i++;
+    }
+
+    Eigen::MatrixXd transformation = y.transpose() * x * (x.transpose() * x).inverse();
+
+    return toalign * transformation;
 }
