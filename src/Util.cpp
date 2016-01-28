@@ -332,21 +332,6 @@ std::vector<std::string> Util::fileLinesToVec(const std::string & filename)
     return result;
 }
 
-std::vector<std::string> Util::mutualLabels(const std::vector<std::string> & labels1, const std::vector<std::string> & labels2)
-{
-    auto l1 = labels1;
-    auto l2 = labels2;
-
-    std::sort(l1.begin(), l1.end());
-    std::sort(l2.begin(), l2.end());
-
-    std::vector<std::string> v(std::max(labels1.size(), labels2.size()));
-    auto it = std::set_intersection(l1.begin(), l1.end(), l2.begin(), l2.end(), v.begin());
-    v.resize(it - v.begin());
-
-    return v;
-}
-
 Eigen::MatrixXd Util::alignDataset(const Eigen::MatrixXd & reference, const Eigen::MatrixXd & toalign, const std::vector<std::string> & labelsReference, const std::vector<std::string> & labelsToalign)
 {
     auto mutualLabels = Util::mutualLabels(labelsReference, labelsToalign);

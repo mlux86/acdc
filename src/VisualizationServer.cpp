@@ -3,6 +3,7 @@
 
 #include <thread>
 #include <chrono>
+#include <set>
 
 #include "boost/filesystem/operations.hpp"
 #include "boost/filesystem/path.hpp"
@@ -92,6 +93,9 @@ void DatasetController::respond(std::stringstream & response, const std::map<std
         } else if (labels == LabelsOrig)
         {
             root["mat"] = Util::clusteringToJson(shownData, Util::numericLabels(vde->labels), vde->labels);
+        } else if (labels == LabelsKraken)
+        {
+            root["mat"] = Util::clusteringToJson(shownData, Util::numericLabels(vdat->krakenClassification), vdat->krakenClassification);
         }
 
         root["numBootstraps"] = (unsigned) vdat->bootstraps.size();
@@ -238,6 +242,30 @@ const std::vector<std::string> VisualizationServer::getClusteringNames()
     return res;
 }
 
+void VisualizationServer::addKrakenResult(const std::string & name, const KrakenResult & krakenResult)
+{
+
+    if (datasets.count(name) == 0)
+    {
+        throw std::runtime_error("Cannot find data set to add Kraken result for!");
+    }
+
+    VisualizationData & vdat = *(datasets[name]);
+    const std::vector<std::string> & labels = vdat.oneshot.labels;
+
+    for (const auto & lbl : labels)
+    {
+        std::string krakenLbl = "unknown";
+        if (krakenResult.classification.find(lbl) != krakenResult.classification.end())
+        {
+            krakenLbl = krakenResult.classification.at(lbl);
+            
+        }
+        vdat.krakenClassification.push_back(krakenLbl);
+    }
+
+}
+
 StatsController::StatsController(const std::string path_) : SimpleGetController(path_)
 {
 }
@@ -278,6 +306,22 @@ void StatsController::respond(std::stringstream & response, const std::map<std::
             entry[clust] = confsJson;
         }
 
+        // kraken
+        const auto & kc = VisualizationServer::getInstance().getClustering(dataset)->krakenClassification;
+        unsigned numUnknown = 0;
+        for (const auto & lbl : kc)
+        {
+            if (lbl == "unknown") 
+            {
+                numUnknown++;
+            }
+        }
+        std::set<std::string> krakenLabels(kc.begin(), kc.end());
+        unsigned numUnique = numUnknown == 0 ? krakenLabels.size() : krakenLabels.size() - 1;
+        Json::Value v;
+        v["numUniqueSpecies"] = numUnique;
+        v["numUnknownContigs"] = numUnknown;
+        entry["kraken"] = v;
 
         root[dataset] = entry;
     }

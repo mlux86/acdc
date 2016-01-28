@@ -5,6 +5,7 @@
 #include "VisualizationServer.h"
 #include "TarjansAlgorithm.h"
 #include "BarnesHutSNEAdapter.h"
+#include "KrakenAdapter.h"
 
 #include "Controller.h"
 #include "WebServer.h"
@@ -25,7 +26,7 @@ int main(int argc, char const *argv[])
 	{
 		opts.reset(new Opts(argc, argv));
 
-		std::ifstream ifs("../banner.txt");
+		std::ifstream ifs("../banner.txt"); // TODO dynamic path
 		banner = std::string((std::istreambuf_iterator<char>(ifs)),
 		                 std::istreambuf_iterator<char>());
 	}
@@ -67,7 +68,9 @@ int main(int argc, char const *argv[])
 
 	for (const auto & fasta : opts->inputFASTAs())
 	{
-		
+		ILOG << "Running Kraken...\n";
+		auto krakenResult = KrakenAdapter::runKraken(fasta, *opts);
+
 		ILOG << "Vectorizing contigs...\n";
 		SequenceVectorizer sv(fasta, *opts);
 		auto dat = sv.vectorize();
@@ -76,19 +79,11 @@ int main(int argc, char const *argv[])
 		auto res = ClusterAnalysis::analyze(dat.first, *opts);
 		auto dataPca = Util::pca(dat.first, opts->tsneDim());
 		VisualizationServer::getInstance().addClustering(fasta, true, dataPca, res.first, dat.second, res.second);
+		VisualizationServer::getInstance().addKrakenResult(fasta, krakenResult);
 
 		ILOG << "Bootstrap analysis...\n";
 		auto results = ClusterAnalysis::analyzeBootstraps(fasta, dat.first, dat.second, *opts);
-
-		for (const auto & res : results)
-		{
-			ILOG << fasta << ": CC k=" << res.resConnComponents.numClusters << "\n";
-			ILOG << fasta << ": DM k=" << res.resDipMeans.numClusters << "\n"; 
-		}
-
-		
 	}
-
 
 	// ILOG << "Waiting for visualization server to stop...\n";
 	// VisualizationServer::getInstance().stop();

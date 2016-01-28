@@ -32,6 +32,8 @@ private:
 
 	unsigned _port = 0;
 
+	std::string _krakenScript = "";
+
 	void initialize(int argc, char const *argv[]);
 
 
@@ -56,5 +58,6 @@ public:
 	unsigned numBootstraps() const;
 	double bootstrapRatio() const;
 	unsigned port() const;
+	std::string krakenScript() const;
 	
 };

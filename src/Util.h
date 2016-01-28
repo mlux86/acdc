@@ -42,8 +42,8 @@ public:
 
 	static std::vector<std::string> fileLinesToVec(const std::string & filename);
 
-	// TODO template
-	static std::vector<std::string> mutualLabels(const std::vector<std::string> & labels1, const std::vector<std::string> & labels2);
+	template<typename T>
+	static std::vector<T> mutualLabels(const std::vector<T> & labels1, const std::vector<T> & labels2);
 
 	static Eigen::MatrixXd alignDataset(const Eigen::MatrixXd & reference, const Eigen::MatrixXd & toalign, const std::vector<std::string> & labelsReference, const std::vector<std::string> & labelsToalign);
 

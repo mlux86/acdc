@@ -9,6 +9,7 @@ add_library(mainprog
 	ClusterAnalysis.cpp
 	Logger.cpp
 	VisualizationServer.cpp
+	KrakenAdapter.cpp
 )
 
 add_executable(acdc main.cpp)

@@ -5,6 +5,7 @@
 #include "WebServer.h"
 #include "Util.h"
 #include "ClusterAnalysis.h"
+#include "KrakenAdapter.h"
 
 #include <eigen3/Eigen/Dense>
 #include <string>
@@ -22,6 +23,7 @@ private:
 	const std::string LabelsOrig = "orig";
 	const std::string LabelsDip = "dip";
 	const std::string LabelsConnComp = "cc";
+	const std::string LabelsKraken = "kraken";
 	const std::string ReductionPca = "pca";
 	const std::string ReductionSne = "sne";
 	const std::string ParamOneshot = "oneshot";
@@ -56,6 +58,7 @@ struct VisualizationData
 {
 	VisualizationDataEntry oneshot;
 	std::vector<VisualizationDataEntry> bootstraps;
+	std::vector<std::string> krakenClassification;
 };
 
 class VisualizationServer
@@ -86,5 +89,5 @@ public:
 		const ClusterAnalysisResult & ClusterAnalysisResult);
 	const VisualizationData * getClustering(const std::string & name);
 	const std::vector<std::string> getClusteringNames();
-	
+	void addKrakenResult(const std::string & name, const KrakenResult & krakenResult);
 };

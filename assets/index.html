@@ -144,7 +144,7 @@
 		{
 			$.getJSON("/stats", function(result)
 			{	
-				$('#confidences').html('<tr><th>Sample</th><th>Confidences CC</th><th>Confidences Dip-Means</th></tr>');
+				$('#confidences').html('<tr><th>Sample</th><th>Confidences CC</th><th>Confidences Dip-Means</th><th>Kraken</th></tr>');
 
 				for (var dataset in result)
 				{
@@ -165,7 +165,7 @@
 							cleanVal = result[dataset].cc[i].confidence;
 						}
 					}
-					ccColor = blendColors('#f46d43', '#abdda4', cleanVal);
+					var ccColor = blendColors('#f46d43', '#abdda4', cleanVal);
 
 					clean = false;
 					conta = false;
@@ -183,9 +183,12 @@
 							cleanVal = result[dataset].dip[i].confidence;
 						}						
 					}
-					dipColor = blendColors('#f46d43', '#abdda4', cleanVal);
+					var dipColor = blendColors('#f46d43', '#abdda4', cleanVal);
 
-					$('#confidences').append('<tr><td class="dataConf">' + dataset + '</td><td class="ccConf" style="background-color:' + ccColor + '">' + cc + '</td><td class="dipConf" style="background-color:' + dipColor + '">' + dip + '</td></tr>');
+					var kraken = 'Unique species: ' + result[dataset].kraken.numUniqueSpecies + '<br/>Unknown contigs: ' + result[dataset].kraken.numUnknownContigs;
+					var krakenColor = result[dataset].kraken.numUniqueSpecies > 1 ? '#f46d43' : '#abdda4';
+
+					$('#confidences').append('<tr><td class="dataConf">' + dataset + '</td><td class="ccConf" style="background-color:' + ccColor + '">' + cc + '</td><td class="dipConf" style="background-color:' + dipColor + '">' + dip + '</td><td class="kraken" style="background-color:' + krakenColor + '">' + kraken + '</td></tr>');
 				}
 
 				$('.dataConf').click(function() {
@@ -212,6 +215,14 @@
 					$('#curLabels').val('dip');					
 					updateChart(true);
 				});
+				$('.kraken').click(function() {
+					$('.bold').removeClass('bold');
+					var dataset = $(this).parent().find('td.dataConf').html();
+					$(this).addClass('bold');
+					$('#curData').val(dataset);
+					$('#curLabels').val('kraken');					
+					updateChart(true);
+				});				
 
 				// setTimeout(updateConfidences, 1000);
 
