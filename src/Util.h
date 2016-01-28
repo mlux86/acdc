@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 
 #include <eigen3/Eigen/Dense>
 #include <json/json.h>
@@ -46,6 +47,8 @@ public:
 	static std::vector<T> mutualLabels(const std::vector<T> & labels1, const std::vector<T> & labels2);
 
 	static Eigen::MatrixXd alignDataset(const Eigen::MatrixXd & reference, const Eigen::MatrixXd & toalign, const std::vector<std::string> & labelsReference, const std::vector<std::string> & labelsToalign);
+
+	static std::unique_ptr<std::string> filterFasta(const std::string & fasta, const std::vector<std::string> contigs);
 
 };
 

@@ -46,6 +46,23 @@ public:
 	std::map<unsigned, double> getClusterConfidences(const std::string & dataset, const std::string & clust);
 };
 
+class FastaExportController : public Controller
+{
+private:
+	std::string path;
+	
+public:
+    FastaExportController(const std::string path_);
+    virtual ~FastaExportController();
+
+	virtual bool validPath(const char * path, const char * method);
+    virtual int handleRequest(  struct MHD_Connection * connection,
+                                const char * url, const char * method, 
+                                const char * upload_data, size_t * upload_data_size);
+};
+
+
+
 struct VisualizationDataEntry
 {
 	Eigen::MatrixXd dataPca;

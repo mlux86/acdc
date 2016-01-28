@@ -51,6 +51,11 @@
 			cursor: pointer;			
 		}
 
+		.exportCb, .exportCb input {
+			font-size: 20px;
+			cursor: pointer;
+		}
+
 		#confidences tr:nth-child(odd) { background-color:#f4f4f4; }
 		#confidences tr:nth-child(even) { background-color:#ffffff; }
 
@@ -137,7 +142,44 @@
 					}
 				}
 
+				if (!bootstrapId)
+				{
+					buildSelectPanel(result.mat);
+				}
 			});
+		}
+
+		function buildSelectPanel(data)
+		{
+			var labelColors = new Array();
+			for (i in data)
+			{
+				if (!(i in labelColors))
+				{
+					labelColors[data[i].label] = data[i].color;
+				}
+			}
+
+			var cb = 'Export contigs with colors: <form id="dataExportForm" name="dataExportForm">';
+			for (i in labelColors)
+			{
+				cb = cb + '<label class="exportCb" for="ecb' + i + '"><input type="checkbox" name="export" value="' + i + '" id="ecb' + i + '"><span style="color:' + labelColors[i] + '">&#9632;</span></label>&nbsp;&nbsp;&nbsp;';
+			}
+			cb = cb + '<br /><input type="submit" value="Download"></form>'
+
+			$('#dataExport').html(cb);
+
+			$("#dataExportForm").on("submit", function(event) 
+			{
+				event.preventDefault();
+				var checked='';
+				$('#dataExportForm input[type="checkbox"]:checked').each(function()
+				{
+					checked = checked + $(this).val() + ',';
+				});				
+				checked = checked.substr(0, checked.length-1);
+				window.location.href = '/export?dataset=' + encodeURIComponent($('#curData').val()) + '&labels=' + encodeURIComponent($('#curLabels').val()) + '&export=' + checked;
+			});			
 		}
 
 		function updateConfidences()
@@ -198,6 +240,7 @@
 					$('#curData').val(dataset);
 					$('#curLabels').val('orig');
 					updateChart(true);
+					$('#bootstrapId').prop("disabled", false);
 				});
 				$('.ccConf').click(function() {
 					$('.bold').removeClass('bold');
@@ -206,6 +249,7 @@
 					$('#curData').val(dataset);
 					$('#curLabels').val('cc');
 					updateChart(true);
+					$('#bootstrapId').prop("disabled", false);
 				});
 				$('.dipConf').click(function() {
 					$('.bold').removeClass('bold');
@@ -214,6 +258,7 @@
 					$('#curData').val(dataset);
 					$('#curLabels').val('dip');					
 					updateChart(true);
+					$('#bootstrapId').prop("disabled", false);
 				});
 				$('.kraken').click(function() {
 					$('.bold').removeClass('bold');
@@ -222,6 +267,7 @@
 					$('#curData').val(dataset);
 					$('#curLabels').val('kraken');					
 					updateChart(true);
+					$('#bootstrapId').prop("disabled", true);
 				});				
 
 				// setTimeout(updateConfidences, 1000);
@@ -267,6 +313,9 @@
 		</select>
 		<div id="chartContainer" style="width: 500px; height: 500px;">
 		</div>
+		<div id="dataExport">			
+			<div id="dataExportCb">&nbsp;</div>
+		</div>		
 	</div>
 </body>
 

@@ -8,6 +8,7 @@
 #include "boost/filesystem/operations.hpp"
 #include "boost/filesystem/path.hpp"
 #include "boost/lexical_cast.hpp"
+#include <boost/algorithm/string.hpp>
 
 DatasetController::DatasetController(const std::string path_) : SimpleGetController(path_)
 {
@@ -135,6 +136,7 @@ void VisualizationServer::run(unsigned port)
 
     controllers.emplace_back(new DatasetController("/json"));
     controllers.emplace_back(new StatsController("/stats"));
+    controllers.emplace_back(new FastaExportController("/export"));
 
     server.reset(new WebServer(port));
 
@@ -369,4 +371,86 @@ std::map<unsigned, double> StatsController::getClusterConfidences(const std::str
     }
 
     return confs;
+}
+
+FastaExportController::FastaExportController(const std::string path_) : path(path_)
+{
+}
+
+FastaExportController::~FastaExportController()
+{
+}
+
+bool FastaExportController::validPath(const char * path_, const char * method_)
+{
+    return strcmp(path_, this->path.c_str()) == 0 && strcmp("GET", method_) == 0;
+}
+
+
+int FastaExportController::handleRequest(  struct MHD_Connection * connection,
+                            const char * url, const char * method, 
+                            const char * upload_data, size_t * upload_data_size)
+{
+    // Extract parameters
+    std::map<std::string, std::string> params;
+    MHD_get_connection_values(connection, MHD_GET_ARGUMENT_KIND, SimpleGetController::MHDCollectParams, &params);    
+
+    std::string dataset = params["dataset"];
+    std::string labels = params["labels"];
+    std::string exprt = params["export"];
+
+    std::vector<std::string> strs;
+    boost::split(strs, exprt, boost::is_any_of(","));
+    std::vector<unsigned> exportLabels;
+    for (const auto & s : strs)
+    {
+        unsigned lbl = boost::lexical_cast<unsigned>(s);
+        exportLabels.push_back(lbl);
+    }    
+
+    const VisualizationDataEntry & vde = VisualizationServer::getInstance().getClustering(dataset)->oneshot;
+
+    std::vector<unsigned> dataLabels;
+
+    if (labels == "cc")
+    {
+        dataLabels = vde.clustRes.resConnComponents.labels;
+    } else if (labels == "dip")
+    {
+        dataLabels = vde.clustRes.resDipMeans.labels;
+    } else if (labels == "kraken")
+    {
+        dataLabels = Util::numericLabels(VisualizationServer::getInstance().getClustering(dataset)->krakenClassification);
+    } else
+    {
+        throw std::runtime_error("Label type not supported!");
+    }
+
+    std::vector<std::string> contigIds;
+
+    for (unsigned i = 0; i < dataLabels.size(); ++i)
+    {        
+        if (std::find(exportLabels.begin(), exportLabels.end(), dataLabels.at(i)) != exportLabels.end())
+        {
+            contigIds.push_back(vde.labels.at(i));
+        }
+    }
+
+    std::unique_ptr<std::string> fasta = Util::filterFasta(dataset, contigIds);
+
+    // Send response.
+    struct MHD_Response * response = MHD_create_response_from_buffer(
+        fasta->size(),
+        (void *)fasta->c_str(), 
+        MHD_RESPMEM_MUST_COPY);
+
+    std::string headername = "Content-Disposition";
+    std::string headervalue = "attachment; filename=export.fasta";
+    MHD_add_response_header(response, headername.c_str(), headervalue.c_str());
+
+    int ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+    
+    MHD_destroy_response(response);
+    
+    return ret;
 }

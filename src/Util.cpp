@@ -12,6 +12,10 @@
 #include <numeric>
 #include <unordered_map>
 
+#include <seqan/alignment_free.h> 
+#include <seqan/sequence.h> 
+#include <seqan/seq_io.h>
+
 Util::Util()
 {
 }
@@ -310,6 +314,7 @@ Json::Value Util::clusteringToJson(const Eigen::MatrixXd & mat, const std::vecto
         unsigned colorIdx = labels.at(i) % colors.size();
         jsonMatPt["color"] = colors[colorIdx];
         jsonMatPt["toolTipContent"] = tooltips[i];
+        jsonMatPt["label"] = labels.at(i);
         jsonMat.append(jsonMatPt);
     }
 
@@ -355,4 +360,33 @@ Eigen::MatrixXd Util::alignDataset(const Eigen::MatrixXd & reference, const Eige
     Eigen::MatrixXd transformation = y.transpose() * x * (x.transpose() * x).inverse();
 
     return toalign * transformation;
+}
+
+std::unique_ptr<std::string> Util::filterFasta(const std::string & fasta, const std::vector<std::string> contigs)
+{
+
+    std::stringstream ss;
+    
+    seqan::SeqFileIn seqFileIn(fasta.c_str());
+    seqan::StringSet<seqan::CharString> ids;
+    seqan::StringSet<seqan::String<seqan::Iupac> > seqs;
+
+    seqan::readRecords(ids, seqs, seqFileIn);
+
+    unsigned n = seqan::length(ids);
+
+    for (unsigned i = 0; i < n; i++)
+    {
+        std::string id;
+        move(id, ids[i]);
+        if (std::find(contigs.begin(), contigs.end(), id) != contigs.end())
+        {
+            std::string seq;
+            move(seq, seqs[i]);
+            ss << id << '\n' << seq << '\n';
+        }
+    }
+
+    std::unique_ptr<std::string> result(new std::string(ss.str()));
+    return result;
 }
