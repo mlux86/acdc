@@ -100,8 +100,6 @@ public:
 	void addClustering(
 		const std::string & key,
 		bool oneshot,
-		const Eigen::MatrixXd & dataPca,
-		const Eigen::MatrixXd & dataSne, 
 		const std::vector<std::string> & labels, 
 		const ClusterAnalysisResult & ClusterAnalysisResult);
 	const VisualizationData * getClustering(const std::string & name);

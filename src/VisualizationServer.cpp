@@ -83,7 +83,8 @@ void DatasetController::respond(std::stringstream & response, const std::map<std
             shownData = vde->dataPca;
         } else
         {
-            shownData = Util::alignDataset(vdat->oneshot.dataSne, vde->dataSne, vdat->oneshot.labels, vde->labels);
+            // shownData = Util::alignDataset(vdat->oneshot.dataSne, vde->dataSne, vdat->oneshot.labels, vde->labels);
+            shownData = vde->dataSne;
         }
         if (labels == LabelsConnComp)
         {
@@ -173,8 +174,6 @@ void VisualizationServer::stop()
 void VisualizationServer::addClustering(
         const std::string & key,
         bool oneshot,
-        const Eigen::MatrixXd & dataPca,
-        const Eigen::MatrixXd & dataSne, 
         const std::vector<std::string> & labels,
         const ClusterAnalysisResult & clustRes)
 {
@@ -189,8 +188,8 @@ void VisualizationServer::addClustering(
     VisualizationData * dat = datasets[key].get();
     
     VisualizationDataEntry vde;
-    vde.dataPca = dataPca;
-    vde.dataSne = dataSne;
+    vde.dataPca = clustRes.dataPca;
+    vde.dataSne = clustRes.dataSne;
     vde.labels = labels;
     vde.clustRes = clustRes;
 

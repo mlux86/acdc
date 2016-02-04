@@ -68,8 +68,8 @@ int main(int argc, char const *argv[])
 
 	for (const auto & fasta : opts->inputFASTAs())
 	{
-		ILOG << "Running Kraken...\n";
-		auto krakenResult = KrakenAdapter::runKraken(fasta, *opts);
+		// ILOG << "Running Kraken...\n";
+		// auto krakenResult = KrakenAdapter::runKraken(fasta, *opts);
 
 		ILOG << "Vectorizing contigs...\n";
 		SequenceVectorizer sv(fasta, *opts);
@@ -77,12 +77,20 @@ int main(int argc, char const *argv[])
 
 		ILOG << "One-shot analysis...\n";
 		auto res = ClusterAnalysis::analyze(dat.first, *opts);
-		auto dataPca = Util::pca(dat.first, opts->tsneDim());
-		VisualizationServer::getInstance().addClustering(fasta, true, dataPca, res.first, dat.second, res.second);
-		VisualizationServer::getInstance().addKrakenResult(fasta, krakenResult);
+		VisualizationServer::getInstance().addClustering(fasta, true, dat.second, res);
+		// VisualizationServer::getInstance().addKrakenResult(fasta, krakenResult);
 
 		ILOG << "Bootstrap analysis...\n";
-		auto results = ClusterAnalysis::analyzeBootstraps(fasta, dat.first, dat.second, *opts);
+		auto results = ClusterAnalysis::analyzeBootstraps(dat.first, *opts);
+		for (auto & r : results)
+		{
+			std::vector<std::string> labels;
+			for (auto & idx : r.bootstrapIndexes) // modify labels
+			{
+				labels.push_back(dat.second[idx]);
+			}
+			VisualizationServer::getInstance().addClustering(fasta, false, labels, r);
+		}
 	}
 
 	// ILOG << "Waiting for visualization server to stop...\n";

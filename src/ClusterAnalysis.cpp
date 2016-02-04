@@ -16,54 +16,55 @@ ClusterAnalysis::~ClusterAnalysis()
 
 }
 
-ClusterAnalysisResult ClusterAnalysis::bootstrapTask(const std::string & taskName, const Eigen::MatrixXd & dataOrig, const std::vector<std::string> & labelsOrig, const Opts & opts, const std::vector<unsigned> indices)
+ClusterAnalysisResult ClusterAnalysis::bootstrapTask(const Eigen::MatrixXd & dataOrig, const Opts & opts, const std::vector<unsigned> indices)
 {
 	Eigen::MatrixXd data = Eigen::MatrixXd::Zero(indices.size(), dataOrig.cols());
-	std::vector<std::string> labels(indices.size());	
+
 	for (unsigned i = 0; i < indices.size(); i++)
 	{
 		data.row(i) = dataOrig.row(indices[i]);
-		labels[i] = labelsOrig[indices[i]];
 	}
+
 	auto res = ClusterAnalysis::analyze(data, opts);
 
-	auto dataPca = Util::pca(data, opts.tsneDim());
-	
-	VisualizationServer::getInstance().addClustering(taskName, false, dataPca, res.first, labels, res.second);
-	
-	return res.second;
+	res.bootstrapIndexes = indices;
+
+	return res;
 }
 
-std::pair<Eigen::MatrixXd, ClusterAnalysisResult> ClusterAnalysis::analyze(const Eigen::MatrixXd & data, const Opts & opts)
+ClusterAnalysisResult ClusterAnalysis::analyze(const Eigen::MatrixXd & data, const Opts & opts)
 {
 	ClusterAnalysisResult res;
 
+	VLOG << "PCA...\n";
+	res.dataPca = Util::pca(data, opts.tsneDim());
+
 	VLOG << "Running t-SNE...\n";
-	auto datSne = BarnesHutSNEAdapter::runBarnesHutSNE(data, opts);
+	res.dataSne = BarnesHutSNEAdapter::runBarnesHutSNE(data, opts);
 
 	VLOG << "Counting connected components...\n";
-	Eigen::MatrixXd affinities = Util::knnAffinityMatrix(datSne, 7, false);
+	Eigen::MatrixXd affinities = Util::knnAffinityMatrix(res.dataSne, 7, false);
 	TarjansAlgorithm ta;
 	res.resConnComponents = ta.run(affinities);
 
 	VLOG << "Running dipMeans...\n";
-	res.resDipMeans = Clustering::dipMeans(datSne, 0, 0.01, 5);
+	// res.resDipMeans = Clustering::dipMeans(datSne, 0, 0.01, 5);
 
-	return std::make_pair(datSne, res);
+	return res;
 }
 
-std::vector<ClusterAnalysisResult> ClusterAnalysis::analyzeBootstraps(const std::string & taskName, const Eigen::MatrixXd & data, const std::vector<std::string> & labels, const Opts & opts)
+std::vector<ClusterAnalysisResult> ClusterAnalysis::analyzeBootstraps(const Eigen::MatrixXd & data, const Opts & opts)
 {
-	const std::vector< std::vector<unsigned> > bootstrapIndices = Util::stratifiedSubsamplingIndices(data.rows(), opts.numBootstraps(), opts.bootstrapRatio());
+	const std::vector< std::vector<unsigned> > bootstrapIndexes = Util::stratifiedSubsamplingIndices(data.rows(), opts.numBootstraps(), opts.bootstrapRatio());
 
 	ThreadPool pool(opts.numThreads());
 
 	std::vector< std::future<ClusterAnalysisResult> > futures;
 
-	for (const auto & indices : bootstrapIndices)
+	for (const auto & indices : bootstrapIndexes)
 	{
 		futures.push_back(
-			pool.enqueue(&ClusterAnalysis::bootstrapTask, taskName, data, labels, opts, indices)
+			pool.enqueue(&ClusterAnalysis::bootstrapTask, data, opts, indices)
 		);
 	}
 

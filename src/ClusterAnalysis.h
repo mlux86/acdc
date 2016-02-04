@@ -7,6 +7,11 @@
 
 struct ClusterAnalysisResult
 {
+	Eigen::MatrixXd dataSne;
+	Eigen::MatrixXd dataPca;
+
+	std::vector<unsigned> bootstrapIndexes;
+
 	ClusteringResult resConnComponents;
 	ClusteringResult resDipMeans;
 };
@@ -17,10 +22,10 @@ class ClusterAnalysis
 private:
 	ClusterAnalysis();
 	~ClusterAnalysis();
-	static ClusterAnalysisResult bootstrapTask(const std::string & taskName, const Eigen::MatrixXd & data, const std::vector<std::string> & labelsOrig, const Opts & opts, const std::vector<unsigned> indices);
+	static ClusterAnalysisResult bootstrapTask(const Eigen::MatrixXd & dataOrig, const Opts & opts, const std::vector<unsigned> indices);
 
 public:
-	static std::pair<Eigen::MatrixXd, ClusterAnalysisResult> analyze(const Eigen::MatrixXd & data, const Opts & opts);
-	static std::vector<ClusterAnalysisResult> analyzeBootstraps(const std::string & taskName, const Eigen::MatrixXd & data, const std::vector<std::string> & labels, const Opts & opts);
+	static ClusterAnalysisResult analyze(const Eigen::MatrixXd & data, const Opts & opts);
+	static std::vector<ClusterAnalysisResult> analyzeBootstraps(const Eigen::MatrixXd & data, const Opts & opts);
 	
 };

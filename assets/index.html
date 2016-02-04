@@ -78,7 +78,7 @@
 		    return "#"+(0x1000000+(Math.round((R2-R1)*p)+R1)*0x10000+(Math.round((G2-G1)*p)+G1)*0x100+(Math.round((B2-B1)*p)+B1)).toString(16).slice(1);
 		}		
 
-		function updateChart(updateBootstraps)
+		function updateChart(updateBootstraps, showExport)
 		{
 			var dataset = $('#curData').val();
 			var labels = $('#curLabels').val();
@@ -142,11 +142,17 @@
 					}
 				}
 
-				if (!bootstrapId)
+				if (showExport)
 				{
 					buildSelectPanel(result.mat);
+					$('#dataExport').show();
+				} else
+				{
+					$('#dataExport').hide();
 				}
+
 			});
+
 		}
 
 		function buildSelectPanel(data)
@@ -239,7 +245,7 @@
 					$(this).addClass('bold');
 					$('#curData').val(dataset);
 					$('#curLabels').val('orig');
-					updateChart(true);
+					updateChart(true, false);
 					$('#bootstrapId').prop("disabled", false);
 				});
 				$('.ccConf').click(function() {
@@ -248,7 +254,7 @@
 					$(this).addClass('bold');
 					$('#curData').val(dataset);
 					$('#curLabels').val('cc');
-					updateChart(true);
+					updateChart(true, true);
 					$('#bootstrapId').prop("disabled", false);
 				});
 				$('.dipConf').click(function() {
@@ -257,7 +263,7 @@
 					$(this).addClass('bold');
 					$('#curData').val(dataset);
 					$('#curLabels').val('dip');					
-					updateChart(true);
+					updateChart(true, true);
 					$('#bootstrapId').prop("disabled", false);
 				});
 				$('.kraken').click(function() {
@@ -266,7 +272,7 @@
 					$(this).addClass('bold');
 					$('#curData').val(dataset);
 					$('#curLabels').val('kraken');					
-					updateChart(true);
+					updateChart(true, true);
 					$('#bootstrapId').prop("disabled", true);
 				});				
 
@@ -279,15 +285,14 @@
 		{	
 			updateConfidences();
 
-			$('#confToggle').click(function() {
-				$('#confidences').toggle();
-			});
 			$('.radioReduction').click(function() {
 				$('#curReduction').val($(this).val());
-				updateChart(false);
+				updateChart(false, !$('#bootstrapId').val() && $('#curLabels').val() != 'orig');
 			});
+
 			$('#bootstrapId').change(function() {
-				updateChart(false);
+				console.log($('#bootstrapId').val());
+				updateChart(false, !$('#bootstrapId').val() && $('#curLabels').val() != 'orig'	);
 			});
 		});		
 
@@ -296,7 +301,6 @@
 </head>
 <body>
 	<div style="float:left;">
-		<a href="#" id="confToggle">Show/hide confidences</a>
 		<table id="confidences">
 			<tr><th>Sample</th><th>Confidence CC</th><th>Confidence Dip-Means</th></tr>
 		</table>
@@ -306,11 +310,27 @@
 		<input type="hidden" id="curData" name="curData" value="">
 		<input type="hidden" id="curLabels" name="curLabels" value="">
 		<input type="hidden" id="curReduction" name="curReduction" value="sne">
-		<input type="radio" class="radioReduction" name="radioReduction" value="sne" checked> BH-SNE
-		<input type="radio" class="radioReduction" name="radioReduction" value="pca"> PCA
-		<select id="bootstrapId">
-			<option value="">One shot</option>
-		</select>
+		<table>
+			<tr>
+			<td>
+				Dimension reduction: 
+			</td>
+			<td>
+				<input type="radio" class="radioReduction" name="radioReduction" value="sne" checked> BH-SNE
+				<input type="radio" class="radioReduction" name="radioReduction" value="pca"> PCA
+			</td>
+			</tr>
+			<tr>
+				<td>
+					Select data set:
+				</td>
+				<td>
+					<select id="bootstrapId">
+						<option value="">One shot</option>
+					</select>
+				</td>
+			</tr>
+		</table>
 		<div id="chartContainer" style="width: 500px; height: 500px;">
 		</div>
 		<div id="dataExport">			

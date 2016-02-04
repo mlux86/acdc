@@ -344,22 +344,59 @@ Eigen::MatrixXd Util::alignDataset(const Eigen::MatrixXd & reference, const Eige
     unsigned n = mutualLabels.size();
     unsigned dim = reference.cols();
 
-    Eigen::MatrixXd x = Eigen::MatrixXd::Zero(n, dim);
-    Eigen::MatrixXd y = Eigen::MatrixXd::Zero(n, dim);
+    // Eigen::MatrixXd x = Eigen::MatrixXd::Zero(n, dim);
+    // Eigen::MatrixXd y = Eigen::MatrixXd::Zero(n, dim);
+
+    // unsigned i = 0;
+    // for (const auto & lbl : mutualLabels)
+    // {
+    //     unsigned idx1 = std::distance(labelsReference.begin(), std::find(labelsReference.begin(), labelsReference.end(), lbl));
+    //     x.row(i) = reference.row(idx1);
+    //     unsigned idx2 = std::distance(labelsToalign.begin(), std::find(labelsToalign.begin(), labelsToalign.end(), lbl));
+    //     y.row(i) = toalign.row(idx2);
+    //     i++;
+    // }
+
+    // Eigen::MatrixXd transformation = (y.transpose() * y + 10 * Eigen::MatrixXd::Identity(dim, dim)).inverse() * y.transpose() * x;
+
+    // Eigen::EigenSolver<Eigen::MatrixXd> eigensolver(transformation);
+    // std::cout << eigensolver.eigenvalues() << std::endl;
+
+    // Eigen::MatrixXd result = toalign * transformation;
+
+    Eigen::MatrixXd x = Eigen::MatrixXd::Zero(n, dim+1);
+    Eigen::MatrixXd y = Eigen::MatrixXd::Zero(n, dim+1);
 
     unsigned i = 0;
     for (const auto & lbl : mutualLabels)
     {
         unsigned idx1 = std::distance(labelsReference.begin(), std::find(labelsReference.begin(), labelsReference.end(), lbl));
-        x.row(i) = reference.row(idx1);
         unsigned idx2 = std::distance(labelsToalign.begin(), std::find(labelsToalign.begin(), labelsToalign.end(), lbl));
-        y.row(i) = toalign.row(idx2);
+
+        for (unsigned j = 0; j < dim; ++j)
+        {
+            x(i, j) = reference(idx1, j);
+            y(i, j) = toalign(idx2, j);
+        }
+        x(i, dim) = 1;
+        y(i, dim) = 1;
+
         i++;
     }
 
-    Eigen::MatrixXd transformation = y.transpose() * x * (x.transpose() * x).inverse();
+    Eigen::MatrixXd transformation = (y.transpose() * y + 0.1 * Eigen::MatrixXd::Identity(dim+1, dim+1)).inverse() * y.transpose() * x;
 
-    return toalign * transformation;
+    // Eigen::EigenSolver<Eigen::MatrixXd> eigensolver(transformation);
+    // std::cout << eigensolver.eigenvalues() << std::endl;
+
+    Eigen::MatrixXd result = y * transformation;
+
+    result = result.block(0, 0, n, dim); 
+
+    Util::saveMatrix(x, "/host/downloads/x.txt", '\t');
+    Util::saveMatrix(y, "/host/downloads/y.txt", '\t');
+
+    return result;
 }
 
 std::unique_ptr<std::string> Util::filterFasta(const std::string & fasta, const std::vector<std::string> contigs)
@@ -383,7 +420,7 @@ std::unique_ptr<std::string> Util::filterFasta(const std::string & fasta, const 
         {
             std::string seq;
             move(seq, seqs[i]);
-            ss << id << '\n' << seq << '\n';
+            ss << '>' << id << '\n' << seq << '\n';
         }
     }
 

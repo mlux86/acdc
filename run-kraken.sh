@@ -5,14 +5,14 @@ fasta="$1"
 if [[ -z "$fasta" ]]; then
  	echo "No fasta file given!"
  	exit 1
-fi 
+fi
 
 krakenFile=$(mktemp)
 krakenOut=$(mktemp)
 
-kraken --db /home/mlux/downloads/minikraken_20141208/ --output "$krakenFile" "$fasta"
+kraken --db /home/mlux/minikraken_20141208/ --output "$krakenFile" "$fasta"
 
-kraken-translate --db /home/mlux/downloads/minikraken_20141208/ "$krakenFile" > "$krakenOut"
+kraken-translate --db /home/mlux/minikraken_20141208/ "$krakenFile" > "$krakenOut"
 
 rm "$krakenFile"
 
