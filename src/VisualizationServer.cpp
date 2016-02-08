@@ -92,12 +92,24 @@ void DatasetController::respond(std::stringstream & response, const std::map<std
                 // shownData = vde->clustRes.dataSne;
             }
         }
+
+
         if (labels == LabelsConnComp)
         {
-            root["mat"] = Util::clusteringToJson(shownData, vde->clustRes.resConnComponents.labels, vde->labels);
+            auto shownLabels = vde->clustRes.resConnComponents.labels;
+            if (!oneshot)
+            {
+                shownLabels = Util::alignBootstrapLabels(vdat->oneshot.clustRes.resConnComponents.labels, shownLabels, vde->clustRes.bootstrapIndexes);
+            }
+            root["mat"] = Util::clusteringToJson(shownData, shownLabels, vde->labels);
         } else if (labels == LabelsDip)
         {
-            root["mat"] = Util::clusteringToJson(shownData, vde->clustRes.resDipMeans.labels, vde->labels);
+            auto shownLabels = vde->clustRes.resDipMeans.labels;
+            if (!oneshot)
+            {
+                shownLabels = Util::alignBootstrapLabels(vdat->oneshot.clustRes.resDipMeans.labels, shownLabels, vde->clustRes.bootstrapIndexes);
+            }
+            root["mat"] = Util::clusteringToJson(shownData, shownLabels, vde->labels);
         } else if (labels == LabelsOrig)
         {
             root["mat"] = Util::clusteringToJson(shownData, Util::numericLabels(vde->labels), vde->labels);

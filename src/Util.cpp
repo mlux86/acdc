@@ -421,6 +421,31 @@ Eigen::MatrixXd Util::alignBootstrap(const Eigen::MatrixXd & reference, const Ei
     return result;
 }
 
+std::vector<unsigned> Util::alignBootstrapLabels(const std::vector<unsigned> & referenceLabels, const std::vector<unsigned> & bootstrapLabels, const std::vector<unsigned> & bootstrapIndexes)
+{
+    unsigned n = bootstrapLabels.size();
+
+    std::unordered_map<unsigned, unsigned> mp;
+
+    for (unsigned i = 0; i < n; i++)
+    {
+        unsigned lbl = bootstrapLabels.at(i);
+        if (mp.count(lbl) == 0)
+        {            
+            mp[lbl] = referenceLabels.at(bootstrapIndexes[i]);
+        }
+    }
+
+    std::vector<unsigned> result(n, 0);
+
+    for (unsigned i = 0; i < n; i++)
+    {
+        result[i] = mp.at(bootstrapLabels.at(i));   
+    }
+
+    return result;
+}
+
 std::unique_ptr<std::string> Util::filterFasta(const std::string & fasta, const std::vector<std::string> contigs)
 {
 
