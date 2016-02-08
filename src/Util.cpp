@@ -337,64 +337,86 @@ std::vector<std::string> Util::fileLinesToVec(const std::string & filename)
     return result;
 }
 
-Eigen::MatrixXd Util::alignDataset(const Eigen::MatrixXd & reference, const Eigen::MatrixXd & toalign, const std::vector<std::string> & labelsReference, const std::vector<std::string> & labelsToalign)
+std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::VectorXd, Eigen::MatrixXd, Eigen::MatrixXd> Util::canonicalCorrelation(const Eigen::MatrixXd & x_, const Eigen::MatrixXd & y_)
 {
-    auto mutualLabels = Util::mutualLabels(labelsReference, labelsToalign);
+    unsigned n = x_.rows();
+    unsigned dimX = x_.cols();
+    unsigned dimY = y_.cols();
 
-    unsigned n = mutualLabels.size();
-    unsigned dim = reference.cols();
-
-    // Eigen::MatrixXd x = Eigen::MatrixXd::Zero(n, dim);
-    // Eigen::MatrixXd y = Eigen::MatrixXd::Zero(n, dim);
-
-    // unsigned i = 0;
-    // for (const auto & lbl : mutualLabels)
-    // {
-    //     unsigned idx1 = std::distance(labelsReference.begin(), std::find(labelsReference.begin(), labelsReference.end(), lbl));
-    //     x.row(i) = reference.row(idx1);
-    //     unsigned idx2 = std::distance(labelsToalign.begin(), std::find(labelsToalign.begin(), labelsToalign.end(), lbl));
-    //     y.row(i) = toalign.row(idx2);
-    //     i++;
-    // }
-
-    // Eigen::MatrixXd transformation = (y.transpose() * y + 10 * Eigen::MatrixXd::Identity(dim, dim)).inverse() * y.transpose() * x;
-
-    // Eigen::EigenSolver<Eigen::MatrixXd> eigensolver(transformation);
-    // std::cout << eigensolver.eigenvalues() << std::endl;
-
-    // Eigen::MatrixXd result = toalign * transformation;
-
-    Eigen::MatrixXd x = Eigen::MatrixXd::Zero(n, dim+1);
-    Eigen::MatrixXd y = Eigen::MatrixXd::Zero(n, dim+1);
-
-    unsigned i = 0;
-    for (const auto & lbl : mutualLabels)
+    if (n != y_.rows())
     {
-        unsigned idx1 = std::distance(labelsReference.begin(), std::find(labelsReference.begin(), labelsReference.end(), lbl));
-        unsigned idx2 = std::distance(labelsToalign.begin(), std::find(labelsToalign.begin(), labelsToalign.end(), lbl));
-
-        for (unsigned j = 0; j < dim; ++j)
-        {
-            x(i, j) = reference(idx1, j);
-            y(i, j) = toalign(idx2, j);
-        }
-        x(i, dim) = 1;
-        y(i, dim) = 1;
-
-        i++;
+        throw std::runtime_error("Number of rows of x must equal number of rows of y.");
     }
 
-    Eigen::MatrixXd transformation = (y.transpose() * y + 0.1 * Eigen::MatrixXd::Identity(dim+1, dim+1)).inverse() * y.transpose() * x;
+    Eigen::MatrixXd x = x_;
+    Eigen::MatrixXd y = y_;
 
-    // Eigen::EigenSolver<Eigen::MatrixXd> eigensolver(transformation);
-    // std::cout << eigensolver.eigenvalues() << std::endl;
+    // subtract means
+    Eigen::VectorXd meanX = x.colwise().sum() / n;
+    x.rowwise() -= meanX.transpose();
+    Eigen::VectorXd meanY = y.colwise().sum() / n;
+    y.rowwise() -= meanY.transpose();
 
-    Eigen::MatrixXd result = y * transformation;
+    Eigen::ColPivHouseholderQR<Eigen::MatrixXd> qrX(x);
+    Eigen::ColPivHouseholderQR<Eigen::MatrixXd> qrY(y);
+    unsigned rankX = qrX.rank();
+    unsigned rankY = qrY.rank();
+    Eigen::PermutationMatrix<Eigen::Dynamic,Eigen::Dynamic> permX = qrX.colsPermutation();
+    Eigen::PermutationMatrix<Eigen::Dynamic,Eigen::Dynamic> permY = qrY.colsPermutation();    
+    Eigen::MatrixXd qX_ = qrX.householderQ();
+    Eigen::MatrixXd qY_ = qrY.householderQ();
+    Eigen::MatrixXd rX_ = qrX.matrixR();
+    Eigen::MatrixXd rY_ = qrY.matrixR();
 
-    result = result.block(0, 0, n, dim); 
+    if (rankX == 0 || rankY == 0)
+    {
+        throw std::runtime_error("Rank of input matrices must not be zero.");
+    }
 
-    Util::saveMatrix(x, "/host/downloads/x.txt", '\t');
-    Util::saveMatrix(y, "/host/downloads/y.txt", '\t');
+    Eigen::MatrixXd qX = qX_.leftCols(rankX);
+    Eigen::MatrixXd rX = rX_.topLeftCorner(rankX, rankX).triangularView<Eigen::Upper>();
+
+    Eigen::MatrixXd qY = qY_.leftCols(rankY);
+    Eigen::MatrixXd rY = rY_.topLeftCorner(rankY, rankY).triangularView<Eigen::Upper>();
+
+    unsigned d = std::min(dimX, dimY);
+
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd(qX.transpose() * qY, Eigen::ComputeThinU | Eigen::ComputeThinV);
+
+    Eigen::VectorXd r = svd.singularValues();
+
+    Eigen::MatrixXd a_ = rX.inverse() * svd.matrixU().leftCols(d) * sqrt((double)n - 1.0);
+    Eigen::MatrixXd b_ = rY.inverse() * svd.matrixV().leftCols(d) * sqrt((double)n - 1.0);
+
+    Eigen::MatrixXd a = permX * a_;
+    Eigen::MatrixXd b = permY * b_;
+
+    Eigen::MatrixXd u = x * a;
+    Eigen::MatrixXd v = y * b;
+
+    return std::make_tuple(a, b, r, u, v);
+}
+
+Eigen::MatrixXd Util::alignBootstrap(const Eigen::MatrixXd & reference, const Eigen::MatrixXd & bootstrap, const std::vector<unsigned> & bootstrapIndexes)
+{
+    unsigned n = bootstrap.rows();
+    unsigned dim = bootstrap.cols();
+
+    Eigen::MatrixXd x = Eigen::MatrixXd::Zero(n, dim);
+    Eigen::MatrixXd y = Eigen::MatrixXd::Zero(n, dim);
+
+    for (unsigned i = 0; i < n; ++i)
+    {
+        x.row(i) = reference.row(bootstrapIndexes[i]);
+        y.row(i) = bootstrap.row(i);
+    }    
+
+    auto ccaRes = canonicalCorrelation(x, y);
+
+    Eigen::MatrixXd a = std::get<0>(ccaRes);
+    Eigen::MatrixXd v = std::get<4>(ccaRes);
+
+    Eigen::MatrixXd result = v * a.inverse();
 
     return result;
 }

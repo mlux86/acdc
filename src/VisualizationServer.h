@@ -65,10 +65,8 @@ public:
 
 struct VisualizationDataEntry
 {
-	Eigen::MatrixXd dataPca;
-	Eigen::MatrixXd dataSne;
-	std::vector<std::string> labels;	
 	ClusterAnalysisResult clustRes;
+	std::vector<std::string> labels;	
 };
 
 struct VisualizationData

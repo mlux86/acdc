@@ -48,7 +48,7 @@ ClusterAnalysisResult ClusterAnalysis::analyze(const Eigen::MatrixXd & data, con
 	res.resConnComponents = ta.run(affinities);
 
 	VLOG << "Running dipMeans...\n";
-	// res.resDipMeans = Clustering::dipMeans(datSne, 0, 0.01, 5);
+	res.resDipMeans = Clustering::dipMeans(res.dataSne, 0, 0.01, 5);
 
 	return res;
 }

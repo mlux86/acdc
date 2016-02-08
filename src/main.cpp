@@ -68,8 +68,8 @@ int main(int argc, char const *argv[])
 
 	for (const auto & fasta : opts->inputFASTAs())
 	{
-		// ILOG << "Running Kraken...\n";
-		// auto krakenResult = KrakenAdapter::runKraken(fasta, *opts);
+		ILOG << "Running Kraken...\n";
+		auto krakenResult = KrakenAdapter::runKraken(fasta, *opts);
 
 		ILOG << "Vectorizing contigs...\n";
 		SequenceVectorizer sv(fasta, *opts);
@@ -78,7 +78,7 @@ int main(int argc, char const *argv[])
 		ILOG << "One-shot analysis...\n";
 		auto res = ClusterAnalysis::analyze(dat.first, *opts);
 		VisualizationServer::getInstance().addClustering(fasta, true, dat.second, res);
-		// VisualizationServer::getInstance().addKrakenResult(fasta, krakenResult);
+		VisualizationServer::getInstance().addKrakenResult(fasta, krakenResult);
 
 		ILOG << "Bootstrap analysis...\n";
 		auto results = ClusterAnalysis::analyzeBootstraps(dat.first, *opts);

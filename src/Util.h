@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <tuple>
 
 #include <eigen3/Eigen/Dense>
 #include <json/json.h>
@@ -46,7 +47,9 @@ public:
 	template<typename T>
 	static std::vector<T> mutualLabels(const std::vector<T> & labels1, const std::vector<T> & labels2);
 
-	static Eigen::MatrixXd alignDataset(const Eigen::MatrixXd & reference, const Eigen::MatrixXd & toalign, const std::vector<std::string> & labelsReference, const std::vector<std::string> & labelsToalign);
+	static std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::VectorXd, Eigen::MatrixXd, Eigen::MatrixXd> canonicalCorrelation(const Eigen::MatrixXd & x, const Eigen::MatrixXd & y);
+
+	static Eigen::MatrixXd alignBootstrap(const Eigen::MatrixXd & reference, const Eigen::MatrixXd & bootstrap, const std::vector<unsigned> & bootstrapIndexes);
 
 	static std::unique_ptr<std::string> filterFasta(const std::string & fasta, const std::vector<std::string> contigs);
 
