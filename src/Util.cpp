@@ -429,7 +429,7 @@ std::vector<unsigned> Util::alignBootstrapLabels(const std::vector<unsigned> & r
     std::unordered_map<unsigned, unsigned> mp;
     std::set<unsigned> assigned;
 
-    unsigned k = 0;
+    unsigned k = *std::max_element(referenceLabels.begin(), referenceLabels.end()) + 1;
 
     for (unsigned i = 0; i < n; i++)
     {
@@ -443,9 +443,7 @@ std::vector<unsigned> Util::alignBootstrapLabels(const std::vector<unsigned> & r
                 assigned.insert(lblTo);
             } else
             {
-                k++;
-                lblTo = *std::max_element(referenceLabels.begin(), referenceLabels.end()) + k;
-                mp[lblFrom] = lblTo;
+                mp[lblFrom] = k++;
             }
         }
     }
