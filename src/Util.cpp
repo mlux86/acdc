@@ -11,6 +11,7 @@
 #include "nanoflann.hpp"
 #include <numeric>
 #include <unordered_map>
+#include <set>
 
 #include <seqan/alignment_free.h> 
 #include <seqan/sequence.h> 
@@ -426,13 +427,26 @@ std::vector<unsigned> Util::alignBootstrapLabels(const std::vector<unsigned> & r
     unsigned n = bootstrapLabels.size();
 
     std::unordered_map<unsigned, unsigned> mp;
+    std::set<unsigned> assigned;
+
+    unsigned k = 0;
 
     for (unsigned i = 0; i < n; i++)
     {
-        unsigned lbl = bootstrapLabels.at(i);
-        if (mp.count(lbl) == 0)
-        {            
-            mp[lbl] = referenceLabels.at(bootstrapIndexes[i]);
+        unsigned lblFrom = bootstrapLabels.at(i);
+        unsigned lblTo = referenceLabels.at(bootstrapIndexes.at(i));
+        if (mp.count(lblFrom) == 0) 
+        {   
+            if (assigned.find(lblTo) == assigned.end())
+            {
+                mp[lblFrom] = lblTo;
+                assigned.insert(lblTo);
+            } else
+            {
+                k++;
+                lblTo = *std::max_element(referenceLabels.begin(), referenceLabels.end()) + k;
+                mp[lblFrom] = lblTo;
+            }
         }
     }
 
