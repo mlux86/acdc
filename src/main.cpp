@@ -66,6 +66,14 @@ int main(int argc, char const *argv[])
 		ELOG << "Could not create output directory, aborting.\n";
 		return EXIT_FAILURE;
 	}
+	try 
+	{
+		Util::copyDir(boost::filesystem::path("../assets"), outPath);
+	} catch(const boost::filesystem::filesystem_error & e)
+	{
+		ELOG << e.what() << "\n";
+		return EXIT_FAILURE;
+	}
 
 	ResultIO rio(opts->outputDir());
 

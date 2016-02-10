@@ -51,6 +51,14 @@ $(document).ready(function()
 	});
 
 	selectedFasta = $('#confidences').find('td.dataConf:first').text();
+
+	if (!selectedFasta)
+	{
+		$('#confidences').hide();
+		$('#scatterContainer').html('<b>No results to show, yet. Reload page to refresh...<b>');
+		return;
+	}
+
 	updateBootStrapsSelect();
 	showVisualization();
 

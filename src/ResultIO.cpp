@@ -104,16 +104,17 @@ void ResultIO::writeResultContainerToJSON(ResultContainer result, const std::str
 
 	Json::StreamWriterBuilder builder;
 	std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
-	std::ofstream ofs(filename, std::ofstream::out);
+	std::ofstream ofs(filename, std::ofstream::out | std::ofstream::app);
 	ofs << "results['" << result.fasta << "'] = ";
 	writer->write(root, &ofs);
+	ofs << ";" << std::endl;
 	ofs.close();
 }
 
 void ResultIO::processResult(const ResultContainer & result)
 {
 	std::stringstream ss;
-	ss << outputDir << "/" << jsonFiles.size() << ".js";
+	ss << outputDir << "/" << "data.js";
 	std::string fname = ss.str();
 	ResultIO::writeResultContainerToJSON(result, fname);
 	jsonFiles.push_back(fname);
