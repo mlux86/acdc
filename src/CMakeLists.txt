@@ -8,10 +8,10 @@ add_library(mainprog
 	Kmeans.cpp
 	ClusterAnalysis.cpp
 	Logger.cpp
-	VisualizationServer.cpp
+	ResultIO.cpp
 	KrakenAdapter.cpp
 )
 
 add_executable(acdc main.cpp)
 
-target_link_libraries(acdc mainprog webserver tsne dip ${Boost_LIBRARIES} ${SEQAN_LIBRARIES} ${JSONCPP_LIBRARY})
+target_link_libraries(acdc mainprog tsne jsoncpp dip pthread m ${Boost_LIBRARIES} ${JSONCPP_LIBRARY})

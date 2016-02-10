@@ -30,7 +30,7 @@ private:
 	unsigned _numBootstraps = 0;
 	double _bootstrapRatio = 0;
 
-	unsigned _port = 0;
+	std::string _outputDir = "";
 
 	std::string _krakenScript = "";
 
@@ -57,7 +57,7 @@ public:
 	unsigned numThreads() const;
 	unsigned numBootstraps() const;
 	double bootstrapRatio() const;
-	unsigned port() const;
+	std::string outputDir() const;
 	std::string krakenScript() const;
 	
 };

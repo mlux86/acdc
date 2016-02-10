@@ -300,27 +300,27 @@ std::vector< std::vector<unsigned> > Util::stratifiedSubsamplingIndices(const un
     return result;
 }
 
-Json::Value Util::clusteringToJson(const Eigen::MatrixXd & mat, const std::vector<unsigned> & labels, const std::vector<std::string> & tooltips)
-{
-    unsigned n = mat.rows();
+// Json::Value Util::clusteringToJson(const Eigen::MatrixXd & mat, const std::vector<unsigned> & labels, const std::vector<std::string> & tooltips)
+// {
+//     unsigned n = mat.rows();
 
-    std::vector<std::string> colors = {"#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33", "#a65628", "#f781bf", "#999999"};
-    auto jsonMat = Json::Value(Json::arrayValue);
+//     std::vector<std::string> colors = {"#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33", "#a65628", "#f781bf", "#999999"};
+//     auto jsonMat = Json::Value(Json::arrayValue);
     
-    for(unsigned i = 0; i < n; i++)
-    {
-        auto jsonMatPt = Json::Value();
-        jsonMatPt["x"] = mat(i, 0);
-        jsonMatPt["y"] = mat(i, 1);
-        unsigned colorIdx = labels.at(i) % colors.size();
-        jsonMatPt["color"] = colors[colorIdx];
-        jsonMatPt["toolTipContent"] = tooltips[i];
-        jsonMatPt["label"] = labels.at(i);
-        jsonMat.append(jsonMatPt);
-    }
+//     for(unsigned i = 0; i < n; i++)
+//     {
+//         auto jsonMatPt = Json::Value();
+//         jsonMatPt["x"] = mat(i, 0);
+//         jsonMatPt["y"] = mat(i, 1);
+//         unsigned colorIdx = labels.at(i) % colors.size();
+//         jsonMatPt["color"] = colors[colorIdx];
+//         jsonMatPt["toolTipContent"] = tooltips[i];
+//         jsonMatPt["label"] = labels.at(i);
+//         jsonMat.append(jsonMatPt);
+//     }
 
-    return jsonMat;
-}
+//     return jsonMat;
+// }
 
 std::vector<std::string> Util::fileLinesToVec(const std::string & filename)
 {

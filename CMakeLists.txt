@@ -13,13 +13,6 @@ set(Boost_USE_STATIC_RUNTIME OFF)
 find_package(Boost 1.58.0 COMPONENTS program_options system filesystem REQUIRED)
 include_directories(${Boost_INCLUDE_DIR})
 
-# SeqAn
-set(SEQAN_FIND_DEPENDENCIES ZLIB BZip2)
-find_package(SeqAn REQUIRED)
-include_directories(SYSTEM ${SEQAN_INCLUDE_DIRS})
-add_definitions(${SEQAN_DEFINITIONS})
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SEQAN_CXX_FLAGS}")
-
 # Eigen
 find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIRS})
@@ -30,21 +23,16 @@ include_directories(SYSTEM "libtsne")
 # Dip statistic
 include_directories(SYSTEM "libdip")
 
-# libmicrohttpd
-find_package(LibMicroHTTPD REQUIRED)
-include_directories(${MHD_INCLUDE_DIRS})
-
-# Web server
-include_directories("libwebserver")
-
 # Json library
-find_package(JsonCpp REQUIRED)
-include_directories(${JSONCPP_INCLUDE_DIR})
+include_directories(SYSTEM "libjsoncpp")
+
+# Seqan library
+include_directories(SYSTEM "libseqan")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 add_subdirectory(libdip)
 add_subdirectory(libtsne)
-add_subdirectory(libwebserver)
+add_subdirectory(libjsoncpp)
 add_subdirectory(src)
 add_subdirectory(test)

@@ -2,14 +2,12 @@
 #include "Opts.h"
 #include "ClusterAnalysis.h"
 #include "Logger.h"
-#include "VisualizationServer.h"
 #include "TarjansAlgorithm.h"
 #include "BarnesHutSNEAdapter.h"
 #include "KrakenAdapter.h"
+#include "ResultIO.h"
 
-#include "Controller.h"
-#include "WebServer.h"
-
+#include <boost/filesystem.hpp>
 #include <string>
 #include <fstream>
 #include <streambuf>
@@ -59,43 +57,42 @@ int main(int argc, char const *argv[])
 		return EXIT_FAILURE;
 	}
 
-	const unsigned port = opts->port();
-	std::thread vst([port]()
-	{
-		VisualizationServer::getInstance().run(port);
-	});
 
+	boost::filesystem::path outPath (opts->outputDir());
+	boost::system::error_code returnedError;
+	boost::filesystem::create_directories(outPath, returnedError);
+	if (returnedError)
+	{
+		ELOG << "Could not create output directory, aborting.\n";
+		return EXIT_FAILURE;
+	}
+
+	ResultIO rio(opts->outputDir());
 
 	for (const auto & fasta : opts->inputFASTAs())
 	{
+		ResultContainer result;
+
+		result.fasta = fasta;
+
 		ILOG << "Running Kraken...\n";
-		auto krakenResult = KrakenAdapter::runKraken(fasta, *opts);
+		result.kraken = KrakenAdapter::runKraken(fasta, *opts);
 
 		ILOG << "Vectorizing contigs...\n";
 		SequenceVectorizer sv(fasta, *opts);
 		auto dat = sv.vectorize();
+		result.fastaLabels = dat.second;
 
 		ILOG << "One-shot analysis...\n";
-		auto res = ClusterAnalysis::analyze(dat.first, *opts);
-		VisualizationServer::getInstance().addClustering(fasta, true, dat.second, res);
-		VisualizationServer::getInstance().addKrakenResult(fasta, krakenResult);
+		result.oneshot = ClusterAnalysis::analyze(dat.first, *opts);
 
 		ILOG << "Bootstrap analysis...\n";
-		auto results = ClusterAnalysis::analyzeBootstraps(dat.first, *opts);
-		for (auto & r : results)
-		{
-			std::vector<std::string> labels;
-			for (auto & idx : r.bootstrapIndexes) // modify labels
-			{
-				labels.push_back(dat.second[idx]);
-			}
-			VisualizationServer::getInstance().addClustering(fasta, false, labels, r);
-		}
+		result.bootstraps = ClusterAnalysis::analyzeBootstraps(dat.first, *opts); 
+
+		rio.processResult(result);
 	}
 
-	// ILOG << "Waiting for visualization server to stop...\n";
-	// VisualizationServer::getInstance().stop();
-	vst.join();
+	rio.finish();
 
 	return EXIT_SUCCESS;
 }

@@ -48,7 +48,7 @@ void Opts::initialize(int argc, char const *argv[])
 	    ("num-bootstraps,b", boost::program_options::value<unsigned>()->default_value(10), "Number of bootstraps")
 	    ("bootstrap-ratio,r", boost::program_options::value<double>()->default_value(0.75), "Bootstrap subsampling ratio")
 	    ("num-threads,T", boost::program_options::value<unsigned>()->default_value(threads), "Number of threads for bootstrap analysis  (default: detect number of cores)")
-	    ("port,p", boost::program_options::value<unsigned>()->default_value(4242), "Visualization server port")
+	    ("output-dir,o", boost::program_options::value<std::string>()->default_value("./results"), "Result output directory")
 	    ("kraken-script,K", boost::program_options::value<std::string>()->default_value("../run-kraken.sh"), "Custom script for running Kraken")
 	    ;
 	
@@ -105,7 +105,7 @@ void Opts::initialize(int argc, char const *argv[])
 	_numBootstraps = vm["num-bootstraps"].as<unsigned>();
 	_numBootstraps = std::max(1u, _numBootstraps);
 	_bootstrapRatio = vm["bootstrap-ratio"].as<double>();
-	_port = vm["port"].as<unsigned>();
+	_outputDir = vm["output-dir"].as<std::string>();
 	_krakenScript = vm["kraken-script"].as<std::string>();
 }
 
@@ -189,9 +189,9 @@ double Opts::bootstrapRatio() const
 	return _bootstrapRatio;
 }
 
-unsigned Opts::port() const
+std::string Opts::outputDir() const
 {
-	return _port;
+	return _outputDir;
 }
 
 std::string Opts::krakenScript() const

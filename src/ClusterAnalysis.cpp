@@ -4,7 +4,6 @@
 #include "BarnesHutSNEAdapter.h"
 #include "TarjansAlgorithm.h"
 #include "Util.h"
-#include "VisualizationServer.h"
 
 ClusterAnalysis::ClusterAnalysis()
 {
