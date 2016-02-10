@@ -17,6 +17,7 @@ $(document).ready(function()
 		selectedLabels = 'fasta';
 		updateBootStrapsSelect();
 		showVisualization();
+		setBoldExclusively($(this));
 	});
 
 	$('.ccConf').click(function() {
@@ -24,6 +25,7 @@ $(document).ready(function()
 		selectedLabels = 'cc';
 		updateBootStrapsSelect();
 		showVisualization();
+		setBoldExclusively($(this));
 	});
 	
 	$('.dipConf').click(function() {
@@ -31,6 +33,7 @@ $(document).ready(function()
 		selectedLabels = 'dip';
 		updateBootStrapsSelect();
 		showVisualization();
+		setBoldExclusively($(this));
 	});
 
 	$('.kraken').click(function() {
@@ -38,6 +41,7 @@ $(document).ready(function()
 		selectedLabels = 'kraken';
 		updateBootStrapsSelect();
 		showVisualization();
+		setBoldExclusively($(this));
 	});
 
 	$('.radioReduction').click(function() {

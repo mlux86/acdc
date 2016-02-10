@@ -1,3 +1,9 @@
+function setBoldExclusively(elem)
+{
+	$('.bold').removeClass('bold');
+	elem.addClass('bold');
+}
+
 function shadeColor(color, percent) 
 {   
     var f=parseInt(color.slice(1),16),t=percent<0?0:255,p=percent<0?percent*-1:percent,R=f>>16,G=f>>8&0x00FF,B=f&0x0000FF;
@@ -201,7 +207,8 @@ function showVisualization()
 	var labels;
 	if (selectedLabels === 'fasta')
 	{
-		labels = numericLabels(x.fastaLabels);
+		// labels = numericLabels(x.fastaLabels);
+		labels = Array.apply(null, Array(x.fastaLabels.length)).map(Number.prototype.valueOf, -1); // no labels / black color
 	} else if(selectedLabels === 'cc')
 	{
 		labels = clustAnaResult.resConnComponents.labels;
@@ -226,7 +233,7 @@ function updateBootStrapsSelect()
 {
 	$('#bootstraps').val('oneshot');
 
-	if (selectedLabels === 'fasta' || selectedLabels === 'kraken')
+	if (selectedLabels === 'kraken')
 	{
 		$('#bootstraps').prop("disabled", true);
 		return;
