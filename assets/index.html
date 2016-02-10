@@ -2,341 +2,69 @@
 <html>
 
 <head>  
-	<style type="text/css">
-		body {
-			background-color: #eeeeee
-		}
-
-		.clearfix:after {
-			content: " "; /* Older browser do not support empty content */
-			visibility: hidden;
-			display: block;
-			height: 0;
-			clear: both;
-		}		
-
-		.contaminated {
-			background-color: #fc8d59;
-		}
-
-		.bold {
-			font-weight: bolder;
-		}
-
-		.clean {
-			background-color: #99d594;
-		}
-
-		.uncertain {
-			background-color: #ffffbf;
-		}
-
-		#chart {
-			padding: 50px;
-		}
-
-		#confidences {
-			border-collapse: collapse;
-		}
-
-		#confidences, #confidences th, #confidences td {
-			border: 1px solid black;
-		}
-
-		#confidences th, #confidences td {
-			padding: 5px;
-		}
-
-		#confidences td {
-			cursor: pointer;			
-		}
-
-		.exportCb, .exportCb input {
-			font-size: 20px;
-			cursor: pointer;
-		}
-
-		#confidences tr:nth-child(odd) { background-color:#f4f4f4; }
-		#confidences tr:nth-child(even) { background-color:#ffffff; }
-
-		.hidden {
-			display: none;			
-		}
-	</style>
-	<script type="text/javascript" src="/jquery.min.js"></script>
-	<script type="text/javascript" src="/canvasjs.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="style.css">
+	<script type="text/javascript" src="jquery.min.js"></script>
 	<script type="text/javascript">		
-
-		function shadeColor(color, percent) {   
-			console.log(percent)
-		    var f=parseInt(color.slice(1),16),t=percent<0?0:255,p=percent<0?percent*-1:percent,R=f>>16,G=f>>8&0x00FF,B=f&0x0000FF;
-		    return "#"+(0x1000000+(Math.round((t-R)*p)+R)*0x10000+(Math.round((t-G)*p)+G)*0x100+(Math.round((t-B)*p)+B)).toString(16).slice(1);
-		}
-
-		function blendColors(c0, c1, p) {
-		    var f=parseInt(c0.slice(1),16),t=parseInt(c1.slice(1),16),R1=f>>16,G1=f>>8&0x00FF,B1=f&0x0000FF,R2=t>>16,G2=t>>8&0x00FF,B2=t&0x0000FF;
-		    return "#"+(0x1000000+(Math.round((R2-R1)*p)+R1)*0x10000+(Math.round((G2-G1)*p)+G1)*0x100+(Math.round((B2-B1)*p)+B1)).toString(16).slice(1);
-		}		
-
-		function updateChart(updateBootstraps, showExport)
-		{
-			var dataset = $('#curData').val();
-			var labels = $('#curLabels').val();
-			var reduction = $('#curReduction').val();
-			var bootstrapId = $('#bootstrapId').val();
-
-			var url = "/json?data=" + encodeURIComponent(dataset) + "&labels=" + encodeURIComponent(labels) + "&reduction=" + encodeURIComponent(reduction);
-
-			if (!bootstrapId)
-			{
-				url = url + "&oneshot=1";
-			} else
-			{
-				url = url + "&bootstrapId=" + bootstrapId;
-			}
-
-			$.getJSON(url, function(result)
-			{
-
-				var chart = new CanvasJS.Chart("chartContainer",
-				{			
-					backgroundColor: "#eeeeee",
-					axisX:
-					{
-						lineThickness: 0,
-						tickThickness: 0,
-						gridThickness: 0,
-						valueFormatString: " "
-					},
-					axisY:
-					{
-						lineThickness: 0,
-						tickThickness: 0,
-						gridThickness: 0,
-						valueFormatString: " "					
-					},
-					data: [
-					{        
-						markerSize: 4,
-						type: "scatter",  
-						dataPoints: result.mat,
-					}
-					],
-					zoomEnabled: true,
-					zoomType: "xy"
-					
-				});				
-
-				chart.render();
-
-				if (updateBootstraps)
-				{
-					$('#bootstrapId').html('');
-					$('#bootstrapId').append('<option value="">One shot</option>');
-					for (var i = 0; i < result.numBootstraps; i++) 
-					{
-						$('#bootstrapId').append($('<option>', {
-						    value: i,
-						    text: 'Bootstrap' + i
-						}));
-					}
-				}
-
-				if (showExport)
-				{
-					buildSelectPanel(result.mat);
-					$('#dataExport').show();
-				} else
-				{
-					$('#dataExport').hide();
-				}
-
-			});
-
-		}
-
-		function buildSelectPanel(data)
-		{
-			var labelColors = new Array();
-			for (i in data)
-			{
-				if (!(i in labelColors))
-				{
-					labelColors[data[i].label] = data[i].color;
-				}
-			}
-
-			var cb = 'Export contigs with colors: <form id="dataExportForm" name="dataExportForm">';
-			for (i in labelColors)
-			{
-				cb = cb + '<label class="exportCb" for="ecb' + i + '"><input type="checkbox" name="export" value="' + i + '" id="ecb' + i + '"><span style="color:' + labelColors[i] + '">&#9632;</span></label>&nbsp;&nbsp;&nbsp;';
-			}
-			cb = cb + '<br /><input type="submit" value="Download"></form>'
-
-			$('#dataExport').html(cb);
-
-			$("#dataExportForm").on("submit", function(event) 
-			{
-				event.preventDefault();
-				var checked='';
-				$('#dataExportForm input[type="checkbox"]:checked').each(function()
-				{
-					checked = checked + $(this).val() + ',';
-				});				
-				checked = checked.substr(0, checked.length-1);
-				window.location.href = '/export?dataset=' + encodeURIComponent($('#curData').val()) + '&labels=' + encodeURIComponent($('#curLabels').val()) + '&export=' + checked;
-			});			
-		}
-
-		function updateConfidences()
-		{
-			$.getJSON("/stats", function(result)
-			{	
-				$('#confidences').html('<tr><th>Sample</th><th>Confidences CC</th><th>Confidences Dip-Means</th><th>Kraken</th></tr>');
-
-				for (var dataset in result)
-				{
-
-					var clean = false;
-					var conta = false;
-					var cleanVal = 0;
-					var cc = '';
-					for (var i in result[dataset].cc)
-					{
-						var k = result[dataset].cc[i].numClusters;	
-						var c = result[dataset].cc[i].confidence;
-						cc = cc + "p(k = " + k + ") = " + c + "<br/>";
-						clean = clean || k == 1;
-						conta = conta || k > 1;
-						if (k == 1)
-						{
-							cleanVal = result[dataset].cc[i].confidence;
-						}
-					}
-					var ccColor = blendColors('#f46d43', '#abdda4', cleanVal);
-
-					clean = false;
-					conta = false;
-					cleanVal = 0;
-					var dip = '';
-					for (var i in result[dataset].dip)
-					{
-						var k = result[dataset].dip[i].numClusters;	
-						var c = result[dataset].dip[i].confidence;
-						dip = dip + "p(k = " + k + ") = " + c + "<br/>";
-						clean = clean || k == 1;
-						conta = conta || k > 1;						
-						if (k == 1)
-						{
-							cleanVal = result[dataset].dip[i].confidence;
-						}						
-					}
-					var dipColor = blendColors('#f46d43', '#abdda4', cleanVal);
-
-					var kraken = 'Unique species: ' + result[dataset].kraken.numUniqueSpecies + '<br/>Unknown contigs: ' + result[dataset].kraken.numUnknownContigs;
-					var krakenColor = result[dataset].kraken.numUniqueSpecies > 1 ? '#f46d43' : '#abdda4';
-
-					$('#confidences').append('<tr><td class="dataConf">' + dataset + '</td><td class="ccConf" style="background-color:' + ccColor + '">' + cc + '</td><td class="dipConf" style="background-color:' + dipColor + '">' + dip + '</td><td class="kraken" style="background-color:' + krakenColor + '">' + kraken + '</td></tr>');
-				}
-
-				$('.dataConf').click(function() {
-					$('.bold').removeClass('bold');
-					var dataset = $(this).html();
-					$(this).addClass('bold');
-					$('#curData').val(dataset);
-					$('#curLabels').val('orig');
-					updateChart(true, false);
-					$('#bootstrapId').prop("disabled", false);
-				});
-				$('.ccConf').click(function() {
-					$('.bold').removeClass('bold');
-					var dataset = $(this).parent().find('td.dataConf').html();
-					$(this).addClass('bold');
-					$('#curData').val(dataset);
-					$('#curLabels').val('cc');
-					updateChart(true, true);
-					$('#bootstrapId').prop("disabled", false);
-				});
-				$('.dipConf').click(function() {
-					$('.bold').removeClass('bold');
-					var dataset = $(this).parent().find('td.dataConf').html();
-					$(this).addClass('bold');
-					$('#curData').val(dataset);
-					$('#curLabels').val('dip');					
-					updateChart(true, true);
-					$('#bootstrapId').prop("disabled", false);
-				});
-				$('.kraken').click(function() {
-					$('.bold').removeClass('bold');
-					var dataset = $(this).parent().find('td.dataConf').html();
-					$(this).addClass('bold');
-					$('#curData').val(dataset);
-					$('#curLabels').val('kraken');					
-					updateChart(true, true);
-					$('#bootstrapId').prop("disabled", true);
-				});				
-
-				// setTimeout(updateConfidences, 1000);
-
-			});
-		}
-
-		$( document ).ready(function() 
-		{	
-			updateConfidences();
-
-			$('.radioReduction').click(function() {
-				$('#curReduction').val($(this).val());
-				updateChart(false, !$('#bootstrapId').val() && $('#curLabels').val() != 'orig');
-			});
-
-			$('#bootstrapId').change(function() {
-				console.log($('#bootstrapId').val());
-				updateChart(false, !$('#bootstrapId').val() && $('#curLabels').val() != 'orig'	);
-			});
-		});		
-
+		var results = new Array();
 	</script>
-
+	<script type="text/javascript" src="0.js"></script>
+	<script type="text/javascript" src="1.js"></script>
+	<script type="text/javascript" src="2.js"></script>
+	<script type="text/javascript" src="3.js"></script>
+	<script type="text/javascript" src="4.js"></script>
+	<script type="text/javascript" src="6.js"></script>
+	<script type="text/javascript" src="7.js"></script>
+	<script type="text/javascript" src="8.js"></script>
+	<script type="text/javascript" src="9.js"></script>
+	<script type="text/javascript" src="10.js"></script>
+	<script type="text/javascript" src="11.js"></script>
+	<script type="text/javascript" src="12.js"></script>
+	<script type="text/javascript" src="13.js"></script>
+	<script type="text/javascript" src="14.js"></script>
+	<script type="text/javascript" src="15.js"></script>
+	<script type="text/javascript" src="16.js"></script>
+	<script type="text/javascript" src="17.js"></script>
+	<script type="text/javascript" src="18.js"></script>
+	<script type="text/javascript" src="19.js"></script>
+	<script type="text/javascript" src="d3.min.js"></script>
+	<script type="text/javascript" src="d3-tip.js"></script>
+	<script type="text/javascript" src="functions.js"></script>
+	<script type="text/javascript" src="script.js"></script>
 </head>
 <body>
-	<div style="float:left;">
-		<table id="confidences">
-			<tr><th>Sample</th><th>Confidence CC</th><th>Confidence Dip-Means</th></tr>
-		</table>
-		<br />
+	<table id="confidences" class="floatLeft">
+		<tr><th>Sample</th><th>Connected Components</th><th>Dip-Means</th><th>Kraken</th></tr>
+	</table>
+	<div id="scatterContainer" class="floatLeft">
+		<form>
+			<fieldset>
+				<legend><b>Data select:</b></legend>
+					<table>
+						<tr>
+						<td>
+							Dimension reduction: 
+						</td>
+						<td>
+							<input type="radio" class="radioReduction" name="radioReduction" value="dataSne" checked> BH-SNE
+							<input type="radio" class="radioReduction" name="radioReduction" value="dataPca"> PCA
+						</td>
+						</tr>
+						<tr>
+							<td>
+								Select data set:
+							</td>
+							<td>
+								<select id="bootstraps">
+									<option value="oneshot">One shot</option>
+								</select>
+							</td>
+						</tr>
+					</table>
+			</fieldset>
+		</form>	
+		<div id="scatter"></div>
 	</div>
-	<div style="float:left;" id="chart">
-		<input type="hidden" id="curData" name="curData" value="">
-		<input type="hidden" id="curLabels" name="curLabels" value="">
-		<input type="hidden" id="curReduction" name="curReduction" value="sne">
-		<table>
-			<tr>
-			<td>
-				Dimension reduction: 
-			</td>
-			<td>
-				<input type="radio" class="radioReduction" name="radioReduction" value="sne" checked> BH-SNE
-				<input type="radio" class="radioReduction" name="radioReduction" value="pca"> PCA
-			</td>
-			</tr>
-			<tr>
-				<td>
-					Select data set:
-				</td>
-				<td>
-					<select id="bootstrapId">
-						<option value="">One shot</option>
-					</select>
-				</td>
-			</tr>
-		</table>
-		<div id="chartContainer" style="width: 500px; height: 500px;">
-		</div>
-		<div id="dataExport">			
-			<div id="dataExportCb">&nbsp;</div>
-		</div>		
-	</div>
+	<div class="clearfix"></div>
 </body>
 
 </html>

@@ -102,9 +102,11 @@ void ResultIO::writeResultContainerToJSON(ResultContainer result, const std::str
         root["krakenLabels"].append(krakenLbl);
     }
 
-	Json::StyledStreamWriter ssw;
+	Json::StreamWriterBuilder builder;
+	std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
 	std::ofstream ofs(filename, std::ofstream::out);
-	ssw.write(ofs, root);
+	ofs << "results['" << result.fasta << "'] = ";
+	writer->write(root, &ofs);
 	ofs.close();
 }
 
