@@ -76,11 +76,13 @@ int main(int argc, char const *argv[])
 	}
 
 	ResultIO rio(opts->outputDir());
+	unsigned idCnt = 1;
 
 	for (const auto & fasta : opts->inputFASTAs())
 	{
 		ResultContainer result;
 
+		result.id = idCnt++;
 		result.fasta = fasta;
 
 		ILOG << "Running Kraken...\n";
@@ -97,7 +99,14 @@ int main(int argc, char const *argv[])
 		ILOG << "Bootstrap analysis...\n";
 		result.bootstraps = ClusterAnalysis::analyzeBootstraps(dat.first, *opts); 
 
-		rio.processResult(result);
+		try 
+		{
+			rio.processResult(result);
+		} catch(const std::runtime_error & e)
+		{
+			ELOG << e.what() << "\n";
+			return EXIT_FAILURE;
+		}		
 	}
 
 	rio.finish();

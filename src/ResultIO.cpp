@@ -1,4 +1,6 @@
 #include <fstream>
+#include <map>
+#include <set>
 
 #include "ResultIO.h"
 
@@ -51,8 +53,8 @@ Json::Value ResultIO::clusterAnalysisResultToJSON(const ClusterAnalysisResult & 
 {
 	auto root = Json::Value();
 
-	root["dataSne"] = ResultIO::matrixToJSON(car.dataSne);
-	root["dataPca"] = ResultIO::matrixToJSON(car.dataPca);
+	root["dataSne"] = matrixToJSON(car.dataSne);
+	root["dataPca"] = matrixToJSON(car.dataPca);
 
 	root["bootstrapIndices"] = Json::Value(Json::arrayValue);
 	for (const auto & idx : car.bootstrapIndexes)
@@ -60,8 +62,8 @@ Json::Value ResultIO::clusterAnalysisResultToJSON(const ClusterAnalysisResult & 
 		root["bootstrapIndices"].append(idx);
 	}
 
-	root["resConnComponents"] = ResultIO::clusteringResultToJSON(car.resConnComponents);
-	root["resDipMeans"] = ResultIO::clusteringResultToJSON(car.resDipMeans);
+	root["resConnComponents"] = clusteringResultToJSON(car.resConnComponents);
+	root["resDipMeans"] = clusteringResultToJSON(car.resDipMeans);
 
 	return root;
 }
@@ -71,6 +73,7 @@ void ResultIO::writeResultContainerToJSON(ResultContainer result, const std::str
 	auto root = Json::Value();
 
 	root["fasta"] = result.fasta;
+	root["id"] = result.id;
 
 	root["fastaLabels"] = Json::Value(Json::arrayValue);
 	for (auto & lbl : result.fastaLabels)
@@ -78,7 +81,7 @@ void ResultIO::writeResultContainerToJSON(ResultContainer result, const std::str
 		root["fastaLabels"].append(lbl);
 	}
 
-	root["oneshot"] = ResultIO::clusterAnalysisResultToJSON(result.oneshot);
+	root["oneshot"] = clusterAnalysisResultToJSON(result.oneshot);
 	
 	root["bootstraps"] = Json::Value(Json::arrayValue);
 	for (auto & bs : result.bootstraps)
@@ -88,7 +91,7 @@ void ResultIO::writeResultContainerToJSON(ResultContainer result, const std::str
 		bs.resConnComponents.labels = Util::alignBootstrapLabels(result.oneshot.resConnComponents.labels, bs.resConnComponents.labels, bs.bootstrapIndexes);
 		bs.resDipMeans.labels = Util::alignBootstrapLabels(result.oneshot.resDipMeans.labels, bs.resDipMeans.labels, bs.bootstrapIndexes);
 
-		root["bootstraps"].append(ResultIO::clusterAnalysisResultToJSON(bs));
+		root["bootstraps"].append(clusterAnalysisResultToJSON(bs));
 	}	
 
 	root["krakenLabels"] = Json::Value(Json::arrayValue);
@@ -111,12 +114,82 @@ void ResultIO::writeResultContainerToJSON(ResultContainer result, const std::str
 	ofs.close();
 }
 
+void ResultIO::exportClusteringFastas(const ResultContainer & result)
+{
+    // create export directory
+
+	boost::filesystem::path exportPath (outputDir + "/export");
+	boost::system::error_code returnedError;
+	boost::filesystem::create_directories(exportPath, returnedError);
+	if (returnedError)
+	{
+		throw std::runtime_error("Could not create output directory, aborting.");
+	}
+
+	// first, we need the kraken result as actual labels
+	std::vector<std::string> krakenLabels;
+    for (auto & lbl : result.fastaLabels)
+    {
+        std::string krakenLbl = "unknown";
+        if (result.kraken.classification.find(lbl) != result.kraken.classification.end())
+        {
+            krakenLbl = result.kraken.classification.at(lbl);
+        }
+        krakenLabels.push_back(krakenLbl);
+    }	
+
+    // start export
+
+	std::map<unsigned, std::set<std::string>> contigIdsCC; // export a set of contigs per label
+	std::map<unsigned, std::set<std::string>> contigIdsDip; // export a set of contigs per label
+	std::map<unsigned, std::set<std::string>> contigIdsKraken; // export a set of contigs per label
+
+    for (unsigned i = 0; i < result.fastaLabels.size(); ++i)
+    {        
+        contigIdsCC[result.oneshot.resConnComponents.labels.at(i)].insert(result.fastaLabels.at(i));
+        contigIdsDip[result.oneshot.resDipMeans.labels.at(i)].insert(result.fastaLabels.at(i));
+        contigIdsKraken[Util::numericLabels(krakenLabels).at(i)].insert(result.fastaLabels.at(i));
+    }	
+
+    // connected components
+    for (auto & kv : contigIdsCC) 
+    {
+    	unsigned lbl = kv.first;
+    	auto & contigs = kv.second;
+    	std::stringstream ss;
+    	ss << outputDir << "/export/" << result.id << "-cc-" << lbl << ".fasta";
+    	Util::filterFasta(result.fasta, contigs, ss.str());
+    }
+
+    // dip means
+    for (auto & kv : contigIdsDip) 
+    {
+    	unsigned lbl = kv.first;
+    	auto & contigs = kv.second;
+    	std::stringstream ss;
+    	ss << outputDir << "/export/" << result.id << "-dip-" << lbl << ".fasta";
+    	Util::filterFasta(result.fasta, contigs, ss.str());
+    }
+
+    // kraken
+    for (auto & kv : contigIdsKraken) 
+    {
+    	unsigned lbl = kv.first;
+    	auto & contigs = kv.second;
+    	std::stringstream ss;
+    	ss << outputDir << "/export/" << result.id << "-kraken-" << lbl << ".fasta";
+    	Util::filterFasta(result.fasta, contigs, ss.str());
+    }
+
+}
+
 void ResultIO::processResult(const ResultContainer & result)
 {
 	std::stringstream ss;
 	ss << outputDir << "/" << "data.js";
 	std::string fname = ss.str();
-	ResultIO::writeResultContainerToJSON(result, fname);
+	exportClusteringFastas(result);
+	writeResultContainerToJSON(result, fname);
 	jsonFiles.push_back(fname);
 }
 

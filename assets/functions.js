@@ -1,3 +1,12 @@
+function arrayUnique(arr) 
+{
+    return arr.reduce(function(p, c) 
+    {
+        if (p.indexOf(c) < 0) p.push(c);
+        return p;
+    }, []);
+}
+
 function setBoldExclusively(elem)
 {
 	$('.bold').removeClass('bold');
@@ -148,9 +157,7 @@ function dimMin(data, dim)
 }
 
 function showData(dataMat, labels, tooltips, width, height, padding)
-{
-	var colors = ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33", "#a65628", "#f781bf", "#999999"];
-
+{	
 	var svg = d3.select("#scatter").html("").append("svg").attr("width", width).attr("height", height);
 
 	svg.append("rect")
@@ -227,11 +234,13 @@ function showVisualization()
 	}	
 
 	showData(dataMat, labels, tooltips, width, height, padding);
+	updateExport(labels);
 }
 
 function updateBootStrapsSelect()
 {
 	$('#bootstraps').val('oneshot');
+	selectedData = 'oneshot';
 
 	if (selectedLabels === 'kraken')
 	{
@@ -253,6 +262,28 @@ function updateBootStrapsSelect()
 		}));		
 	}
 
+}
+
+function updateExport(labels)
+{
+	if (selectedLabels === 'fasta' || selectedData !== 'oneshot')
+	{
+		$('#export').hide();
+		return;
+	}
+
+	var uniqueLabels = arrayUnique(labels).sort();
+
+	$('#exportColors').html('');
+	for (var i in uniqueLabels)
+	{
+		var lbl = uniqueLabels[i];
+		var color = colors[lbl % colors.length];
+		var href = 'export/' + results[selectedFasta].id + "-" + selectedLabels + "-" + lbl + ".fasta";
+		$('#exportColors').append('<span><a style="color: ' + color + ';" href="' + href + '">&#x25CF;</a></span>&nbsp;');
+	}
+
+	$('#export').show();
 }
 
 function numericLabels(labels)

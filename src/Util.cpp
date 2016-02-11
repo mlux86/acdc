@@ -11,7 +11,6 @@
 #include "nanoflann.hpp"
 #include <numeric>
 #include <unordered_map>
-#include <set>
 
 #include <seqan/alignment_free.h> 
 #include <seqan/sequence.h> 
@@ -458,7 +457,7 @@ std::vector<unsigned> Util::alignBootstrapLabels(const std::vector<unsigned> & r
     return result;
 }
 
-std::unique_ptr<std::string> Util::filterFasta(const std::string & fasta, const std::vector<std::string> contigs)
+void Util::filterFasta(const std::string & fasta, const std::set<std::string> contigs, const std::string & exportFilename)
 {
 
     std::stringstream ss;
@@ -483,8 +482,9 @@ std::unique_ptr<std::string> Util::filterFasta(const std::string & fasta, const 
         }
     }
 
-    std::unique_ptr<std::string> result(new std::string(ss.str()));
-    return result;
+    std::ofstream ofs(exportFilename, std::ofstream::out);
+    ofs << ss.str();
+    ofs.close();
 }
 
 void Util::copyDir(boost::filesystem::path const & source, boost::filesystem::path const & destination)

@@ -11,6 +11,8 @@
 
 struct ResultContainer
 {
+	unsigned id;
+
 	std::string fasta;
 	std::vector<std::string> fastaLabels;
 
@@ -24,10 +26,11 @@ class ResultIO
 {
 
 private:
-    static Json::Value matrixToJSON(const Eigen::MatrixXd & mat);
-    static Json::Value clusteringResultToJSON(const ClusteringResult & cr);
-    static Json::Value clusterAnalysisResultToJSON(const ClusterAnalysisResult & car);
-	static void writeResultContainerToJSON(ResultContainer result, const std::string & filename);
+    Json::Value matrixToJSON(const Eigen::MatrixXd & mat);
+    Json::Value clusteringResultToJSON(const ClusteringResult & cr);
+    Json::Value clusterAnalysisResultToJSON(const ClusterAnalysisResult & car);
+	void writeResultContainerToJSON(ResultContainer result, const std::string & filename);
+    void exportClusteringFastas(const ResultContainer & result);
 
 	std::string outputDir;
     std::vector<std::string> jsonFiles;

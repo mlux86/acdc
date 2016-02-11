@@ -30,33 +30,38 @@
 		<tr><th>Sample</th><th>Connected Components</th><th>Dip-Means</th><th>Kraken</th></tr>
 	</table>
 	<div id="scatterContainer" class="floatLeft">
-		<form>
-			<fieldset>
-				<legend><b>Data select:</b></legend>
-					<table>
-						<tr>
+		<fieldset>
+			<legend><b>Select data:</b></legend>
+				<table>
+					<tr>
+					<td>
+						Dimension reduction: 
+					</td>
+					<td>
+						<input type="radio" class="radioReduction" name="radioReduction" value="dataSne" id="dataSne" checked> <label for="dataSne">BH-SNE</label>
+						<input type="radio" class="radioReduction" name="radioReduction" value="dataPca" id="dataPca"> <label for="dataPca">PCA</label>
+					</td>
+					</tr>
+					<tr>
 						<td>
-							Dimension reduction: 
+							Select data set:
 						</td>
 						<td>
-							<input type="radio" class="radioReduction" name="radioReduction" value="dataSne" checked> BH-SNE
-							<input type="radio" class="radioReduction" name="radioReduction" value="dataPca"> PCA
+							<select id="bootstraps">
+								<option value="oneshot">One shot</option>
+							</select>
 						</td>
-						</tr>
-						<tr>
-							<td>
-								Select data set:
-							</td>
-							<td>
-								<select id="bootstraps">
-									<option value="oneshot">One shot</option>
-								</select>
-							</td>
-						</tr>
-					</table>
-			</fieldset>
-		</form>	
+					</tr>
+				</table>
+		</fieldset>
 		<div id="scatter"></div>
+		<div id="export">
+			<fieldset>
+				<legend><b>Decontamination:</b></legend>
+				Click cluster color to download the corresponding cluster fasta file:<br/>
+				<span id="exportColors"></span>
+			</fieldset>
+		</div>
 	</div>
 	<div class="clearfix"></div>
 </body>

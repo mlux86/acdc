@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <set>
 #include <string>
 #include <memory>
 #include <tuple>
@@ -54,7 +55,7 @@ public:
 
 	static std::vector<unsigned> alignBootstrapLabels(const std::vector<unsigned> & referenceLabels, const std::vector<unsigned> & bootstrapLabels, const std::vector<unsigned> & bootstrapIndexes);
 
-	static std::unique_ptr<std::string> filterFasta(const std::string & fasta, const std::vector<std::string> contigs);
+	static void filterFasta(const std::string & fasta, const std::set<std::string> contigs, const std::string & exportFilename);
 
 	static void copyDir(boost::filesystem::path const & source, boost::filesystem::path const & destination);
 
