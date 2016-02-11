@@ -1,6 +1,10 @@
+#include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
+#include <cstdio>
+#include <string>
+
 #include "KrakenAdapter.h"
 #include "Logger.h"
-#include <boost/algorithm/string.hpp>
 
 KrakenAdapter::KrakenAdapter()
 {
@@ -12,22 +16,34 @@ KrakenAdapter::~KrakenAdapter()
 
 KrakenResult KrakenAdapter::runKraken(const std::string & fasta, const Opts & opts)
 {
-	std::string krakenCommand = opts.krakenScript() + " " + fasta;
+    boost::filesystem::path temp = boost::filesystem::unique_path();
+    const std::string fname = temp.native(); 
+    const std::string fnameT = fname + ".t";
 
- 	FILE * file = popen(krakenCommand.c_str(), "r");
+	std::string krakenCommand = "kraken --db '" + opts.krakenDb() + "' --output '" + fname + "' '" + fasta + "'";
+    if (!(Logger::getInstance().getLevel() == Verbose || Logger::getInstance().getLevel() == Debug))
+    {
+        krakenCommand = krakenCommand + " > /dev/null 2>&1";
+    }
+    std::string krakenTranslateCommand = "kraken-translate --db '" + opts.krakenDb() + "' '" + fname + "' > '" + fnameT + "'";
 
- 	if (!file)
+    DLOG << "Executing: " << krakenCommand << "\n";
+ 	FILE * f1 = popen(krakenCommand.c_str(), "r");
+ 	if (!f1)
  	{
  		throw std::runtime_error("Cannot run Kraken!");
  	}
+    pclose(f1);
 
-    char buffer[4096];
-    fgets(buffer, sizeof(buffer), file);
-    pclose(file);
+    DLOG << "Executing: " << krakenTranslateCommand << "\n";
+    FILE * f2 = popen(krakenTranslateCommand.c_str(), "r");
+    if (!f2)
+    {
+        throw std::runtime_error("Cannot translate Kraken!");
+    }
+    pclose(f2);
 
-    std::string krakenResultFile(buffer, strlen(buffer)-1);
-
-    auto krakenOut = Util::fileLinesToVec(krakenResultFile);
+    auto krakenOut = Util::fileLinesToVec(fnameT);
 
     KrakenResult res;
 
@@ -51,6 +67,9 @@ KrakenResult KrakenAdapter::runKraken(const std::string & fasta, const Opts & op
 
 		res.classification[contig] = species;
     }
+
+    std::remove(fname.c_str());
+    std::remove(fnameT.c_str());
 
     return res;
 }

@@ -34,6 +34,7 @@ public:
 	static Logger & getInstance();
 
 	void setLevel(LogLevel newLevel);
+	LogLevel getLevel();
 
 	std::ostream & log(LogLevel lvl);
 	std::ostream & error();

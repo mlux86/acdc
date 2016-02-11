@@ -49,7 +49,7 @@ void Opts::initialize(int argc, char const *argv[])
 	    ("bootstrap-ratio,r", boost::program_options::value<double>()->default_value(0.75), "Bootstrap subsampling ratio")
 	    ("num-threads,T", boost::program_options::value<unsigned>()->default_value(threads), "Number of threads for bootstrap analysis  (default: detect number of cores)")
 	    ("output-dir,o", boost::program_options::value<std::string>()->default_value("./results"), "Result output directory")
-	    ("kraken-script,K", boost::program_options::value<std::string>()->default_value("../run-kraken.sh"), "Custom script for running Kraken")
+	    ("kraken-db,K", boost::program_options::value<std::string>()->default_value("/home/mlux/minikraken_20141208/"), "Kraken database")
 	    ;
 	
 	boost::program_options::variables_map vm;
@@ -106,7 +106,7 @@ void Opts::initialize(int argc, char const *argv[])
 	_numBootstraps = std::max(1u, _numBootstraps);
 	_bootstrapRatio = vm["bootstrap-ratio"].as<double>();
 	_outputDir = vm["output-dir"].as<std::string>();
-	_krakenScript = vm["kraken-script"].as<std::string>();
+	_krakenDb = vm["kraken-db"].as<std::string>();
 }
 
 bool Opts::needsHelp() const
@@ -194,7 +194,7 @@ std::string Opts::outputDir() const
 	return _outputDir;
 }
 
-std::string Opts::krakenScript() const
+std::string Opts::krakenDb() const
 {
-	return _krakenScript;
+	return _krakenDb;
 }

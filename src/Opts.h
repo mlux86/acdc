@@ -32,7 +32,7 @@ private:
 
 	std::string _outputDir = "";
 
-	std::string _krakenScript = "";
+	std::string _krakenDb = "";
 
 	void initialize(int argc, char const *argv[]);
 
@@ -58,6 +58,6 @@ public:
 	unsigned numBootstraps() const;
 	double bootstrapRatio() const;
 	std::string outputDir() const;
-	std::string krakenScript() const;
+	std::string krakenDb() const;
 	
 };

@@ -24,6 +24,11 @@ void Logger::setLevel(LogLevel newLevel)
 	this->level = newLevel;
 }
 
+LogLevel Logger::getLevel()
+{
+	return this->level;
+}
+
 std::ostream & Logger::log(LogLevel lvl)
 {	
 	std::ostream * out;

@@ -80,28 +80,31 @@ int main(int argc, char const *argv[])
 
 	for (const auto & fasta : opts->inputFASTAs())
 	{
+		ILOG << "Processing file: " << fasta << "\n";
 		ResultContainer result;
 
 		result.id = idCnt++;
 		result.fasta = fasta;
 
-		ILOG << "Running Kraken...\n";
-		result.kraken = KrakenAdapter::runKraken(fasta, *opts);
-
-		ILOG << "Vectorizing contigs...\n";
-		SequenceVectorizer sv(fasta, *opts);
-		auto dat = sv.vectorize();
-		result.fastaLabels = dat.second;
-
-		ILOG << "One-shot analysis...\n";
-		result.oneshot = ClusterAnalysis::analyze(dat.first, *opts);
-
-		ILOG << "Bootstrap analysis...\n";
-		result.bootstraps = ClusterAnalysis::analyzeBootstraps(dat.first, *opts); 
-
 		try 
 		{
+			ILOG << "  Running Kraken ... "; ILOG.flush();
+			result.kraken = KrakenAdapter::runKraken(fasta, *opts);
+
+			ILOG << "vectorizing contigs ... "; ILOG.flush();
+			SequenceVectorizer sv(fasta, *opts);
+			auto dat = sv.vectorize();
+			result.fastaLabels = dat.second;
+
+			ILOG << "one-shot analysis ... "; ILOG.flush();
+			result.oneshot = ClusterAnalysis::analyze(dat.first, *opts);
+
+			ILOG << "bootstrap analysis ... "; ILOG.flush();
+			result.bootstraps = ClusterAnalysis::analyzeBootstraps(dat.first, *opts); 
+			
+			ILOG << " writing result ... "; ILOG.flush();
 			rio.processResult(result);
+			ILOG << "done!\n";
 		} catch(const std::runtime_error & e)
 		{
 			ELOG << e.what() << "\n";
