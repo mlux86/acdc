@@ -1,5 +1,5 @@
 body {
-  background-color: #eeeeee;
+  background-color: #eee;
   font-family: helvetica, arial, sans-serif;
   font-size: 12px;
 }
@@ -58,7 +58,7 @@ a:active {
 }
 
 #confidences, #confidences th, #confidences td {
-  border: 1px solid black;
+  border: 1px solid #ddd;
 }
 
 #confidences th, #confidences td {

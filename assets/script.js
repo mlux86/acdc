@@ -57,6 +57,7 @@ $(document).ready(function()
 	});
 
 	selectedFasta = $('#confidences').find('td.dataConf:first').text();
+	setBoldExclusively($('#confidences').find('td.dataConf:first'));
 
 	if (!selectedFasta)
 	{

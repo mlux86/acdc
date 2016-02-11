@@ -133,7 +133,7 @@ function buildConfidenceTable(results)
 
 		// kraken
 
-		var kraken = 'Unique species: ' + stats[i].kraken.numSpecies + '<br/>Unknown: ' + stats[i].kraken.numUnknown;
+		var kraken = stats[i].kraken.numSpecies + ' species';
 		var krakenColor = stats[i].kraken.numSpecies > 1 ? '#f46d43' : '#abdda4';		
 
 		$('#confidences').append('<tr><td class="dataConf">' + i + '</td><td class="ccConf" style="background-color:' + ccColor + '">' + cc + '</td><td class="dipConf" style="background-color:' + dipColor + '">' + dip + '</td><td class="kraken" style="background-color:' + krakenColor + '">' + kraken + '</td></tr>');
