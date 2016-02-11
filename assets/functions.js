@@ -103,9 +103,81 @@ function calculateStats(results)
 	return stats;
 }
 
+function cellBarChart(containerCell, confidences, maxK)
+{
+	// convert confidences into data array
+	var data = new Array(maxK);
+	for (var i = 1; i <= maxK; i++) 
+	{
+		data[i-1] = {};
+		data[i-1].numClusters = i;
+		if (i in confidences)
+		{
+			data[i-1].confidence = confidences[i];
+		} else
+		{
+			data[i-1].confidence = 0;
+		}
+	}
+
+	var margin = {top: 10, right: 20, bottom: 25, left: 20},
+	width = 80 - margin.left - margin.right,
+	height = 60 - margin.top - margin.bottom;
+
+	var x = d3.scale.ordinal().rangeRoundBands([0, width], .1);
+	var y = d3.scale.linear().range([height, 0]);
+
+	var xAxis = d3.svg.axis().scale(x).orient("bottom");
+	var yAxis = d3.svg.axis().scale(y).orient("left").ticks(1);
+
+	var svg = d3.select($(containerCell).get(0)).append("svg")
+		.attr("width", width + margin.left + margin.right)
+		.attr("height", height + margin.top + margin.bottom)
+		.append("g")
+		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+	x.domain(data.map(function(d) { return d.numClusters; }));
+	y.domain([0, 1]);
+
+
+  	svg.append("g")
+		.attr("class", "x axis")
+		.attr("transform", "translate(0," + height + ")")
+		.call(xAxis);
+
+  	svg.append("g")
+		.attr("class", "y axis")
+		.call(yAxis);
+
+    tip = d3.tip().attr('class', 'd3-tip').offset([-10, 0]).html(function(d, i) { return 'p(' + data[i].numClusters + ') = ' + data[i].confidence; });
+    svg.call(tip);
+
+	svg.selectAll(".bar")
+		.data(data)
+		.enter().append("rect")
+		.attr("class", "bar")
+		.attr("x", function(d) { return x(d.numClusters); })
+		.attr("width", x.rangeBand())
+		.attr("y", function(d) { return y(d.confidence); })
+		.attr("height", function(d) { return height - y(d.confidence); })
+		.on('mouseover', tip.show)
+		.on('mouseout', tip.hide);
+
+}
+
 function buildConfidenceTable(results)
 {
 	var stats = calculateStats(results);
+
+	var maxK = 0;
+	for (var i in stats)
+	{
+		var keys =      Object.keys(stats[i].connComponents).map(Number)
+				.concat(Object.keys(stats[i].dipMeans).map(Number));
+				// .concat(stats[i].kraken.numSpecies);
+		var maxKey = Math.max.apply(Math, keys);		
+		maxK = Math.max(maxK, maxKey);
+	}
 
 	for (var i in stats)
 	{
@@ -136,7 +208,10 @@ function buildConfidenceTable(results)
 		var kraken = stats[i].kraken.numSpecies + ' species';
 		var krakenColor = stats[i].kraken.numSpecies > 1 ? '#f46d43' : '#abdda4';		
 
-		$('#confidences').append('<tr><td class="dataConf">' + i + '</td><td class="ccConf" style="background-color:' + ccColor + '">' + cc + '</td><td class="dipConf" style="background-color:' + dipColor + '">' + dip + '</td><td class="kraken" style="background-color:' + krakenColor + '">' + kraken + '</td></tr>');
+		$('#confidences').append('<tr><td class="dataConf">' + i + '</td><td style="background-color:' + ccColor + ';" class="ccConf"><div class="chart"></div></td><td style="background-color:' + dipColor + ';" class="dipConf"><div class="chart"></div></td><td style="background-color:' + krakenColor + ';" class="kraken">' + kraken + '</td></tr>');
+
+		cellBarChart($('#confidences tr:last td.ccConf div.chart'), stats[i].connComponents, maxK);
+		cellBarChart($('#confidences tr:last td.dipConf div.chart'), stats[i].dipMeans, maxK);
 	}	
 }
 

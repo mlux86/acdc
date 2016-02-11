@@ -69,12 +69,41 @@ a:active {
   cursor: pointer;      
 }
 
+#confidences td.ccConf td.dipConf td.kraken {
+  text-align: right;
+}
+
 #confidences tr:nth-child(odd) { 
   background-color:#f4f4f4; 
 }
 
 #confidences tr:nth-child(even) { 
   background-color:#ffffff; 
+}
+
+/* bars */
+#confidences td svg {
+  display: block;
+  margin: auto;    
+}
+
+.bar {
+  fill: #222;
+}
+
+.bar:hover {
+  fill: brown;
+}
+
+.axis {
+  font: 10px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
 }
 
 /* export colors */
