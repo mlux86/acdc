@@ -1,3 +1,15 @@
+function stickyScatter() 
+{
+    if ( $(window).scrollTop() > $('#scatterContainerAnchor').offset().top) 
+    {
+        $('#scatterContainer').addClass('stick');
+        var left = $('#confidences').offset().left + $('#confidences').width() + 25;
+		$('#scatterContainer').offset({ left: left });
+    } else {
+        $('#scatterContainer').removeClass('stick');
+    }
+}
+
 function arrayUnique(arr) 
 {
     return arr.reduce(function(p, c) 

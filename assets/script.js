@@ -69,4 +69,7 @@ $(document).ready(function()
 	updateBootStrapsSelect();	
 	showVisualization();
 
+    $(window).scroll(stickyScatter);
+    stickyScatter();
+
 });

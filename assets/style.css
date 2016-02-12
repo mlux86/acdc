@@ -46,6 +46,13 @@ a:active {
   width: 500px;
 }
 
+#scatterContainer.stick {
+  position: fixed;
+  top: 0;
+  z-index: 10000;
+  border-radius: 0 0 0.5em 0.5em;
+}
+
 #scatterContainer form{
   margin-bottom: 25px;
 }
