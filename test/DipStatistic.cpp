@@ -1,6 +1,6 @@
 #include "catch.h"
 
-#include "Util.h"
+#include "MatrixUtil.h"
 #include "DipStatistic.h"
 
 #include <algorithm>
@@ -9,8 +9,8 @@
 TEST_CASE("Dip statistic", "[dip]")
 {
 
-	Eigen::MatrixXd unimodal = Util::loadMatrix("../data/unimodal.txt", ' ');
-	Eigen::MatrixXd bimodal = Util::loadMatrix("../data/bimodal.txt", ' ');
+	Eigen::MatrixXd unimodal = MatrixUtil::loadMatrix("../data/unimodal.txt", ' ');
+	Eigen::MatrixXd bimodal = MatrixUtil::loadMatrix("../data/bimodal.txt", ' ');
 
 	std::vector<double> pdfUni;
 	for (unsigned i = 0; i < unimodal.rows(); i++)

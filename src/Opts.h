@@ -3,8 +3,6 @@
 #include <vector>
 #include <string>
 
-#include "Util.h"
-
 class Opts
 {
 private:
@@ -35,7 +33,6 @@ private:
 	std::string _krakenDb = "";
 
 	void initialize(int argc, char const *argv[]);
-
 
 public:
 	Opts(int argc, char const *argv[]);

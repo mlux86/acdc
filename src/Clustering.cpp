@@ -1,7 +1,8 @@
 #include "Logger.h"
 #include "Clustering.h"
 #include "DipStatistic.h"
-#include "Util.h"
+#include "MLUtil.h"
+#include "MatrixUtil.h"
 #include "Kmeans.h"
 
 #include <math.h>  
@@ -28,7 +29,7 @@ ClusteringResult Clustering::dipMeans(const Eigen::MatrixXd& data, double alpha,
     unsigned n = data.rows();
     unsigned dim = data.cols();
     
-    Eigen::MatrixXd dist = Util::pdist(data);
+    Eigen::MatrixXd dist = MLUtil::pdist(data);
 
     unsigned k = 1;
     std::vector<unsigned> labels(n, 0);
@@ -135,7 +136,7 @@ ClusteringResult Clustering::dipMeans(const Eigen::MatrixXd& data, double alpha,
 
             // refresh means
             k++;
-            Util::matrixRemoveRow(means, splitLabel);
+            MatrixUtil::matrixRemoveRow(means, splitLabel);
             Eigen::MatrixXd newMeans(k, dim);
             newMeans << means, 
                         locallyOptimizedMeans;

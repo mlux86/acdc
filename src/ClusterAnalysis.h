@@ -22,6 +22,8 @@ class ClusterAnalysis
 private:
 	ClusterAnalysis();
 	~ClusterAnalysis();
+	
+	static std::vector< std::vector<unsigned> > stratifiedSubsamplingIndices(const unsigned n, const unsigned k, const double ratio = 0.8);
 	static ClusterAnalysisResult bootstrapTask(const Eigen::MatrixXd & dataOrig, const Opts & opts, const std::vector<unsigned> indices);
 
 public:

@@ -1,6 +1,9 @@
 add_library(mainprog
 	Opts.cpp
-	Util.cpp
+	SequenceUtil.cpp
+	MatrixUtil.cpp
+	IOUtil.cpp
+	MLUtil.cpp
 	BarnesHutSNEAdapter.cpp
 	SequenceVectorizer.cpp
 	Clustering.cpp

@@ -3,7 +3,8 @@
 #include "ClusterAnalysis.h"
 #include "BarnesHutSNEAdapter.h"
 #include "TarjansAlgorithm.h"
-#include "Util.h"
+#include "MatrixUtil.h"
+#include "MLUtil.h"
 
 ClusterAnalysis::ClusterAnalysis()
 {
@@ -13,6 +14,33 @@ ClusterAnalysis::ClusterAnalysis()
 ClusterAnalysis::~ClusterAnalysis()
 {
 
+}
+
+std::vector< std::vector<unsigned> > ClusterAnalysis::stratifiedSubsamplingIndices(const unsigned n, const unsigned k, const double ratio)
+{
+    std::vector<unsigned> indices(n);
+    std::iota(indices.begin(), indices.end(), 0);
+    std::shuffle(indices.begin(), indices.end(), std::mt19937{std::random_device{}()});
+
+    unsigned m = (unsigned) ((double)n * ratio);
+    unsigned step = (n - m) / k;
+
+    std::vector< std::vector<unsigned> > result;
+
+    for (unsigned i = 0; i < k; i++)
+    {
+        unsigned from = i*step;
+        unsigned to = i*step + m;
+        if (i == k-1)
+        {
+            to = std::max(to, n);
+        }
+
+        std::vector<unsigned> e(indices.begin()+from, indices.begin()+to);
+        result.push_back(e); 
+    }
+
+    return result;
 }
 
 ClusterAnalysisResult ClusterAnalysis::bootstrapTask(const Eigen::MatrixXd & dataOrig, const Opts & opts, const std::vector<unsigned> indices)
@@ -36,13 +64,13 @@ ClusterAnalysisResult ClusterAnalysis::analyze(const Eigen::MatrixXd & data, con
 	ClusterAnalysisResult res;
 
 	VLOG << "PCA...\n";
-	res.dataPca = Util::pca(data, opts.tsneDim());
+	res.dataPca = MLUtil::pca(data, opts.tsneDim());
 
 	VLOG << "Running t-SNE...\n";
 	res.dataSne = BarnesHutSNEAdapter::runBarnesHutSNE(data, opts);
 
 	VLOG << "Counting connected components...\n";
-	Eigen::MatrixXd affinities = Util::knnAffinityMatrix(res.dataSne, 7, false);
+	Eigen::MatrixXd affinities = MLUtil::knnAffinityMatrix(res.dataSne, 7, false);
 	TarjansAlgorithm ta;
 	res.resConnComponents = ta.run(affinities);
 
@@ -54,7 +82,7 @@ ClusterAnalysisResult ClusterAnalysis::analyze(const Eigen::MatrixXd & data, con
 
 std::vector<ClusterAnalysisResult> ClusterAnalysis::analyzeBootstraps(const Eigen::MatrixXd & data, const Opts & opts)
 {
-	const std::vector< std::vector<unsigned> > bootstrapIndexes = Util::stratifiedSubsamplingIndices(data.rows(), opts.numBootstraps(), opts.bootstrapRatio());
+	const std::vector< std::vector<unsigned> > bootstrapIndexes = ClusterAnalysis::stratifiedSubsamplingIndices(data.rows(), opts.numBootstraps(), opts.bootstrapRatio());
 
 	ThreadPool pool(opts.numThreads());
 

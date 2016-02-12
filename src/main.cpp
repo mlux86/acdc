@@ -6,6 +6,7 @@
 #include "BarnesHutSNEAdapter.h"
 #include "KrakenAdapter.h"
 #include "ResultIO.h"
+#include "IOUtil.h"
 
 #include <boost/filesystem.hpp>
 #include <string>
@@ -68,7 +69,7 @@ int main(int argc, char const *argv[])
 	}
 	try 
 	{
-		Util::copyDir(boost::filesystem::path("../assets"), outPath);
+		IOUtil::copyDir(boost::filesystem::path("../assets"), outPath);
 	} catch(const boost::filesystem::filesystem_error & e)
 	{
 		ELOG << e.what() << "\n";

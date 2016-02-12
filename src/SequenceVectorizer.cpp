@@ -1,6 +1,7 @@
 #include "Logger.h"
 #include "SequenceVectorizer.h"
-#include "Util.h"
+#include "SequenceUtil.h"
+#include "IOUtil.h"
 
 #include <string>
 #include <vector>
@@ -36,7 +37,7 @@ void SequenceVectorizer::buildParams(const Opts & opts)
 	if(windowWidth == 0)
 	{
 		// The file size in bytes is approximately the number of nucleotide (not accounting for ID strings)
-		auto fileSize = Util::getFileSizeBytes(inputFasta);
+		auto fileSize = IOUtil::getFileSizeBytes(inputFasta);
         windowStep = (unsigned) ceil((double)fileSize / (double)opts.targetNumPoints());
         windowWidth = 2 * windowStep;
         DLOG << "k=" << opts.windowKmerLength() << "   "
@@ -53,9 +54,9 @@ void SequenceVectorizer::buildParams(const Opts & opts)
 void SequenceVectorizer::buildFeatureKmers()
 {
 	unsigned idx = 0;
-	for (auto kmer : Util::allKmers(kmerLength))
+	for (auto kmer : SequenceUtil::allKmers(kmerLength))
 	{
-		std::string revCompl = Util::reverseComplement(kmer);
+		std::string revCompl = SequenceUtil::reverseComplement(kmer);
 		std::string & final = revCompl < kmer ? revCompl : kmer;
 
 		if(kmerIndexes.find(final) != kmerIndexes.end())

@@ -5,6 +5,7 @@
 
 #include "KrakenAdapter.h"
 #include "Logger.h"
+#include "IOUtil.h"
 
 KrakenAdapter::KrakenAdapter()
 {
@@ -43,7 +44,7 @@ KrakenResult KrakenAdapter::runKraken(const std::string & fasta, const Opts & op
     }
     pclose(f2);
 
-    auto krakenOut = Util::fileLinesToVec(fnameT);
+    auto krakenOut = IOUtil::fileLinesToVec(fnameT);
 
     KrakenResult res;
 

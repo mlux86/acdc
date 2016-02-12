@@ -1,6 +1,6 @@
 #include "Logger.h"
 #include "BarnesHutSNEAdapter.h"
-#include "Util.h"
+#include "MLUtil.h"
 
 BarnesHutSNEAdapter::BarnesHutSNEAdapter()
 {
@@ -8,6 +8,11 @@ BarnesHutSNEAdapter::BarnesHutSNEAdapter()
 
 BarnesHutSNEAdapter::~BarnesHutSNEAdapter()
 {
+}
+
+unsigned BarnesHutSNEAdapter::estimateTsnePerplexity(const Eigen::MatrixXd & mat)
+{
+    return (unsigned) (pow(log(mat.rows()), 2)); 
 }
 
 double * BarnesHutSNEAdapter::loadData(const Eigen::MatrixXd & eigendata)
@@ -53,7 +58,7 @@ Eigen::MatrixXd BarnesHutSNEAdapter::runBarnesHutSNE(const Eigen::MatrixXd & eig
     if (eigendata.cols() > opts.tsnePcaDim())
     {
         DLOG << "Initially reducing dimension to " << opts.tsnePcaDim() << " using PCA...\n";
-        tsneData = Util::pca(eigendata, opts.tsnePcaDim());
+        tsneData = MLUtil::pca(eigendata, opts.tsnePcaDim());
     } else
     {
         tsneData = eigendata;
@@ -68,7 +73,7 @@ Eigen::MatrixXd BarnesHutSNEAdapter::runBarnesHutSNE(const Eigen::MatrixXd & eig
     unsigned perplexity = opts.tsnePerplexity();
     if (perplexity == 0)
     {
-        perplexity = Util::estimateTsnePerplexity(tsneData);
+        perplexity = BarnesHutSNEAdapter::estimateTsnePerplexity(tsneData);
     }
 
     // read the parameters and the dataset

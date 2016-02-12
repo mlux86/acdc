@@ -1,7 +1,14 @@
 #include <fstream>
 #include <map>
+#include <unordered_map>
 #include <set>
+#include <boost/filesystem.hpp>
+#include <seqan/alignment_free.h> 
+#include <seqan/sequence.h> 
+#include <seqan/seq_io.h>
 
+#include "MatrixUtil.h"
+#include "MLUtil.h"
 #include "ResultIO.h"
 
 ResultIO::ResultIO(const std::string & dir) : outputDir(dir)
@@ -14,24 +21,52 @@ ResultIO::~ResultIO()
 
 }
 
-Json::Value ResultIO::matrixToJSON(const Eigen::MatrixXd & mat)
+std::vector<unsigned> ResultIO::numericLabels(const std::vector<std::string> & labels)
 {
-    unsigned n = mat.rows();
-    unsigned dim = mat.cols();
-
-	auto arr = Json::Value(Json::arrayValue);
-
-    for(unsigned i = 0; i < n; i++)
+    unsigned n = labels.size();
+    std::vector<unsigned> v(n, 0);
+    std::unordered_map<std::string, unsigned> lblMap;
+    unsigned cnt = 0;
+    unsigned i = 0;
+    for (const auto & lbl : labels)
     {
-        auto entry = Json::Value(Json::arrayValue);
-    	for(unsigned j = 0; j < dim; j++)
-    	{
-    		entry.append(mat(i, j));
-    	}
-        arr.append(entry);
+        if(lblMap.find(lbl) == lblMap.end())
+        {
+            lblMap[lbl] = cnt++;
+        }
+        v[i++] = lblMap[lbl];
+    }   
+    return v;	
+}
+
+void ResultIO::filterFasta(const std::string & fasta, const std::set<std::string> contigs, const std::string & exportFilename)
+{
+
+    std::stringstream ss;
+    
+    seqan::SeqFileIn seqFileIn(fasta.c_str());
+    seqan::StringSet<seqan::CharString> ids;
+    seqan::StringSet<seqan::String<seqan::Iupac> > seqs;
+
+    seqan::readRecords(ids, seqs, seqFileIn);
+
+    unsigned n = seqan::length(ids);
+
+    for (unsigned i = 0; i < n; i++)
+    {
+        std::string id;
+        move(id, ids[i]);
+        if (std::find(contigs.begin(), contigs.end(), id) != contigs.end())
+        {
+            std::string seq;
+            move(seq, seqs[i]);
+            ss << '>' << id << '\n' << seq << '\n';
+        }
     }
 
-	return arr;
+    std::ofstream ofs(exportFilename, std::ofstream::out);
+    ofs << ss.str();
+    ofs.close();
 }
 
 Json::Value ResultIO::clusteringResultToJSON(const ClusteringResult & cr)
@@ -53,8 +88,8 @@ Json::Value ResultIO::clusterAnalysisResultToJSON(const ClusterAnalysisResult & 
 {
 	auto root = Json::Value();
 
-	root["dataSne"] = matrixToJSON(car.dataSne);
-	root["dataPca"] = matrixToJSON(car.dataPca);
+	root["dataSne"] = MatrixUtil::matrixToJSON(car.dataSne);
+	root["dataPca"] = MatrixUtil::matrixToJSON(car.dataPca);
 
 	root["bootstrapIndices"] = Json::Value(Json::arrayValue);
 	for (const auto & idx : car.bootstrapIndexes)
@@ -87,9 +122,9 @@ void ResultIO::writeResultContainerToJSON(ResultContainer result, const std::str
 	for (auto & bs : result.bootstraps)
 	{
 		// align bootstrap data to oneshot data (data points and labels)
-		bs.dataSne = Util::alignBootstrap(result.oneshot.dataSne, bs.dataSne, bs.bootstrapIndexes);        
-		bs.resConnComponents.labels = Util::alignBootstrapLabels(result.oneshot.resConnComponents.labels, bs.resConnComponents.labels, bs.bootstrapIndexes);
-		bs.resDipMeans.labels = Util::alignBootstrapLabels(result.oneshot.resDipMeans.labels, bs.resDipMeans.labels, bs.bootstrapIndexes);
+		bs.dataSne = MLUtil::alignBootstrap(result.oneshot.dataSne, bs.dataSne, bs.bootstrapIndexes);        
+		bs.resConnComponents.labels = MLUtil::alignBootstrapLabels(result.oneshot.resConnComponents.labels, bs.resConnComponents.labels, bs.bootstrapIndexes);
+		bs.resDipMeans.labels = MLUtil::alignBootstrapLabels(result.oneshot.resDipMeans.labels, bs.resDipMeans.labels, bs.bootstrapIndexes);
 
 		root["bootstraps"].append(clusterAnalysisResultToJSON(bs));
 	}	
@@ -148,7 +183,7 @@ void ResultIO::exportClusteringFastas(const ResultContainer & result)
     {        
         contigIdsCC[result.oneshot.resConnComponents.labels.at(i)].insert(result.fastaLabels.at(i));
         contigIdsDip[result.oneshot.resDipMeans.labels.at(i)].insert(result.fastaLabels.at(i));
-        contigIdsKraken[Util::numericLabels(krakenLabels).at(i)].insert(result.fastaLabels.at(i));
+        contigIdsKraken[numericLabels(krakenLabels).at(i)].insert(result.fastaLabels.at(i));
     }	
 
     // connected components
@@ -158,7 +193,7 @@ void ResultIO::exportClusteringFastas(const ResultContainer & result)
     	auto & contigs = kv.second;
     	std::stringstream ss;
     	ss << outputDir << "/export/" << result.id << "-cc-" << lbl << ".fasta";
-    	Util::filterFasta(result.fasta, contigs, ss.str());
+    	filterFasta(result.fasta, contigs, ss.str());
     }
 
     // dip means
@@ -168,7 +203,7 @@ void ResultIO::exportClusteringFastas(const ResultContainer & result)
     	auto & contigs = kv.second;
     	std::stringstream ss;
     	ss << outputDir << "/export/" << result.id << "-dip-" << lbl << ".fasta";
-    	Util::filterFasta(result.fasta, contigs, ss.str());
+    	filterFasta(result.fasta, contigs, ss.str());
     }
 
     // kraken
@@ -178,7 +213,7 @@ void ResultIO::exportClusteringFastas(const ResultContainer & result)
     	auto & contigs = kv.second;
     	std::stringstream ss;
     	ss << outputDir << "/export/" << result.id << "-kraken-" << lbl << ".fasta";
-    	Util::filterFasta(result.fasta, contigs, ss.str());
+    	filterFasta(result.fasta, contigs, ss.str());
     }
 
 }

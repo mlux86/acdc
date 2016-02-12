@@ -11,6 +11,8 @@ private:
 	BarnesHutSNEAdapter();
 	~BarnesHutSNEAdapter();
 
+	static unsigned estimateTsnePerplexity(const Eigen::MatrixXd & mat);
+
 	static double * loadData(const Eigen::MatrixXd & eigendata);
 	static Eigen::MatrixXd saveData(double* data, int n, int d);
 

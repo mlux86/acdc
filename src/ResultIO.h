@@ -25,8 +25,10 @@ struct ResultContainer
 class ResultIO
 {
 
-private:
-    Json::Value matrixToJSON(const Eigen::MatrixXd & mat);
+private:    
+	std::vector<unsigned> numericLabels(const std::vector<std::string> & labels);	
+	void filterFasta(const std::string & fasta, const std::set<std::string> contigs, const std::string & exportFilename);	
+
     Json::Value clusteringResultToJSON(const ClusteringResult & cr);
     Json::Value clusterAnalysisResultToJSON(const ClusterAnalysisResult & car);
 	void writeResultContainerToJSON(ResultContainer result, const std::string & filename);

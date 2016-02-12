@@ -1,6 +1,7 @@
 #include "Opts.h"
 #include "OptsAccumulator.h"
 #include "Logger.h"
+#include "IOUtil.h"
 
 #include <boost/program_options.hpp>
 #include <boost/algorithm/string/trim.hpp>
@@ -74,7 +75,7 @@ void Opts::initialize(int argc, char const *argv[])
 	{
 		std::string fastaListFile = vm["input-list"].as<std::string>();
 		boost::algorithm::trim(fastaListFile);	
-		_inputFASTAs = Util::fileLinesToVec(fastaListFile);
+		_inputFASTAs = IOUtil::fileLinesToVec(fastaListFile);
 	} else if (vm.count("input-fasta"))
 	{
 		std::string singleFasta = vm["input-fasta"].as<std::string>();
