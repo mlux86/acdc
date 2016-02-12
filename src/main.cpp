@@ -31,7 +31,7 @@ int main(int argc, char const *argv[])
 	}
 	catch(const std::exception & e) 
 	{
-		ELOG << e.what() << '\n';
+		std::cerr << e.what() << std::endl;
 		return EXIT_FAILURE;
 	}
 
@@ -69,11 +69,17 @@ int main(int argc, char const *argv[])
 	}
 	try 
 	{
-		IOUtil::copyDir(boost::filesystem::path("../assets"), outPath);
+		IOUtil::copyDir(boost::filesystem::path("../assets"), outPath, true);
 	} catch(const boost::filesystem::filesystem_error & e)
 	{
 		ELOG << e.what() << "\n";
 		return EXIT_FAILURE;
+	}
+
+	std::string dataFile = opts->outputDir() + "/data.js";
+	if (boost::filesystem::exists(boost::filesystem::path(dataFile)))
+	{
+		std::remove(dataFile.c_str());
 	}
 
 	ResultIO rio(opts->outputDir());
@@ -81,6 +87,12 @@ int main(int argc, char const *argv[])
 
 	for (const auto & fasta : opts->inputFASTAs())
 	{
+		if (!boost::filesystem::is_regular_file(boost::filesystem::path(fasta)))
+		{
+			ELOG << "File '" << fasta << "' does not exist or is not a regular file! Skipping...\n";
+			continue;  
+		}
+
 		ILOG << "Processing file: " << fasta << "\n";
 		ResultContainer result;
 

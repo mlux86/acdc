@@ -24,19 +24,16 @@ void Opts::initialize(int argc, char const *argv[])
 	unsigned threads = std::thread::hardware_concurrency();
 	if (threads == 0)
 	{
-		ELOG << "Could not detect number of cores. Defaulting to one thread.\n";
+		std::cerr << "Could not detect number of cores. Defaulting to one thread." << std::endl;
 		threads = 1;
-	} else
-	{
-		DLOG << "Detected " << threads << " cores.\n";
-	}	
+	} 
 
 	description.add_options()
 	    ("help,h", "Display this help message")
 	    ("verbose,v", accumulator<int>(&_logLevel)->implicit_value(1), "Verbose output (use -vv for more or -vvv for maximum verbosity)")
 	    ("quiet,q", "No output")
-	    ("input-fasta,i", boost::program_options::value<std::string>()->default_value(""), "Input FASTA file")
-	    ("input-list,I", boost::program_options::value<std::string>()->default_value(""), "File with a list of input FASTA files, one per line")
+	    ("input-fasta,i", boost::program_options::value<std::string>(), "Input FASTA file")
+	    ("input-list,I", boost::program_options::value<std::string>(), "File with a list of input FASTA files, one per line")
 	    ("tsne-dimension,d", boost::program_options::value<unsigned>()->default_value(2), "T-SNE dimension")
 	    ("tsne-pca-dimension,u", boost::program_options::value<unsigned>()->default_value(50), "T-SNE initial PCA dimension")
 	    ("tsne-perplexity,p", boost::program_options::value<unsigned>(), "T-SNE perplexity (overrides automatic estimation)")

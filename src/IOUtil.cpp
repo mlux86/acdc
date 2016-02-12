@@ -8,7 +8,7 @@ unsigned long long IOUtil::getFileSizeBytes(const std::string & filename)
     return in.tellg(); 
 }
 
-void IOUtil::copyDir(boost::filesystem::path const & source, boost::filesystem::path const & destination)
+void IOUtil::copyDir(boost::filesystem::path const & source, boost::filesystem::path const & destination, bool overwriteExisting)
 {
     namespace fs = boost::filesystem;
 
@@ -24,7 +24,13 @@ void IOUtil::copyDir(boost::filesystem::path const & source, boost::filesystem::
         fs::path current(file->path());
         if(!fs::is_directory(current))
         {
-            fs::copy_file(current, destination / current.filename());
+            if (overwriteExisting)
+            {
+                fs::copy_file(current, destination / current.filename(), fs::copy_option::overwrite_if_exists);
+            } else
+            {
+                fs::copy_file(current, destination / current.filename());
+            }
         }
     }
 }
