@@ -77,10 +77,6 @@ Eigen::MatrixXd SequenceVectorizer::vectorize(seqan::Dna5String & sequence) cons
 	unsigned len = seqan::length(sequence);
 	unsigned n = (unsigned) (((int)len - (int)windowWidth) / (int)windowStep) + 1;	
 
-	// if (len < windowWidth)
-	// {
-		// throw std::runtime_error("Length of contig is smaller than window size!");
-	// }
 	if (n == 0) // include contigs smaller than window width
 	{
 		n++;

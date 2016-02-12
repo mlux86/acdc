@@ -52,6 +52,7 @@ TEST_CASE("Vectorize different sequences", "[SequenceVectorizer]")
 
 	{	
 		SequenceVectorizer sv(2, 5, 1); 
+		sv.setNormalize(false);
 		auto mat = sv.vectorize(seq1);
 		Eigen::MatrixXd target(1,10);
 		target << 0, 0, 1, 0, 1, 1, 0, 1, 0, 0;
@@ -59,6 +60,7 @@ TEST_CASE("Vectorize different sequences", "[SequenceVectorizer]")
 	}
 	{
 		SequenceVectorizer sv(2, 8, 5); 	
+		sv.setNormalize(false);
 		auto mat = sv.vectorize(seq2);
 		Eigen::MatrixXd target(5, 10);
 		target << 0, 0, 0, 1, 1, 1, 2, 0, 2, 0,
@@ -70,6 +72,7 @@ TEST_CASE("Vectorize different sequences", "[SequenceVectorizer]")
 	}
 	{
 		SequenceVectorizer sv(3, 15, 15); 	
+		sv.setNormalize(false);
 		auto mat = sv.vectorize(seq2);
 		Eigen::MatrixXd target(2, 32);
 		target << 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 2, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0,
@@ -77,7 +80,8 @@ TEST_CASE("Vectorize different sequences", "[SequenceVectorizer]")
 		REQUIRE(mat.isApprox(target));
 	}
 	{
-		SequenceVectorizer sv(4, 10, 5); 	
+		SequenceVectorizer sv(4, 10, 5);
+		sv.setNormalize(false); 	
 		auto mat = sv.vectorize(seq3);
 		Eigen::MatrixXd target(9, 136);
 		target << 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
