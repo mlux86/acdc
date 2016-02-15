@@ -19,10 +19,10 @@ function arrayUnique(arr)
     }, []);
 }
 
-function setBoldExclusively(elem)
+function setActiveExclusively(elem)
 {
-	$('.bold').removeClass('bold');
-	elem.addClass('bold');
+	$('.active').removeClass('active');
+	elem.addClass('active');
 }
 
 function shadeColor(color, percent) 
@@ -202,34 +202,27 @@ function buildConfidenceTable(results)
 
 	for (var i in stats)
 	{
-		// connected components
+		var ccClean = stats[i].connComponents[1] == 1;
+		var dipClean = stats[i].dipMeans[1] == 1;
+		var kraken = stats[i].kraken.numSpecies;
+		var krakenClean = stats[i].kraken.numSpecies == 1;
 
-		var s = stats[i].connComponents;
-		var cc = '';
-		for (var k in s)
+		var status = 'warning';
+		if (ccClean && dipClean && krakenClean)
 		{
-			cc = cc + "p(k = " + k + ") = " + s[k] + "<br/>";
-		}
-		var cleanVal = stats[i].connComponents[1] ? stats[i].connComponents[1] : 0;
-		var ccColor = blendColors('#f46d43', '#abdda4', cleanVal);
-
-		// dip means
-		
-		var s = stats[i].dipMeans;
-		var dip = '';
-		for (var k in s)
+			status = 'clean';
+		} else if (!ccClean && !dipClean && !krakenClean)
 		{
-			dip = dip + "p(k = " + k + ") = " + s[k] + "<br/>";
+			status = 'contaminated';
 		}
-		var cleanVal = stats[i].dipMeans[1] ? stats[i].dipMeans[1] : 0;
-		var dipColor = blendColors('#f46d43', '#abdda4', cleanVal);
 
-		// kraken
-
-		var kraken = stats[i].kraken.numSpecies + ' species';
-		var krakenColor = stats[i].kraken.numSpecies > 1 ? '#f46d43' : '#abdda4';		
-
-		$('#confidences').append('<tr><td class="dataConf">' + i + '</td><td style="background-color:' + ccColor + ';" class="ccConf"><div class="chart"></div></td><td style="background-color:' + dipColor + ';" class="dipConf"><div class="chart"></div></td><td style="background-color:' + krakenColor + ';" class="kraken">' + kraken + '</td></tr>');
+		$('#confidences').append('<tr>' +
+			'<td class="' + status + '">&nbsp;</td>' + 
+			'<td class="dataConf">' + i + '</td>' +
+			'<td class="ccConf"><div class="chart"></div></td>' +
+			'<td class="dipConf"><div class="chart"></div></td>' + 
+			'<td class="kraken"><span class="number">' + kraken + '</span><br/>species</td>' +
+			'</tr>');
 
 		cellBarChart($('#confidences tr:last td.ccConf div.chart'), stats[i].connComponents, maxK);
 		cellBarChart($('#confidences tr:last td.dipConf div.chart'), stats[i].dipMeans, maxK);

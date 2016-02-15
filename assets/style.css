@@ -36,8 +36,9 @@ a:active {
   clear: both;
 }   
 
-.bold {
+td.active {
   font-weight: bolder;
+  background-color: #edf8b1;
 }
 
 /* scatter */
@@ -76,8 +77,14 @@ a:active {
   cursor: pointer;      
 }
 
-#confidences td.ccConf td.dipConf td.kraken {
-  text-align: right;
+td.ccConf, td.dipConf, td.kraken {
+  text-align: center;
+  width: 100px;
+}
+
+td.kraken > span.number {
+  font-size: 16px;
+  font-weight: bold;
 }
 
 #confidences tr:nth-child(odd) { 
@@ -86,6 +93,28 @@ a:active {
 
 #confidences tr:nth-child(even) { 
   background-color:#ffffff; 
+}
+
+td.clean, td.warning, td.contaminated {
+  padding: 0;
+  margin: 0;
+  width: 20px;
+  height: 20px;
+  background-size: 20px 20px;
+  background-repeat: no-repeat;
+  background-position: center center;
+}
+
+td.clean {
+  background-image: url(clean.png);
+}
+
+td.warning {
+  background-image: url(warning.png);
+}
+
+td.contaminated {
+  background-image: url(contaminated.png);
 }
 
 /* bars */
@@ -99,7 +128,7 @@ a:active {
 }
 
 .bar:hover {
-  fill: brown;
+  fill: red;
 }
 
 .axis {

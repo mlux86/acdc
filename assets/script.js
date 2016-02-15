@@ -19,7 +19,7 @@ $(document).ready(function()
 		selectedLabels = 'fasta';
 		updateBootStrapsSelect();
 		showVisualization();
-		setBoldExclusively($(this));
+		setActiveExclusively($(this));
 	});
 
 	$('.ccConf').click(function() {
@@ -27,7 +27,7 @@ $(document).ready(function()
 		selectedLabels = 'cc';
 		updateBootStrapsSelect();
 		showVisualization();
-		setBoldExclusively($(this));
+		setActiveExclusively($(this));
 	});
 	
 	$('.dipConf').click(function() {
@@ -35,7 +35,7 @@ $(document).ready(function()
 		selectedLabels = 'dip';
 		updateBootStrapsSelect();
 		showVisualization();
-		setBoldExclusively($(this));
+		setActiveExclusively($(this));
 	});
 
 	$('.kraken').click(function() {
@@ -43,7 +43,7 @@ $(document).ready(function()
 		selectedLabels = 'kraken';
 		updateBootStrapsSelect();
 		showVisualization();
-		setBoldExclusively($(this));
+		setActiveExclusively($(this));
 	});
 
 	$('.radioReduction').click(function() {
@@ -57,7 +57,7 @@ $(document).ready(function()
 	});
 
 	selectedFasta = $('#confidences').find('td.dataConf:first').text();
-	setBoldExclusively($('#confidences').find('td.dataConf:first'));
+	setActiveExclusively($('#confidences').find('td.dataConf:first'));
 
 	if (!selectedFasta)
 	{
