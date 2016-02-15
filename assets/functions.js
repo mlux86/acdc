@@ -277,7 +277,7 @@ function showData(dataMat, labels, tooltips, width, height, padding)
 			.append("circle")
 			.attr("cx", function(d) { return xScale(d[0]); })
        		.attr("cy", function(d) { return yScale(d[1]); })
-       		.attr("r", function(d) {return 2; })
+       		.attr("r", function(d) {return 3; })
        		.style("fill", function(d, i) {return colors[labels[i] % colors.length]; })
 			.on('mouseover', tip.show)
 			.on('mouseout', tip.hide);	
