@@ -151,6 +151,14 @@ function cellBarChart(containerCell, confidences, maxK)
 	x.domain(data.map(function(d) { return d.numClusters; }));
 	y.domain([0, 1]);
 
+	svg.append("rect")
+	   .attr("x", 0)
+	   .attr("y", 0)
+	   .attr("width", width)
+	   .attr("height", height)
+	   .style("fill", "none")
+  	   .style("stroke", "#aaa")
+       .style("stroke-width", "1");	  
 
   	svg.append("g")
 		.attr("class", "x axis")

@@ -138,7 +138,7 @@ td.contaminated {
 .axis path,
 .axis line {
   fill: none;
-  stroke: #000;
+  stroke: #aaa;
   shape-rendering: crispEdges;
 }
 
