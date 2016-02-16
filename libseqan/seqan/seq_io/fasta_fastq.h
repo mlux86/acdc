@@ -104,12 +104,13 @@ struct MagicHeader<Raw, T> :
 template <typename T>
 struct FileExtensions<Fasta, T>
 {
-    static char const * VALUE[2];
+    static char const * VALUE[3];
 };
 template <typename T>
-char const * FileExtensions<Fasta, T>::VALUE[2] =
+char const * FileExtensions<Fasta, T>::VALUE[3] =
 {
     ".fa",      // default output extension
+    ".fas",
     ".fasta"
 //    ".faa",     // FASTA Amino Acid file
 //    ".ffn",     // FASTA nucleotide coding regions file
