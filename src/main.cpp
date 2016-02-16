@@ -14,7 +14,7 @@
 #include <streambuf>
 #include <future>
 
-int main(int argc, char const *argv[])
+int main(int argc, char *argv[])
 {
 
 	std::unique_ptr<Opts> opts;
@@ -25,7 +25,7 @@ int main(int argc, char const *argv[])
 	{
 		opts.reset(new Opts(argc, argv));
 
-		std::ifstream ifs("../banner.txt"); // TODO dynamic path
+		std::ifstream ifs(opts->sharePath() + "/banner.txt");
 		banner = std::string((std::istreambuf_iterator<char>(ifs)),
 		                 std::istreambuf_iterator<char>());
 	}
@@ -69,7 +69,7 @@ int main(int argc, char const *argv[])
 	}
 	try 
 	{
-		IOUtil::copyDir(boost::filesystem::path("../assets"), outPath, true);
+		IOUtil::copyDir(boost::filesystem::path(opts->sharePath() + "/assets"), outPath, true);
 	} catch(const boost::filesystem::filesystem_error & e)
 	{
 		ELOG << e.what() << "\n";

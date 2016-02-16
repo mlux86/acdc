@@ -3,12 +3,14 @@
 #include "Logger.h"
 #include "IOUtil.h"
 
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/path.hpp>
 #include <boost/program_options.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <sstream>
 #include <thread>
 
-Opts::Opts(int argc, char const *argv[])
+Opts::Opts(int argc, char *argv[])
 {
 	initialize(argc, argv);
 }
@@ -17,7 +19,7 @@ Opts::~Opts()
 {
 }
 
-void Opts::initialize(int argc, char const *argv[])
+void Opts::initialize(int argc, char *argv[])
 {
 	boost::program_options::options_description description("Usage", 250);
 
@@ -27,6 +29,12 @@ void Opts::initialize(int argc, char const *argv[])
 		std::cerr << "Could not detect number of cores. Defaulting to one thread." << std::endl;
 		threads = 1;
 	} 
+
+	// find path of binary
+    boost::filesystem::path fullPath(boost::filesystem::initial_path<boost::filesystem::path>());
+    fullPath = boost::filesystem::system_complete(boost::filesystem::path(argv[0]));
+    _execPath = boost::filesystem::canonical(boost::filesystem::complete(fullPath)).parent_path().string();
+    _sharePath = _execPath + "/../share/acdc";
 
 	description.add_options()
 	    ("help,h", "Display this help message")
@@ -105,6 +113,16 @@ void Opts::initialize(int argc, char const *argv[])
 	_bootstrapRatio = vm["bootstrap-ratio"].as<double>();
 	_outputDir = vm["output-dir"].as<std::string>();
 	_krakenDb = vm["kraken-db"].as<std::string>();
+}
+
+std::string Opts::execPath() const
+{
+	return _execPath;
+}
+
+std::string Opts::sharePath() const
+{
+	return _sharePath;
 }
 
 bool Opts::needsHelp() const

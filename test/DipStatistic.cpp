@@ -9,8 +9,8 @@
 TEST_CASE("Dip statistic", "[dip]")
 {
 
-	Eigen::MatrixXd unimodal = MatrixUtil::loadMatrix("../data/unimodal.txt", ' ');
-	Eigen::MatrixXd bimodal = MatrixUtil::loadMatrix("../data/bimodal.txt", ' ');
+	Eigen::MatrixXd unimodal = MatrixUtil::loadMatrix("../share/acdc/testdata/unimodal.txt", ' ');
+	Eigen::MatrixXd bimodal = MatrixUtil::loadMatrix("../share/acdc/testdata/bimodal.txt", ' ');
 
 	std::vector<double> pdfUni;
 	for (unsigned i = 0; i < unimodal.rows(); i++)

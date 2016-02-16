@@ -25,7 +25,7 @@ Other needed libraries are included.
 
 ## Installation
 
-Clone the repository, run Cmake and build the library
+Clone the repository, run CMake and build the library
 
 ```
 # git clone https://github.com/mlux86/acdc.git
@@ -34,26 +34,32 @@ Clone the repository, run Cmake and build the library
 # make -j4
 ```
 
-Installation of the binaries is not supported, yet (but will be in the future).
+To install acdc:
+
+```
+make install
+```
+
+The installation path (prefix path) can be changed by adding the option `-DCMAKE_INSTALL_PREFIX=<prefix-path>` to the cmake command above.
 
 ## Running
 
 To show the help, including various parameters of acdc, run
 
 ```
-# bin/acdc -h
+# acdc -h
 ```
 
 To run acdc to check a single fasta file for contamination:
 
 ```
-# bin/acdc -i <path-to-fasta>
+# acdc -i <path-to-fasta>
 ```
 
 To run acdc in batch mode, supply a list of fasta files:
 
 ```
-# bin/acdc -I <path-to-file-with-list-of-fastas>
+# acdc -I <path-to-file-with-list-of-fastas>
 ```
 
 ## Viewing results

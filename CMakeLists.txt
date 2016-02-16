@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 project(acdc)
-enable_testing()
 
 set(CMAKE_BUILD_TYPE Release)
 
@@ -32,10 +31,21 @@ include_directories(SYSTEM "libseqan")
 # Seqan library
 include_directories(SYSTEM "libnanoflann")
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 
 add_subdirectory(libdip)
 add_subdirectory(libtsne)
 add_subdirectory(libjsoncpp)
 add_subdirectory(src)
 add_subdirectory(test)
+
+# installation 
+
+# if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+#     set (CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/dist" CACHE PATH "default install path" FORCE)
+# endif()
+
+message(STATUS "CMAKE_INSTALL_PREFIX: " ${CMAKE_INSTALL_PREFIX})
+
+install(FILES ${CMAKE_BINARY_DIR}/acdc DESTINATION bin)
+install(DIRECTORY share/ DESTINATION share)

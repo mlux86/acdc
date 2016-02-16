@@ -6,6 +6,9 @@
 class Opts
 {
 private:
+	std::string _execPath = "";
+	std::string _sharePath = "";
+
 	bool _needsHelp = false;
 	std::string _helpDesc = "";
 	int _logLevel = 0;
@@ -32,12 +35,14 @@ private:
 
 	std::string _krakenDb = "";
 
-	void initialize(int argc, char const *argv[]);
+	void initialize(int argc, char *argv[]);
 
 public:
-	Opts(int argc, char const *argv[]);
+	Opts(int argc, char *argv[]);
 	~Opts();
 
+	std::string execPath() const;
+	std::string sharePath() const;
 	bool needsHelp() const;
 	unsigned logLevel() const;
 	std::string helpDesc() const;
