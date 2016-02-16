@@ -6,6 +6,7 @@ add_executable(acdc-test
 	testmain.cpp
 	SequenceVectorizer.cpp
 	DipStatistic.cpp
+	TarjansAlgorithm.cpp
 )
 
 target_link_libraries(acdc-test mainprog tsne dip jsoncpp pthread m ${Boost_LIBRARIES} ${JSONCPP_LIBRARY})
