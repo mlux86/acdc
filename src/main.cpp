@@ -21,6 +21,8 @@ int main(int argc, char *argv[])
 
 	std::string banner = "";
 
+	// build program arguments
+
 	try 
 	{
 		opts.reset(new Opts(argc, argv));
@@ -35,12 +37,16 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
+	// show help
+
 	if (opts->needsHelp())
 	{
 		std::cout << banner << std::endl;
 		std::cout << opts->helpDesc() << std::endl;
 		return EXIT_SUCCESS;
 	}
+
+	// configure logger
 
 	switch (opts->logLevel())
 	{
@@ -52,35 +58,51 @@ int main(int argc, char *argv[])
 		default: throw std::runtime_error("Loglevel undefined!");
 	}
 
+	// check if Kraken exists
+	bool krakenExists = KrakenAdapter::krakenExists();
+	if (!krakenExists)
+	{
+		ELOG << "Kraken not found and will be disabled! Please make sure that the kraken and kraken-translate executables are in the $PATH environment variable." << std::endl;
+	}
+
+	// check for input files
+
 	if (opts->inputFASTAs().empty())
 	{
-		ELOG << "No input FASTA file(s) given (--input-fasta,-i), aborting.\n";
+		ELOG << "No input FASTA file(s) given (--input-fasta,-i), aborting." << std::endl;
 		return EXIT_FAILURE;
 	}
 
+	// create output directory	
 
 	boost::filesystem::path outPath (opts->outputDir());
 	boost::system::error_code returnedError;
 	boost::filesystem::create_directories(outPath, returnedError);
 	if (returnedError)
 	{
-		ELOG << "Could not create output directory, aborting.\n";
+		ELOG << "Could not create output directory, aborting." << std::endl;
 		return EXIT_FAILURE;
 	}
+
+	// copy result assets
 	try 
 	{
 		IOUtil::copyDir(boost::filesystem::path(opts->sharePath() + "/assets"), outPath, true);
 	} catch(const boost::filesystem::filesystem_error & e)
 	{
-		ELOG << e.what() << "\n";
+		ELOG << e.what() << std::endl;
 		return EXIT_FAILURE;
 	}
+
+	// remove old data.js file if necessary
 
 	std::string dataFile = opts->outputDir() + "/data.js";
 	if (boost::filesystem::exists(boost::filesystem::path(dataFile)))
 	{
 		std::remove(dataFile.c_str());
 	}
+
+
 
 	ResultIO rio(opts->outputDir());
 	unsigned idCnt = 1;
@@ -89,11 +111,11 @@ int main(int argc, char *argv[])
 	{
 		if (!boost::filesystem::is_regular_file(boost::filesystem::path(fasta)))
 		{
-			ELOG << "File '" << fasta << "' does not exist or is not a regular file! Skipping...\n";
+			ELOG << "File '" << fasta << "' does not exist or is not a regular file! Skipping..." << std::endl;
 			continue;  
 		}
 
-		ILOG << "Processing file: " << fasta << "\n";
+		ILOG << "Processing file: " << fasta << std::endl;
 		ResultContainer result;
 
 		result.id = idCnt++;
@@ -101,26 +123,28 @@ int main(int argc, char *argv[])
 
 		try 
 		{
-			ILOG << "  Running Kraken ... "; ILOG.flush();
-			result.kraken = KrakenAdapter::runKraken(fasta, *opts);
+			if (krakenExists)
+			{
+				ILOG << "Running Kraken..." << std::endl;
+				result.kraken = KrakenAdapter::runKraken(fasta, *opts);
+			}
 
-			ILOG << "vectorizing contigs ... "; ILOG.flush();
+			ILOG << "Vectorizing contigs..." << std::endl;
 			SequenceVectorizer sv(fasta, *opts);
 			auto dat = sv.vectorize();
 			result.fastaLabels = dat.second;
 
-			ILOG << "one-shot analysis ... "; ILOG.flush();
+			ILOG << "One-shot analysis..." << std::endl;
 			result.oneshot = ClusterAnalysis::analyze(dat.first, *opts);
 
-			ILOG << "bootstrap analysis ... "; ILOG.flush();
+			ILOG << "Bootstrap analysis..." << std::endl;
 			result.bootstraps = ClusterAnalysis::analyzeBootstraps(dat.first, *opts); 
 			
-			ILOG << " writing result ... "; ILOG.flush();
+			ILOG << "Writing result..." << std::endl;
 			rio.processResult(result);
-			ILOG << "done!\n";
-		} catch(const std::runtime_error & e)
+		} catch(const std::exception & e)
 		{
-			ELOG << e.what() << "\n";
+			ELOG << e.what() << std::endl;
 			return EXIT_FAILURE;
 		}		
 	}

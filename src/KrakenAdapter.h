@@ -16,8 +16,9 @@ class KrakenAdapter
 private:
 	KrakenAdapter();
 	~KrakenAdapter();
-
+	
 public:
+	static bool krakenExists();
 	static KrakenResult runKraken(const std::string & fasta, const Opts & opts);
 	
 };

@@ -15,6 +15,35 @@ KrakenAdapter::~KrakenAdapter()
 {
 }
 
+bool KrakenAdapter::krakenExists()
+{
+    std::string krakenCommand = "kraken -h > /dev/null 2>&1";
+    FILE * f1 = popen(krakenCommand.c_str(), "r");
+    if (!f1)
+    {
+        throw std::runtime_error("fork() or pipe() failed!");
+    }
+    int r1 = pclose(f1);
+    if (WEXITSTATUS(r1) != 0)
+    {
+        return false;
+    }
+
+    std::string krakenTranslateCommand = "kraken-translate -h > /dev/null 2>&1";
+    FILE * f2 = popen(krakenTranslateCommand.c_str(), "r");
+    if (!f2)
+    {
+        throw std::runtime_error("fork() or pipe() failed!");
+    }
+    int r2 = pclose(f2);
+    if (WEXITSTATUS(r2) != 0)
+    {
+        return false;
+    }    
+
+    return true;
+}
+
 KrakenResult KrakenAdapter::runKraken(const std::string & fasta, const Opts & opts)
 {
     boost::filesystem::path temp = boost::filesystem::unique_path();
@@ -32,17 +61,25 @@ KrakenResult KrakenAdapter::runKraken(const std::string & fasta, const Opts & op
  	FILE * f1 = popen(krakenCommand.c_str(), "r");
  	if (!f1)
  	{
- 		throw std::runtime_error("Cannot run Kraken!");
+ 		throw std::runtime_error("fork() or pipe() failed!");
  	}
-    pclose(f1);
+    int r1 = pclose(f1);
+    if (WEXITSTATUS(r1) != 0)
+    {
+        throw std::runtime_error("kraken finished abnormally.");    
+    }
 
     DLOG << "Executing: " << krakenTranslateCommand << "\n";
     FILE * f2 = popen(krakenTranslateCommand.c_str(), "r");
     if (!f2)
     {
-        throw std::runtime_error("Cannot translate Kraken!");
+        throw std::runtime_error("fork() or pipe() failed!");
     }
-    pclose(f2);
+    int r2 = pclose(f2);
+    if (WEXITSTATUS(r2) != 0)
+    {
+        throw std::runtime_error("kraken-translate finished abnormally.");    
+    }
 
     auto krakenOut = IOUtil::fileLinesToVec(fnameT);
 
