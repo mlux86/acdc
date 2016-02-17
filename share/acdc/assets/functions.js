@@ -199,6 +199,11 @@ function cellBarChart(containerCell, confidences, maxK)
 
 function buildConfidenceTable(results)
 {
+	if (typeof results == 'undefined' || Object.keys(results) == 0)
+	{
+		return;
+	}
+
 	var stats = calculateStats(results);
 
 	var maxK = 0;
