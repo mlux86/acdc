@@ -11,7 +11,7 @@
 #include "MLUtil.h"
 #include "ResultIO.h"
 
-ResultIO::ResultIO(const std::string & dir) : outputDir(dir)
+ResultIO::ResultIO(const std::string & dir, bool krakenEnabled_) : outputDir(dir), krakenEnabled(krakenEnabled_)
 {
 
 }
@@ -129,15 +129,18 @@ void ResultIO::writeResultContainerToJSON(ResultContainer result, const std::str
 		root["bootstraps"].append(clusterAnalysisResultToJSON(bs));
 	}	
 
-	root["krakenLabels"] = Json::Value(Json::arrayValue);
-    for (auto & lbl : result.fastaLabels)
+    if (krakenEnabled)
     {
-        std::string krakenLbl = "unknown";
-        if (result.kraken.classification.find(lbl) != result.kraken.classification.end())
+    	root["krakenLabels"] = Json::Value(Json::arrayValue);
+        for (auto & lbl : result.fastaLabels)
         {
-            krakenLbl = result.kraken.classification.at(lbl);
+            std::string krakenLbl = "unknown";
+            if (result.kraken.classification.find(lbl) != result.kraken.classification.end())
+            {
+                krakenLbl = result.kraken.classification.at(lbl);
+            }
+            root["krakenLabels"].append(krakenLbl);
         }
-        root["krakenLabels"].append(krakenLbl);
     }
 
 	Json::StreamWriterBuilder builder;
@@ -207,13 +210,16 @@ void ResultIO::exportClusteringFastas(const ResultContainer & result)
     }
 
     // kraken
-    for (auto & kv : contigIdsKraken) 
+    if (krakenEnabled)
     {
-    	unsigned lbl = kv.first;
-    	auto & contigs = kv.second;
-    	std::stringstream ss;
-    	ss << outputDir << "/export/" << result.id << "-kraken-" << lbl << ".fasta";
-    	filterFasta(result.fasta, contigs, ss.str());
+        for (auto & kv : contigIdsKraken) 
+        {
+        	unsigned lbl = kv.first;
+        	auto & contigs = kv.second;
+        	std::stringstream ss;
+        	ss << outputDir << "/export/" << result.id << "-kraken-" << lbl << ".fasta";
+        	filterFasta(result.fasta, contigs, ss.str());
+        }
     }
 
 }

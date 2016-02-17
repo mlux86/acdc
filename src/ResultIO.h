@@ -35,10 +35,11 @@ private:
     void exportClusteringFastas(const ResultContainer & result);
 
 	std::string outputDir;
+    bool krakenEnabled;
     std::vector<std::string> jsonFiles;
 
 public:
-	ResultIO(const std::string & outputDir);
+	ResultIO(const std::string & outputDir, bool krakenEnabled);
 	~ResultIO();
 	
 	void processResult(const ResultContainer & result);

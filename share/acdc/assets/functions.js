@@ -94,21 +94,24 @@ function calculateStats(results)
 		stats[key].connComponents = tnc["connComponents"];
 		stats[key].dipMeans = tnc["dipMeans"];
 
-		stats[key].kraken = {};
-		var krakenNumUnknown = 0;
-		$.each(res.krakenLabels, function (idx, val) 
+		if ("krakenLabels" in res)
 		{
-			if (val === "unknown")
+			stats[key].kraken = {};
+			var krakenNumUnknown = 0;
+			$.each(res.krakenLabels, function (idx, val) 
 			{
-				krakenNumUnknown++;
+				if (val === "unknown")
+				{
+					krakenNumUnknown++;
+				}
+			});
+			stats[key].kraken.numUnknown = krakenNumUnknown;
+			var krakenUnique = res.krakenLabels.filter(onlyUnique);
+			stats[key].kraken.numSpecies = krakenUnique.length;
+			if(krakenNumUnknown > 0)
+			{
+				stats[key].kraken.numSpecies--;
 			}
-		});
-		stats[key].kraken.numUnknown = krakenNumUnknown;
-		var krakenUnique = res.krakenLabels.filter(onlyUnique);
-		stats[key].kraken.numSpecies = krakenUnique.length;
-		if(krakenNumUnknown > 0)
-		{
-			stats[key].kraken.numSpecies--;
 		}
 	}
 
@@ -203,17 +206,21 @@ function buildConfidenceTable(results)
 	{
 		var keys =      Object.keys(stats[i].connComponents).map(Number)
 				.concat(Object.keys(stats[i].dipMeans).map(Number));
-				// .concat(stats[i].kraken.numSpecies);
 		var maxKey = Math.max.apply(Math, keys);		
 		maxK = Math.max(maxK, maxKey);
 	}
+
+	var firstKey = Object.keys(results)[0];
+	var krakenEnabled = "krakenLabels" in results[firstKey];
+
+	$('#confidences').append('<tr><th>Contamination<br/>status</th><th>Sample</th><th>Connected Components</th><th>Dip Means</th>' + (krakenEnabled ? '<th>Kraken</th>' : '') + '</tr>');
 
 	for (var i in stats)
 	{
 		var ccClean = stats[i].connComponents[1] == 1;
 		var dipClean = stats[i].dipMeans[1] == 1;
-		var kraken = stats[i].kraken.numSpecies;
-		var krakenClean = stats[i].kraken.numSpecies == 1;
+		var kraken = krakenEnabled ? stats[i].kraken.numSpecies : 0;
+		var krakenClean = krakenEnabled && (stats[i].kraken.numSpecies == 1);
 
 		var status = 'warning';
 		if (ccClean && dipClean && krakenClean)
@@ -229,7 +236,7 @@ function buildConfidenceTable(results)
 			'<td class="dataConf">' + i + '</td>' +
 			'<td class="ccConf"><div class="chart"></div></td>' +
 			'<td class="dipConf"><div class="chart"></div></td>' + 
-			'<td class="kraken"><span class="number">' + kraken + '</span><br/>species</td>' +
+			(krakenEnabled ? '<td class="kraken"><span class="number">' + kraken + '</span><br/>species</td>' : '') +
 			'</tr>');
 
 		cellBarChart($('#confidences tr:last td.ccConf div.chart'), stats[i].connComponents, maxK);

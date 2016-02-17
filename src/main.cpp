@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
 
 
 
-	ResultIO rio(opts->outputDir());
+	ResultIO rio(opts->outputDir(), krakenExists);
 	unsigned idCnt = 1;
 
 	for (const auto & fasta : opts->inputFASTAs())
