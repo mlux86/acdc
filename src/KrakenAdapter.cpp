@@ -7,7 +7,7 @@
 #include "Logger.h"
 #include "IOUtil.h"
 
-KrakenAdapter::KrakenAdapter()
+KrakenAdapter::KrakenAdapter(const Opts & o) : opts(o)
 {
 }
 
@@ -17,6 +17,11 @@ KrakenAdapter::~KrakenAdapter()
 
 bool KrakenAdapter::krakenExists()
 {
+    if (opts.krakenDb().empty())
+    {
+        return false;
+    }
+
     std::string krakenCommand = "kraken -h > /dev/null 2>&1";
     FILE * f1 = popen(krakenCommand.c_str(), "r");
     if (!f1)
@@ -44,7 +49,7 @@ bool KrakenAdapter::krakenExists()
     return true;
 }
 
-KrakenResult KrakenAdapter::runKraken(const std::string & fasta, const Opts & opts)
+KrakenResult KrakenAdapter::runKraken(const std::string & fasta)
 {
     boost::filesystem::path temp = boost::filesystem::unique_path();
     const std::string fname = temp.native(); 
@@ -66,7 +71,7 @@ KrakenResult KrakenAdapter::runKraken(const std::string & fasta, const Opts & op
     int r1 = pclose(f1);
     if (WEXITSTATUS(r1) != 0)
     {
-        throw std::runtime_error("kraken finished abnormally.");    
+        throw std::runtime_error("Kraken finished abnormally. Use -vv or -vvv switch to show more information.");    
     }
 
     DLOG << "Executing: " << krakenTranslateCommand << "\n";
@@ -78,7 +83,7 @@ KrakenResult KrakenAdapter::runKraken(const std::string & fasta, const Opts & op
     int r2 = pclose(f2);
     if (WEXITSTATUS(r2) != 0)
     {
-        throw std::runtime_error("kraken-translate finished abnormally.");    
+        throw std::runtime_error("Kraken-translate finished abnormally. Use -vv or -vvv switch to show more information.");    
     }
 
     auto krakenOut = IOUtil::fileLinesToVec(fnameT);

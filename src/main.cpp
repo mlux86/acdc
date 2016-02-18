@@ -58,11 +58,12 @@ int main(int argc, char *argv[])
 		default: throw std::runtime_error("Loglevel undefined!");
 	}
 
-	// check if Kraken exists
-	bool krakenExists = KrakenAdapter::krakenExists();
+	// setup Kraken 
+	KrakenAdapter krk(*opts);
+	bool krakenExists = krk.krakenExists();
 	if (!krakenExists)
 	{
-		ELOG << "Kraken not found and will be disabled! Please make sure that the kraken and kraken-translate executables are in the $PATH environment variable." << std::endl;
+		ELOG << "Kraken not found! It will be disabled.\n- Please make sure that the folders containing the 'kraken' and 'kraken-translate' executables is in your $PATH.\n- Please make sure to supply a database using the --kraken-db switch." << std::endl;
 	}
 
 	// check for input files
@@ -126,7 +127,7 @@ int main(int argc, char *argv[])
 			if (krakenExists)
 			{
 				ILOG << "Running Kraken..." << std::endl;
-				result.kraken = KrakenAdapter::runKraken(fasta, *opts);
+				result.kraken = krk.runKraken(fasta);
 			}
 
 			ILOG << "Vectorizing contigs..." << std::endl;
@@ -144,8 +145,7 @@ int main(int argc, char *argv[])
 			rio.processResult(result);
 		} catch(const std::exception & e)
 		{
-			ELOG << e.what() << std::endl;
-			return EXIT_FAILURE;
+			ELOG << "An error occurred processing this file: " << e.what() << std::endl;
 		}		
 	}
 

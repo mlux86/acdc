@@ -14,11 +14,13 @@ class KrakenAdapter
 {
 
 private:
-	KrakenAdapter();
-	~KrakenAdapter();
+	const Opts & opts;
 	
 public:
-	static bool krakenExists();
-	static KrakenResult runKraken(const std::string & fasta, const Opts & opts);
+	KrakenAdapter(const Opts & opts);
+	~KrakenAdapter();
+	
+	bool krakenExists();
+	KrakenResult runKraken(const std::string & fasta);
 	
 };
