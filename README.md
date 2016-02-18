@@ -19,9 +19,13 @@ Acdc is a tool to test next-generation-sequencing (NGS) data from single-cell se
 * C++11 compatible compiler
 * [CMake](https://cmake.org/) >= 3.0
 * [Boost C++ Libraries](http://www.boost.org) >= 1.58.0 (program_options, system, filesystem)
-* [Kraken](https://github.com/DerrickWood/kraken) >= 0.10.5-beta
+* [Eigen](http://eigen.tuxfamily.org/) >= 3.3
 
 Other needed libraries are included.
+
+### Optional dependencies
+
+[Kraken](https://github.com/DerrickWood/kraken) >= 0.10.5-beta can be used to improve results by using a database. If Kraken cannot be found in the $PATH environment variable, it is disabled automatically.
 
 ## Installation
 
@@ -69,10 +73,11 @@ It contains the file `index.html` that can be viewed in any modern browser, supp
 
 ## Used Libraries
 
+* [Eigen](http://eigen.tuxfamily.org/), a C++ template library for linear algebra: matrices, vectors, numerical solvers, and related algorithms.
 * [SeqAn](http://www.seqan.de/), an open source C++ library of efficient algorithms and data structures for the analysis of sequences with the focus on biological data.
 * [t-SNE](https://lvdmaaten.github.io/tsne/), t-Distributed Stochastic Neighbor Embedding (t-SNE) is a technique for dimensionality reduction that is particularly well suited for the visualization of high-dimensional datasets.
 * [diptest: Hartigan's Dip Test Statistic for Unimodality](https://cran.r-project.org/web/packages/diptest/), by Martin Maechler (originally from Fortran and S-plus by Dario Ringach, NYU.edu), modified for use in a C++ application.
-* [JsonCpp](https://github.com/open-source-parsers/jsoncpp), A C++ library for interacting with JSON.
+* [JsonCpp](https://github.com/open-source-parsers/jsoncpp), a C++ library for interacting with JSON.
 * [nanoflann](https://github.com/jlblancoc/nanoflann), a C++ header-only library for Nearest Neighbor (NN) search wih KD-trees.
 * [Catch](https://github.com/philsquared/Catch), a modern, C++-native, header-only, framework for unit-tests, TDD and BDD.
 * [jQuery](https://jquery.com/), a fast, small, and feature-rich JavaScript library. 
