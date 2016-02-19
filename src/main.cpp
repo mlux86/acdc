@@ -58,20 +58,20 @@ int main(int argc, char *argv[])
 		default: throw std::runtime_error("Loglevel undefined!");
 	}
 
+	// check for input files
+
+	if (opts->inputFASTAs().empty())
+	{
+		ELOG << "No input FASTA file(s) given (--input-fasta,-i)." << std::endl;
+		return EXIT_FAILURE;
+	}
+
 	// setup Kraken 
 	KrakenAdapter krk(*opts);
 	bool krakenExists = krk.krakenExists();
 	if (!krakenExists)
 	{
 		ELOG << "Kraken not found! It will be disabled.\n- Please make sure that the folders containing the 'kraken' and 'kraken-translate' executables is in your $PATH.\n- Please make sure to supply a database using the --kraken-db switch." << std::endl;
-	}
-
-	// check for input files
-
-	if (opts->inputFASTAs().empty())
-	{
-		ELOG << "No input FASTA file(s) given (--input-fasta,-i), aborting." << std::endl;
-		return EXIT_FAILURE;
 	}
 
 	// create output directory	

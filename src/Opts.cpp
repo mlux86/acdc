@@ -31,9 +31,14 @@ void Opts::initialize(int argc, char *argv[])
 	} 
 
 	// find path of binary
-    boost::filesystem::path fullPath(boost::filesystem::initial_path<boost::filesystem::path>());
-    fullPath = boost::filesystem::system_complete(boost::filesystem::path(argv[0]));
-    _execPath = boost::filesystem::canonical(boost::filesystem::complete(fullPath)).parent_path().string();
+
+	char result[4096];
+	unsigned count = readlink( "/proc/self/exe", result, 4096);
+	std::string selfExe(result, (count > 0) ? count : 0);
+
+    boost::filesystem::path path(selfExe);
+    boost::filesystem::path fullPath = boost::filesystem::canonical(boost::filesystem::system_complete(path));
+    _execPath = fullPath.parent_path().string();
     _sharePath = _execPath + "/../share/acdc";
 
 	description.add_options()
