@@ -207,11 +207,12 @@ function dimMin(data, dim)
 	}, Infinity);
 }
 
-function showData(dataMat, labels, tooltips, greyedOut, width, height, padding)
+function showData(dataMat, labels, tooltips, greyedOut, highlighted, width, height, padding)
 {	
 	var svg = d3.select("#scatter").html("").append("svg").attr("width", width).attr("height", height);
 
 	var doGrey = typeof greyedOut != 'undefined' && greyedOut.length == labels.length;
+	var doHighlight = typeof highlighted != 'undefined' && highlighted.length == labels.length;
 
 	svg.append("rect")
 	   .attr("x", 0)
@@ -237,16 +238,26 @@ function showData(dataMat, labels, tooltips, greyedOut, width, height, padding)
     tip = d3.tip().attr('class', 'd3-tip').offset([-10, 0]).html(function(d, i) { return tooltips[i]; });
     svg.call(tip);
 
-	svg.selectAll("circle")
-			.data(dataMat)
-			.enter()
-			.append("circle")
-			.attr("cx", function(d) { return xScale(d[0]); })
-       		.attr("cy", function(d) { return yScale(d[1]); })
-       		.attr("r", function(d) {return 3; })
-       		.style("fill", function(d, i) {return (doGrey && greyedOut[i]) ? greyColor : colors[labels[i] % colors.length]; })
-			.on('mouseover', tip.show)
-			.on('mouseout', tip.hide);	
+	var shapes = svg.selectAll("circle").data(dataMat).enter();
+
+	shapes.append("circle")
+		  .attr("cx", function(d) { return xScale(d[0]); })
+		  .attr("cy", function(d) { return yScale(d[1]); })
+		  .attr("r", function(d) {return 3; })
+		  .style("fill", function(d, i) {return (doGrey && greyedOut[i]) ? greyColor : colors[labels[i] % colors.length]; })
+		  .on('mouseover', tip.show)
+		  .on('mouseout', tip.hide);
+
+	shapes.append("circle")
+		  .filter(function(d, i){ return highlighted[i]; })
+		  .attr("cx", function(d) { return xScale(d[0]); })
+		  .attr("cy", function(d) { return yScale(d[1]); })
+		  .attr("r", function(d) {return 6; })
+		  .style("fill", function(d, i) {return '#F53BFF'; })
+		  .on('mouseover', tip.show)
+		  .on('mouseout', tip.hide);
+
+	
 }
 
 function showVisualization()
@@ -266,11 +277,19 @@ function showVisualization()
 
 	var labels;
 	var greyedOut = new Array();
+	var highlighted = new Array();
 	var outliers = new Array();
 	if (selectedLabels === 'fasta')
 	{
 		// labels = numericLabels(x.fastaLabels);
 		labels = Array.apply(null, Array(x.fastaLabels.length)).map(Number.prototype.valueOf, -1); // no labels / black color
+		if ("sixteenSContigs" in x)
+		{
+			for (var i = 0; i < x.krakenLabels.length; i++)
+			{
+				highlighted.push($.inArray(x.fastaLabels[i], x.sixteenSContigs) >= 0);
+			}			
+		}
 	} else if(selectedLabels === 'cc')
 	{
 		labels = clustAnaResult.clustCC.labels;	
@@ -343,7 +362,7 @@ function showVisualization()
 		tooltips = removeIndexes(tooltips, rmIdx);
 	}
 
-	showData(dataMat, labels, tooltips, greyedOut, width, height, padding);
+	showData(dataMat, labels, tooltips, greyedOut, highlighted, width, height, padding);
 	updateExport(labels, greyedOut);
 }
 

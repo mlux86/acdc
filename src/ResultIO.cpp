@@ -167,13 +167,10 @@ void ResultIO::writeResultContainerToJSON(ResultContainer result, const std::str
         }
     }
 
-    if (result.sixteenSContigs.size() > 0)
+    root["sixteenSContigs"] = Json::Value(Json::arrayValue);
+    for (const auto & contig : result.sixteenSContigs)
     {
-        root["sixteenSContigs"] = Json::Value(Json::arrayValue);
-        for (const auto & contig : result.sixteenSContigs)
-        {
-            root["sixteenSContigs"].append(contig);
-        }
+        root["sixteenSContigs"].append(contig);
     }
 
 	Json::StreamWriterBuilder builder;
