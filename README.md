@@ -25,7 +25,7 @@ Other needed libraries are included.
 
 ### Optional dependencies
 
-[Kraken](https://github.com/DerrickWood/kraken) >= 0.10.5-beta can be used to improve results by using a database. If Kraken cannot be found in the $PATH environment variable, it is disabled automatically.
+[Kraken](https://github.com/DerrickWood/kraken) >= 0.10.5-beta can be used to improve results by using a database.
 
 ## Installation
 
@@ -65,6 +65,16 @@ To run acdc in batch mode, supply a list of fasta files:
 ```
 # acdc -I <path-to-file-with-list-of-fastas>
 ```
+
+### Including Kraken results
+
+By default, Kraken is not included in the computation. It is necessary, to specify a database for Kraken to access, i.e.:
+
+```
+# acdc -K <path-to-kraken-db> -i <path-to-fasta>
+```
+
+Make sure that the `kraken` and `kraken-translate` executables can be found in the $PATH environment variable.
 
 ## Viewing results
 
