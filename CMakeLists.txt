@@ -22,14 +22,17 @@ include_directories(SYSTEM "libtsne")
 # Dip statistic
 include_directories(SYSTEM "libdip")
 
-# Json library
+# Jsoncpp
 include_directories(SYSTEM "libjsoncpp")
 
-# Seqan library
+# Seqan
 include_directories(SYSTEM "libseqan")
 
-# Seqan library
+# Nanoflann
 include_directories(SYSTEM "libnanoflann")
+
+# Catch
+include_directories(SYSTEM "libcatch")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 

@@ -1,0 +1,11 @@
+diptest: Hartigan's Dip Test Statistic for Unimodality - Corrected
+
+https://cran.r-project.org/web/packages/diptest/
+
+Compute Hartigan's dip test statistic for unimodality / multimodality and provide a test with simulation based p-values, where the original public code has been corrected.
+
+Version: 0.75-7
+Published: 2015-06-08
+Author:	Martin Maechler (originally from Fortran and S-plus by Dario Ringach, NYU.edu)
+Maintainer:	Martin Maechler <maechler at stat.math.ethz.ch>
+License: GPL-2 | GPL-3
