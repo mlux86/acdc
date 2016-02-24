@@ -14,6 +14,7 @@ add_library(mainprog
 	Logger.cpp
 	KrakenAdapter.cpp
 	ResultIO.cpp
+	RnammerAdapter.cpp
 )
 
 add_executable(acdc main.cpp)

@@ -167,6 +167,15 @@ void ResultIO::writeResultContainerToJSON(ResultContainer result, const std::str
         }
     }
 
+    if (result.sixteenSContigs.size() > 0)
+    {
+        root["sixteenSContigs"] = Json::Value(Json::arrayValue);
+        for (const auto & contig : result.sixteenSContigs)
+        {
+            root["sixteenSContigs"].append(contig);
+        }
+    }
+
 	Json::StreamWriterBuilder builder;
 	std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
 	std::ofstream ofs(filename, std::ofstream::out | std::ofstream::app);

@@ -87,32 +87,31 @@ KrakenResult KrakenAdapter::runKraken(const std::string & fasta)
     }
 
     auto krakenOut = IOUtil::fileLinesToVec(fnameT);
+    std::remove(fname.c_str());
+    std::remove(fnameT.c_str());
 
     KrakenResult res;
 
     for (const auto & line : krakenOut)
     {
-    	std::vector<std::string> parts;
-    	boost::split(parts, line, boost::is_any_of("\t"));
+        std::vector<std::string> parts;
+        boost::split(parts, line, boost::is_any_of("\t"));
 
-    	std::string contig = parts[0];
+        std::string contig = parts[0];
 
-		boost::split(parts, parts[1], boost::is_any_of(";"));
+        boost::split(parts, parts[1], boost::is_any_of(";"));
 
-		std::string species;
-		if (parts.size() >= 9)
-		{
-			species = parts[8];
-		} else
-		{
-			species = "unknown";
-		}
+        std::string species;
+        if (parts.size() >= 9)
+        {
+            species = parts[8];
+        } else
+        {
+            species = "unknown";
+        }
 
-		res.classification[contig] = species;
+        res.classification[contig] = species;
     }
-
-    std::remove(fname.c_str());
-    std::remove(fnameT.c_str());
 
     return res;
 }

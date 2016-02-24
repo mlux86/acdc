@@ -5,6 +5,7 @@
 #include "TarjansAlgorithm.h"
 #include "BarnesHutSNEAdapter.h"
 #include "KrakenAdapter.h"
+#include "RnammerAdapter.h"
 #include "ResultIO.h"
 #include "IOUtil.h"
 #include "MLUtil.h"
@@ -80,8 +81,14 @@ int main(int argc, char *argv[])
 		ELOG << "Kraken not found! It will be disabled.\n- Please make sure that the folders containing the 'kraken' and 'kraken-translate' executables is in your $PATH.\n- Please make sure to supply a database using the --kraken-db switch." << std::endl;
 	}
 
-	// create output directory
+	// setup Rnammer 
+	bool rmrExists = RnammerAdapter::rnammerExists();
+	if (!rmrExists)
+	{
+		ELOG << "Rnammer not found! It will be disabled.\n- Please make sure that the folders containing the 'rnammer' executable is in your $PATH." << std::endl;
+	}
 
+	// create output directory
 	boost::filesystem::path outPath (opts->outputDir());
 	boost::system::error_code returnedError;
 	boost::filesystem::create_directories(outPath, returnedError);
@@ -131,6 +138,12 @@ int main(int argc, char *argv[])
 
 		try
 		{
+			if (rmrExists)
+			{
+				ILOG << "Running Rnammer..." << std::endl;
+				result.sixteenSContigs = RnammerAdapter::find16SContigs(fasta);
+			}
+
 			if (krakenExists)
 			{
 				ILOG << "Running Kraken..." << std::endl;

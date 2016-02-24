@@ -19,7 +19,8 @@ struct ResultContainer
 	ClusterAnalysisResult oneshot;
 	std::vector<ClusterAnalysisResult> bootstraps;
 
-	KrakenResult kraken;	
+	KrakenResult kraken;
+	std::vector<std::string> sixteenSContigs;
 };
 
 class ResultIO
