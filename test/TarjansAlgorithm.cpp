@@ -9,8 +9,8 @@
 
 TEST_CASE("Tarjans algorithm, two clusters", "[tarjan]")
 {
-	Eigen::MatrixXd clustData = MatrixUtil::loadMatrix("../share/acdc/testdata/twoclusters.txt", ' ');
-	Eigen::MatrixXd clustDataLabels = MatrixUtil::loadMatrix("../share/acdc/testdata/twoclusters.labels.txt", ' ');
+	Eigen::MatrixXd clustData = MatrixUtil::loadMatrix("../testdata/twoclusters.txt", ' ');
+	Eigen::MatrixXd clustDataLabels = MatrixUtil::loadMatrix("../testdata/twoclusters.labels.txt", ' ');
 
 	Eigen::MatrixXd affinities = MLUtil::knnAffinityMatrix(clustData, 7, false);
 	TarjansAlgorithm ta;
@@ -29,8 +29,8 @@ TEST_CASE("Tarjans algorithm, two clusters", "[tarjan]")
 
 TEST_CASE("Tarjans algorithm, two clusters & one mini cluster", "[tarjan]")
 {
-	Eigen::MatrixXd clustData = MatrixUtil::loadMatrix("../share/acdc/testdata/threeclusters.txt", ' ');
-	Eigen::MatrixXd clustDataLabels = MatrixUtil::loadMatrix("../share/acdc/testdata/threeclusters.labels.txt", ' ');
+	Eigen::MatrixXd clustData = MatrixUtil::loadMatrix("../testdata/threeclusters.txt", ' ');
+	Eigen::MatrixXd clustDataLabels = MatrixUtil::loadMatrix("../testdata/threeclusters.labels.txt", ' ');
 
 	Eigen::MatrixXd affinities = MLUtil::knnAffinityMatrix(clustData, 7, false);
 	TarjansAlgorithm ta;

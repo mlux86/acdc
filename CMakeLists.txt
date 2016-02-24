@@ -40,12 +40,6 @@ add_subdirectory(src)
 add_subdirectory(test)
 
 # installation 
-
-# if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-#     set (CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/dist" CACHE PATH "default install path" FORCE)
-# endif()
-
 message(STATUS "CMAKE_INSTALL_PREFIX: " ${CMAKE_INSTALL_PREFIX})
-
-install(FILES ${CMAKE_BINARY_DIR}/acdc ${CMAKE_BINARY_DIR}/acdc-test DESTINATION bin)
+install(PROGRAMS ${CMAKE_BINARY_DIR}/acdc DESTINATION bin)
 install(DIRECTORY share/ DESTINATION share)
