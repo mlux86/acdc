@@ -5,6 +5,7 @@
 #include <set>
 #include <map>
 #include <string>
+#include <vector>
 #include "Opts.h"
 
 class SequenceVectorizer
@@ -16,13 +17,19 @@ protected:
 	unsigned kmerLength = 0;
 	unsigned windowWidth = 0;
 	unsigned windowStep = 0;
+	unsigned targetNumPoints = 0;
 
 	std::map<std::string, unsigned> kmerIndexes;
 	std::set<std::string> uniqueKmers;
 
 	bool normalize = true;
 
+	std::vector<std::string> ids;
+	std::vector<seqan::Dna5String> sequences;	
+
 	void buildParams(const Opts & opts);
+	void loadFasta();
+	void estimateWindowParams();
 	void buildFeatureKmers();
 
 public:

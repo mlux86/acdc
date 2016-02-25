@@ -33,14 +33,55 @@ void SequenceVectorizer::buildParams(const Opts & opts)
 	kmerLength = opts.windowKmerLength();
 	windowWidth = opts.windowWidth();
 	windowStep = opts.windowStep();
+	targetNumPoints = opts.targetNumPoints();
 
+	loadFasta();
+	estimateWindowParams();
+}
+
+void SequenceVectorizer::loadFasta()
+{
+	seqan::SeqFileIn seqFileIn(inputFasta.c_str());
+	seqan::StringSet<seqan::CharString> ids_;
+	seqan::StringSet<seqan::String<seqan::Iupac> > seqs_;
+
+	seqan::readRecords(ids_, seqs_, seqFileIn);
+
+	unsigned n = seqan::length(ids_);
+
+	ids.clear();
+	sequences.clear();
+
+	for (unsigned i = 0; i < n; i++)
+	{
+		std::string id;
+		move(id, ids_[i]);
+		seqan::Dna5String seq = seqs_[i];
+		unsigned len = seqan::length(seq);
+
+		if (len < minContigLength)
+		{
+			continue;
+		}
+
+		ids.push_back(id);
+		sequences.push_back(seq);
+	}	
+}
+
+void SequenceVectorizer::estimateWindowParams()
+{
 	if(windowWidth == 0)
 	{
-		// The file size in bytes is approximately the number of nucleotide (not accounting for ID strings)
-		auto fileSize = IOUtil::getFileSizeBytes(inputFasta);
-        windowStep = (unsigned) ceil((double)fileSize / (double)opts.targetNumPoints());
+		unsigned long long numNucleotides = 0;
+		for (const auto & seq : sequences)
+		{
+			numNucleotides += seqan::length(seq);
+		}
+
+        windowStep = (unsigned) ceil((double)numNucleotides / (double)targetNumPoints);
         windowWidth = 2 * windowStep;
-        DLOG << "k=" << opts.windowKmerLength() << "   "
+        DLOG << "k=" << kmerLength << "   "
                 << "windowWidth=" << windowWidth << "   "
                 << "windowStep=" << windowStep << "\n";
 	}
@@ -114,29 +155,15 @@ Eigen::MatrixXd SequenceVectorizer::vectorize(seqan::Dna5String & sequence) cons
 
 std::pair< Eigen::MatrixXd, std::vector<std::string> > SequenceVectorizer::vectorize() const
 {
-
-	seqan::SeqFileIn seqFileIn(inputFasta.c_str());
-	seqan::StringSet<seqan::CharString> ids;
-	seqan::StringSet<seqan::String<seqan::Iupac> > seqs;
-
-	seqan::readRecords(ids, seqs, seqFileIn);
-
-	unsigned n = seqan::length(ids);
+	unsigned n = ids.size();
 
 	Eigen::MatrixXd result(0, getDim());
 	std::vector<std::string> labels;
 
 	for (unsigned i = 0; i < n; i++)
 	{
-		std::string id;
-		move(id, ids[i]);
-		seqan::Dna5String seq = seqs[i];
-		unsigned len = seqan::length(seq);
-
-		if (len < minContigLength)
-		{
-			continue;
-		}
+		std::string id = ids.at(i);
+		seqan::Dna5String seq = sequences.at(i);
 
 		try 
 		{
