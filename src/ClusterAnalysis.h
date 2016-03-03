@@ -7,6 +7,7 @@
 
 struct ClusterAnalysisResult
 {
+	Eigen::MatrixXd dataOrig;
 	Eigen::MatrixXd dataSne;
 	Eigen::MatrixXd dataPca;
 

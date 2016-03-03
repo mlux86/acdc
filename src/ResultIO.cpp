@@ -174,7 +174,7 @@ void ResultIO::exportClusteringFastas(const ResultContainer & result)
             krakenLbl = result.kraken.classification.at(lbl);
         }
         krakenLabels.push_back(krakenLbl);
-    }	
+    }
 
     // start export
 
@@ -220,6 +220,15 @@ void ResultIO::exportClusteringFastas(const ResultContainer & result)
         	ss << outputDir << "/export/" << result.id << "-kraken-" << lbl << ".fasta";
         	filterFasta(result.fasta, contigs, ss.str());
         }
+
+        std::stringstream ss;
+        ss << outputDir << "/export/" << result.id << ".oneshot.kraken";
+        std::ofstream ofs(ss.str(), std::ofstream::out);
+        for (auto & lbl : krakenLabels) 
+        {
+            ofs << lbl << std::endl;
+        }
+        ofs.close(); 
     }
 
 }
@@ -232,6 +241,16 @@ void ResultIO::processResult(const ResultContainer & result)
 	exportClusteringFastas(result);
 	writeResultContainerToJSON(result, fname);
 	jsonFiles.push_back(fname);
+
+    ss.str("");
+    ss << outputDir << "/export/" << result.id<< ".oneshot.orig";
+    MatrixUtil::saveMatrix(result.oneshot.dataOrig, ss.str(), '\t');
+    ss.str("");
+    ss << outputDir << "/export/" << result.id<< ".oneshot.sne";
+    MatrixUtil::saveMatrix(result.oneshot.dataPca, ss.str(), '\t');
+    ss.str("");
+    ss << outputDir << "/export/" << result.id <<  ".oneshot.pca";
+    MatrixUtil::saveMatrix(result.oneshot.dataPca, ss.str(), '\t');
 }
 
 void ResultIO::finish()

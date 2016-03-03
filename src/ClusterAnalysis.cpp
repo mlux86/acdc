@@ -63,6 +63,8 @@ ClusterAnalysisResult ClusterAnalysis::analyze(const Eigen::MatrixXd & data, con
 {
 	ClusterAnalysisResult res;
 
+	res.dataOrig = data;
+
 	VLOG << "PCA...\n";
 	res.dataPca = MLUtil::pca(data, opts.tsneDim());
 
