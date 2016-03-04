@@ -247,7 +247,7 @@ void ResultIO::processResult(const ResultContainer & result)
     MatrixUtil::saveMatrix(result.oneshot.dataOrig, ss.str(), '\t');
     ss.str("");
     ss << outputDir << "/export/" << result.id<< ".oneshot.sne";
-    MatrixUtil::saveMatrix(result.oneshot.dataPca, ss.str(), '\t');
+    MatrixUtil::saveMatrix(result.oneshot.dataSne, ss.str(), '\t');
     ss.str("");
     ss << outputDir << "/export/" << result.id <<  ".oneshot.pca";
     MatrixUtil::saveMatrix(result.oneshot.dataPca, ss.str(), '\t');

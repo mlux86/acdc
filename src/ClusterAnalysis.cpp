@@ -84,12 +84,17 @@ ClusterAnalysisResult ClusterAnalysis::analyze(const Eigen::MatrixXd & data, con
 
 std::vector<ClusterAnalysisResult> ClusterAnalysis::analyzeBootstraps(const Eigen::MatrixXd & data, const Opts & opts)
 {
-	const std::vector< std::vector<unsigned> > bootstrapIndexes = ClusterAnalysis::stratifiedSubsamplingIndices(data.rows(), opts.numBootstraps(), opts.bootstrapRatio());
-
 	ThreadPool pool(opts.numThreads());
 
 	std::vector< std::future<ClusterAnalysisResult> > futures;
 
+	// add oneshot task
+	futures.push_back(
+		pool.enqueue(&ClusterAnalysis::analyze, data, opts)
+	);
+
+	// add bootstrap tasks
+	const std::vector< std::vector<unsigned> > bootstrapIndexes = ClusterAnalysis::stratifiedSubsamplingIndices(data.rows(), opts.numBootstraps(), opts.bootstrapRatio());
 	for (const auto & indices : bootstrapIndexes)
 	{
 		futures.push_back(

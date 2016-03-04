@@ -135,11 +135,10 @@ int main(int argc, char *argv[])
 			auto dat = sv.vectorize();
 			result.fastaLabels = dat.second;
 
-			ILOG << "One-shot analysis..." << std::endl;
-			result.oneshot = ClusterAnalysis::analyze(dat.first, *opts);
-
-			ILOG << "Bootstrap analysis..." << std::endl;
+			ILOG << "Analysis..." << std::endl;
 			result.bootstraps = ClusterAnalysis::analyzeBootstraps(dat.first, *opts); 
+			result.oneshot = result.bootstraps.at(0);
+			result.bootstraps.erase(result.bootstraps.begin());
 			
 			ILOG << "Writing result..." << std::endl;
 			rio.processResult(result);
