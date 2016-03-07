@@ -40,16 +40,16 @@ Eigen::MatrixXd MatrixUtil::loadMatrix(std::string filename, char delimiter)
     std::getline(ifs, line);
 
     std::vector<std::string> strs;
-    boost::split(strs, line, boost::is_any_of(delim));    
+    boost::split(strs, line, boost::is_any_of(delim));
 
-    auto rows = boost::lexical_cast<unsigned>(strs.front());
     auto cols = boost::lexical_cast<unsigned>(strs.back());
 
-    Eigen::MatrixXd mat = Eigen::MatrixXd::Zero(rows, cols);
+    Eigen::MatrixXd mat = Eigen::MatrixXd::Zero(0, cols);
 
-    for (unsigned i = 0; i < rows; i++)
+    unsigned i = 0;
+    while (std::getline(ifs, line))
     {
-        std::getline(ifs, line);
+        mat.conservativeResize(i+1, cols);
 
         strs.clear();
         boost::split(strs, line, boost::is_any_of(delim));
@@ -59,6 +59,7 @@ Eigen::MatrixXd MatrixUtil::loadMatrix(std::string filename, char delimiter)
             auto val = boost::lexical_cast<float>(strs[j]);
             mat(i, j) = val;
         }
+        i++;
     }
 
     ifs.close();
@@ -78,7 +79,7 @@ void MatrixUtil::saveMatrix(const Eigen::MatrixXd & mat, std::string filename, c
     unsigned rows = mat.rows();
     unsigned cols = mat.cols();
 
-    ofs << rows << delimiter << cols << '\n';
+    ofs << cols << '\n';
 
     for (unsigned i = 0; i < rows; i++)
     {
