@@ -4,9 +4,10 @@
 #include "MLUtil.h"
 #include "MatrixUtil.h"
 #include "Kmeans.h"
+#include "HierarchicalClustering.h"
 
-#include <math.h>  
-#include <numeric>  
+#include <math.h>
+#include <numeric>
 #include <algorithm>
 #include <chrono>
 #include <random>
@@ -21,142 +22,152 @@ Clustering::~Clustering()
 {
 }
 
-ClusteringResult Clustering::dipMeans(const Eigen::MatrixXd& data, double alpha, double splitThreshold, unsigned maxClusters)
+bool Clustering::isMultiModal(const Eigen::MatrixXd & data, double alpha, double splitThreshold)
 {
-    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-    std::mt19937 generator(seed);
-
     unsigned n = data.rows();
-    unsigned dim = data.cols();
-    
+
     Eigen::MatrixXd dist = MLUtil::pdist(data);
 
-    unsigned k = 1;
-    std::vector<unsigned> labels(n, 0);
-
-    Eigen::MatrixXd means = data.colwise().sum() / n;
-
-    while (true)
+    DipStatistic ds;
+    double splitPerc = 0.0;
+    // for each cluster member, see if it is a split viewer
+    #pragma omp parallel for shared(splitPerc)
+    for (unsigned i = 0; i < n; i++)
     {
-        if (maxClusters > 0 && k == maxClusters)
+        if (splitPerc < splitThreshold)
         {
-            break;
-        }
-
-        std::vector<double> scores;
-
-        for (unsigned j = 0; j < k; j++) // calculate scores for clusters c_j
-        {
-            // find indexes of cluster j
-            std::vector<unsigned> clusterIdx;
-            for (unsigned i = 0; i < n; i++)
+            std::vector<double> viewerDists;
+            for (unsigned j = 0; j < n; j++)
             {
-                if (labels.at(i) == j)
+                if (i != j)
                 {
-                    clusterIdx.push_back(i);
+                    viewerDists.push_back(dist(i, j));
                 }
             }
-
-            unsigned numSplitViewers = 0;
-            double splitScore = 0.0;
-            DipStatistic ds;
-            // for each cluster member, see if it is a split viewer
-            for (auto idx : clusterIdx)
+            auto dipRes = ds.calculate(viewerDists, 1000);
+            if (dipRes.p <= alpha)
             {
-                std::vector<double> viewerDists;
-                for (auto idx2 : clusterIdx)
-                {
-                    if (idx != idx2)
-                    {
-                        viewerDists.push_back(dist(idx, idx2));
-                    }
-                }
-                auto dipRes = ds.calculate(viewerDists, 1000);
-                if (dipRes.p <= alpha)
-                {
-                    numSplitViewers++;
-                    splitScore += dipRes.dip;
-                }
+                splitPerc += 1.0 / (double)n;
             }
-            splitScore /= numSplitViewers;
-            double splitPerc = (double)numSplitViewers / (double)clusterIdx.size(); 
-
-            if (splitPerc >= splitThreshold)
-            {
-                scores.push_back(splitScore);
-            } else
-            {
-                scores.push_back(0.0);
-            }
-        }
-
-        // to split or not to split...
-
-        auto maxScoreIter = std::max_element(scores.begin(), scores.end());
-        if (*maxScoreIter > 0.0)
-        {
-            unsigned splitLabel = std::distance(scores.begin(), maxScoreIter);
-
-            DLOG << "split " << splitLabel << " with score=" << scores[splitLabel] << "\n";
-
-            // assemble data matrix with cluster members, split means
-
-            Eigen::MatrixXd members(0, dim);
-            for (unsigned i = 0; i < n; i++)
-            {
-                if (labels.at(i) == splitLabel)
-                {
-                    members.conservativeResize(members.rows()+1, dim);
-                    members.row(members.rows()-1) = data.row(i);
-                }
-            }
-
-            Eigen::VectorXd oldMean = means.row(splitLabel);
-            std::uniform_int_distribution<unsigned> distn(0, members.rows() - 1);
-
-            Eigen::MatrixXd locallyOptimizedMeans;
-
-            double minMse = std::numeric_limits<double>::max();
-            for (unsigned i = 0; i < 5; i++)
-            {
-                unsigned randIdx = distn(generator);
-                Eigen::MatrixXd splitMeans = Eigen::MatrixXd(2, dim);
-                splitMeans.row(0) = members.row(randIdx);
-                splitMeans.row(1) = oldMean - (members.row(randIdx).transpose() - oldMean);
-
-                Kmeans km(2);
-                km.initMeans(splitMeans);
-                auto tmp = km.iteration(members);
-                if (tmp.second < minMse)
-                {
-                    minMse = tmp.second;
-                    locallyOptimizedMeans = km.getMeans();
-                }
-            }
-
-            // refresh means
-            k++;
-            MatrixUtil::matrixRemoveRow(means, splitLabel);
-            Eigen::MatrixXd newMeans(k, dim);
-            newMeans << means, 
-                        locallyOptimizedMeans;
-
-
-            // finally ... run k-means for refinement on full data set            
-            Kmeans km(k);
-            km.initMeans(newMeans);
-            ClusteringResult res = km.run(data);
-            labels = res.labels;
-            means = km.getMeans();
-
-        } else
-        {
-            break;
         }
     }
 
+    return splitPerc >= splitThreshold;
+}
+
+double Clustering::daviesBouldin(const Eigen::MatrixXd & data, const std::vector<unsigned> & labels)
+{    
+    unsigned n = data.rows();
+    unsigned dim = data.cols();
+
+    auto uniqueLabels = labels;
+    auto it = std::unique(uniqueLabels.begin(), uniqueLabels.end());
+    uniqueLabels.resize(std::distance(uniqueLabels.begin(), it));
+    std::sort(uniqueLabels.begin(), uniqueLabels.end());
+
+    unsigned numClusters = uniqueLabels.size();
+    std::vector<unsigned> clusterSizes(numClusters);
+
+    // compute class wise means
+    Eigen::MatrixXd mu(numClusters, dim);
+    for (unsigned j = 0; j < numClusters; j++)
+    {
+        unsigned lbl = uniqueLabels.at(j);        
+
+        // filter elemens with labels == lbl
+        Eigen::MatrixXd members(0, dim);
+        for (unsigned i = 0; i < n; i++)
+        {
+            if (lbl == labels.at(i))
+            {
+                members.conservativeResize(members.rows()+1, dim);
+                members.row(members.rows()-1) = data.row(i);
+            }
+        }
+        clusterSizes[j] = members.rows();
+        mu.row(j) = members.colwise().sum() / members.rows();
+    }
+
+    // compute data to data and intra-cluster distances
+    Eigen::MatrixXd tmp(n+numClusters, dim);
+    tmp << data, mu;
+    Eigen::MatrixXd distances = MLUtil::pdist(tmp);
+    Eigen::MatrixXd dc = distances.topRightCorner(n, numClusters); // data to mean distances
+    Eigen::MatrixXd cc = distances.bottomRightCorner(numClusters, numClusters); // intra-cluster    
+
+    double db = 0;
+
+    for (unsigned i = 0; i < numClusters; i++)
+    {
+
+        unsigned lbl = uniqueLabels.at(i);
+
+        double di = 0; // mean intra cluster distance for i
+        for (unsigned j = 0; j < n; j++)
+        {
+            if (lbl == labels.at(j))
+            {
+                di += dc(j, i);
+            }
+        }
+        di /= clusterSizes.at(i);
+
+        double s = 0;
+
+        for (unsigned j = 0; j < numClusters; j++)
+        {
+            unsigned lbl2 = uniqueLabels.at(j);
+            if (lbl == lbl2)
+            {
+                continue;
+            }
+
+            double dj = 0; // mean intra cluster distance for i
+            for (unsigned k = 0; k < n; k++)
+            {
+                if (lbl2 == labels.at(k))
+                {
+                    dj += dc(k, j);
+                }
+            }
+            dj /= clusterSizes.at(j);
+
+            double s_ = (di + dj) / cc(i, j);
+
+            if (s_ > s)
+            {
+                s = s_;
+            }
+        }
+
+        db += s;
+
+    }
+
+    db /= numClusters;
+
+    return db;
+}
+
+ClusteringResult Clustering::estimateK(const Eigen::MatrixXd & data, unsigned maxK)
+{
     ClusteringResult res;
-    res.numClusters = k;
-    res.labels = labels;
-    return res;       
+
+    Eigen::MatrixXd z = HierarchicalClustering::linkage(data);
+
+    double minDb = std::numeric_limits<double>::max();
+    for (unsigned k = 2; k < maxK; k++)
+    {
+        std::vector<unsigned> labels = HierarchicalClustering::cluster(z, k);
+        double db = Clustering::daviesBouldin(data, labels);
+
+        if (db < minDb)
+        {
+            minDb = db;
+            res.labels = labels;
+            res.numClusters = k;
+        }
+    }
+
+    return res;
 }

@@ -100,6 +100,24 @@ Eigen::MatrixXd MLUtil::pdist(const Eigen::MatrixXd & data)
     return distances;
 }
 
+Eigen::VectorXd MLUtil::condensedPdist(const Eigen::MatrixXd & data)
+{
+    unsigned n = data.rows();
+
+    Eigen::VectorXd distances(n*(n-1)/2);
+
+    unsigned c = 0;
+    for (unsigned i = 0; i < n; i++)
+    {
+        for (unsigned j = i+1; j < n; j++)
+        {
+            distances(c++) = (data.row(i) - data.row(j)).norm();
+        }
+    }
+
+    return distances;
+}
+
 std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::VectorXd, Eigen::MatrixXd, Eigen::MatrixXd> MLUtil::canonicalCorrelation(const Eigen::MatrixXd & x_, const Eigen::MatrixXd & y_)
 {
     unsigned n = x_.rows();

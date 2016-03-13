@@ -13,8 +13,8 @@ struct ClusterAnalysisResult
 
 	std::vector<unsigned> bootstrapIndexes;
 
-	ClusteringResult resConnComponents;
-	ClusteringResult resDipMeans;
+	ClusteringResult clustPca;
+	ClusteringResult clustSne;
 };
 
 class ClusterAnalysis

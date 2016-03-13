@@ -16,6 +16,8 @@ struct ResultContainer
 	std::string fasta;
 	std::vector<std::string> fastaLabels;
 
+	bool isContaminated;
+	
 	ClusterAnalysisResult oneshot;
 	std::vector<ClusterAnalysisResult> bootstraps;
 

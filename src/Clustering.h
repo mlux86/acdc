@@ -17,6 +17,7 @@ private:
 	~Clustering();
 
 public:
-    static ClusteringResult dipMeans(const Eigen::MatrixXd& data, double alpha = 0.0, double splitThreshold = 0.01, unsigned maxClusters = 0);    
-
+	static bool isMultiModal(const Eigen::MatrixXd & data, double alpha, double splitThreshold);
+	static double daviesBouldin(const Eigen::MatrixXd & data, const std::vector<unsigned> & labels);
+	static ClusteringResult estimateK(const Eigen::MatrixXd & data, unsigned maxK);
 };

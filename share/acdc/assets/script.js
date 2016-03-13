@@ -14,6 +14,39 @@ $(document).ready(function()
 
 	buildConfidenceTable(results);
 
+	$(document).keydown(function(evt) {
+		var elem = $('td.active');
+
+		var nextActive;
+		switch(evt.which)
+		{
+			case 37: 
+				nextActive = elem.prev();
+				evt.preventDefault();
+				break;
+			case 38: 
+				nextActive = elem.closest('tr').prev().children().eq(elem.index());
+				evt.preventDefault();		
+				break;
+			case 39: 
+				nextActive = elem.next();
+				evt.preventDefault();
+				break;
+			case 40: 
+				nextActive = elem.closest('tr').next().children().eq(elem.index());
+				evt.preventDefault();
+				break;												
+			default: break;
+		}
+
+		if (typeof nextActive != 'undefined' && nextActive.hasClass('selectable'))
+		{
+			elem.removeClass('active');
+			nextActive.trigger('click');
+		}
+		
+	});
+
 	$('.dataConf').click(function() {
 		selectedFasta = $(this).text();
 		selectedLabels = 'fasta';
@@ -22,17 +55,17 @@ $(document).ready(function()
 		setActiveExclusively($(this));
 	});
 
-	$('.ccConf').click(function() {
+	$('.pcaConf').click(function() {
 		selectedFasta = $(this).parent().find('td.dataConf').text();
-		selectedLabels = 'cc';
+		selectedLabels = 'pca';
 		updateBootStrapsSelect();
 		showVisualization();
 		setActiveExclusively($(this));
 	});
 	
-	$('.dipConf').click(function() {
+	$('.sneConf').click(function() {
 		selectedFasta = $(this).parent().find('td.dataConf').text();
-		selectedLabels = 'dip';
+		selectedLabels = 'sne';
 		updateBootStrapsSelect();
 		showVisualization();
 		setActiveExclusively($(this));

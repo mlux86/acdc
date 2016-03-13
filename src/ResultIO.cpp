@@ -97,8 +97,8 @@ Json::Value ResultIO::clusterAnalysisResultToJSON(const ClusterAnalysisResult & 
 		root["bootstrapIndices"].append(idx);
 	}
 
-	root["resConnComponents"] = clusteringResultToJSON(car.resConnComponents);
-	root["resDipMeans"] = clusteringResultToJSON(car.resDipMeans);
+	root["clustPca"] = clusteringResultToJSON(car.clustPca);
+	root["clustSne"] = clusteringResultToJSON(car.clustSne);
 
 	return root;
 }
@@ -123,8 +123,8 @@ void ResultIO::writeResultContainerToJSON(ResultContainer result, const std::str
 	{
 		// align bootstrap data to oneshot data (data points and labels)
 		bs.dataSne = MLUtil::alignBootstrap(result.oneshot.dataSne, bs.dataSne, bs.bootstrapIndexes);        
-		bs.resConnComponents.labels = MLUtil::alignBootstrapLabels(result.oneshot.resConnComponents.labels, bs.resConnComponents.labels, bs.bootstrapIndexes);
-		bs.resDipMeans.labels = MLUtil::alignBootstrapLabels(result.oneshot.resDipMeans.labels, bs.resDipMeans.labels, bs.bootstrapIndexes);
+		bs.clustPca.labels = MLUtil::alignBootstrapLabels(result.oneshot.clustPca.labels, bs.clustPca.labels, bs.bootstrapIndexes);
+		bs.clustSne.labels = MLUtil::alignBootstrapLabels(result.oneshot.clustSne.labels, bs.clustSne.labels, bs.bootstrapIndexes);
 
 		root["bootstraps"].append(clusterAnalysisResultToJSON(bs));
 	}	
@@ -178,34 +178,34 @@ void ResultIO::exportClusteringFastas(const ResultContainer & result)
 
     // start export
 
-	std::map<unsigned, std::set<std::string>> contigIdsCC; // export a set of contigs per label
-	std::map<unsigned, std::set<std::string>> contigIdsDip; // export a set of contigs per label
+	std::map<unsigned, std::set<std::string>> contigIdsPca; // export a set of contigs per label
+	std::map<unsigned, std::set<std::string>> contigIdsSne; // export a set of contigs per label
 	std::map<unsigned, std::set<std::string>> contigIdsKraken; // export a set of contigs per label
 
     for (unsigned i = 0; i < result.fastaLabels.size(); ++i)
     {        
-        contigIdsCC[result.oneshot.resConnComponents.labels.at(i)].insert(result.fastaLabels.at(i));
-        contigIdsDip[result.oneshot.resDipMeans.labels.at(i)].insert(result.fastaLabels.at(i));
+        contigIdsPca[result.oneshot.clustPca.labels.at(i)].insert(result.fastaLabels.at(i));
+        contigIdsSne[result.oneshot.clustSne.labels.at(i)].insert(result.fastaLabels.at(i));
         contigIdsKraken[numericLabels(krakenLabels).at(i)].insert(result.fastaLabels.at(i));
     }	
 
-    // connected components
-    for (auto & kv : contigIdsCC) 
+    // Pca
+    for (auto & kv : contigIdsPca) 
     {
     	unsigned lbl = kv.first;
     	auto & contigs = kv.second;
     	std::stringstream ss;
-    	ss << outputDir << "/export/" << result.id << "-cc-" << lbl << ".fasta";
+    	ss << outputDir << "/export/" << result.id << "-pca-" << lbl << ".fasta";
     	filterFasta(result.fasta, contigs, ss.str());
     }
 
-    // dip means
-    for (auto & kv : contigIdsDip) 
+    // Sne
+    for (auto & kv : contigIdsSne) 
     {
     	unsigned lbl = kv.first;
     	auto & contigs = kv.second;
     	std::stringstream ss;
-    	ss << outputDir << "/export/" << result.id << "-dip-" << lbl << ".fasta";
+    	ss << outputDir << "/export/" << result.id << "-sne-" << lbl << ".fasta";
     	filterFasta(result.fasta, contigs, ss.str());
     }
 

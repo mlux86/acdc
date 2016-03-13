@@ -65,19 +65,17 @@ ClusterAnalysisResult ClusterAnalysis::analyze(const Eigen::MatrixXd & data, con
 
 	res.dataOrig = data;
 
-	VLOG << "PCA...\n";
+	VLOG << "PCA..." << std::endl;
 	res.dataPca = MLUtil::pca(data, opts.tsneDim());
 
-	VLOG << "Running t-SNE...\n";
+	VLOG << "Running t-SNE..." << std::endl;
 	res.dataSne = BarnesHutSNEAdapter::runBarnesHutSNE(data, opts);
 
-	VLOG << "Counting connected components...\n";
-	Eigen::MatrixXd affinities = MLUtil::knnAffinityMatrix(res.dataSne, 7, false);
-	TarjansAlgorithm ta;
-	res.resConnComponents = ta.run(affinities);
+	VLOG << "Clustering PCA...\n";
+	res.clustPca = Clustering::estimateK(res.dataPca, 5);
 
-	VLOG << "Running dipMeans...\n";
-	res.resDipMeans = Clustering::dipMeans(res.dataSne, 0, 0.01, 5);
+	VLOG << "Clustering t-SNE...\n";
+	res.clustSne = Clustering::estimateK(res.dataSne, 5);
 
 	return res;
 }
@@ -87,11 +85,6 @@ std::vector<ClusterAnalysisResult> ClusterAnalysis::analyzeBootstraps(const Eige
 	ThreadPool pool(opts.numThreads());
 
 	std::vector< std::future<ClusterAnalysisResult> > futures;
-
-	// add oneshot task
-	futures.push_back(
-		pool.enqueue(&ClusterAnalysis::analyze, data, opts)
-	);
 
 	// add bootstrap tasks
 	const std::vector< std::vector<unsigned> > bootstrapIndexes = ClusterAnalysis::stratifiedSubsamplingIndices(data.rows(), opts.numBootstraps(), opts.bootstrapRatio());

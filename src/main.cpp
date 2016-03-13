@@ -7,23 +7,30 @@
 #include "KrakenAdapter.h"
 #include "ResultIO.h"
 #include "IOUtil.h"
+#include "MLUtil.h"
+#include "HierarchicalClustering.h"
 
 #include <boost/filesystem.hpp>
 #include <string>
 #include <fstream>
 #include <streambuf>
 #include <future>
+#include <map>
+
+#include <eigen3/Eigen/Dense>
+#include "MatrixUtil.h"
+
+// TODO better leverage parallelism (don't use it only for bootstrapping if possible)
 
 int main(int argc, char *argv[])
 {
-
 	std::unique_ptr<Opts> opts;
 
 	std::string banner = "";
 
 	// build program arguments
 
-	try 
+	try
 	{
 		opts.reset(new Opts(argc, argv));
 
@@ -31,7 +38,7 @@ int main(int argc, char *argv[])
 		banner = std::string((std::istreambuf_iterator<char>(ifs)),
 		                 std::istreambuf_iterator<char>());
 	}
-	catch(const std::exception & e) 
+	catch(const std::exception & e)
 	{
 		std::cerr << e.what() << std::endl;
 		return EXIT_FAILURE;
@@ -66,7 +73,8 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	// setup Kraken 
+	// setup Kraken
+
 	KrakenAdapter krk(*opts);
 	bool krakenExists = krk.krakenExists();
 	if (!krakenExists)
@@ -74,7 +82,7 @@ int main(int argc, char *argv[])
 		ELOG << "Kraken not found! It will be disabled.\n- Please make sure that the folders containing the 'kraken' and 'kraken-translate' executables is in your $PATH.\n- Please make sure to supply a database using the --kraken-db switch." << std::endl;
 	}
 
-	// create output directory	
+	// create output directory
 
 	boost::filesystem::path outPath (opts->outputDir());
 	boost::system::error_code returnedError;
@@ -86,7 +94,8 @@ int main(int argc, char *argv[])
 	}
 
 	// copy result assets
-	try 
+
+	try
 	{
 		IOUtil::copyDir(boost::filesystem::path(opts->sharePath() + "/assets"), outPath, true);
 	} catch(const boost::filesystem::filesystem_error & e)
@@ -103,7 +112,7 @@ int main(int argc, char *argv[])
 		std::remove(dataFile.c_str());
 	}
 
-
+    // process files
 
 	ResultIO rio(opts->outputDir(), krakenExists);
 	unsigned idCnt = 1;
@@ -113,7 +122,7 @@ int main(int argc, char *argv[])
 		if (!boost::filesystem::is_regular_file(boost::filesystem::path(fasta)))
 		{
 			ELOG << "File '" << fasta << "' does not exist or is not a regular file! Skipping..." << std::endl;
-			continue;  
+			continue;
 		}
 
 		ILOG << "Processing file: " << fasta << std::endl;
@@ -122,7 +131,7 @@ int main(int argc, char *argv[])
 		result.id = idCnt++;
 		result.fasta = fasta;
 
-		try 
+		try
 		{
 			if (krakenExists)
 			{
@@ -130,25 +139,71 @@ int main(int argc, char *argv[])
 				result.kraken = krk.runKraken(fasta);
 			}
 
-			ILOG << "Vectorizing contigs..." << std::endl;
+			ILOG << "Vectorizing contigs & dimensionality reduction..." << std::endl;
 			SequenceVectorizer sv(fasta, *opts);
 			auto dat = sv.vectorize();
+			result.oneshot.dataOrig = dat.first;
 			result.fastaLabels = dat.second;
-
-			ILOG << "Analysis..." << std::endl;
-			result.bootstraps = ClusterAnalysis::analyzeBootstraps(dat.first, *opts); 
-			result.oneshot = result.bootstraps.at(0);
-			result.bootstraps.erase(result.bootstraps.begin());
+			VLOG << "Running PCA..." << std::endl;
+			result.oneshot.dataPca = MLUtil::pca(result.oneshot.dataOrig, opts->tsneDim());
+			VLOG << "Running t-SNE..." << std::endl;
 			
-			ILOG << "Writing result..." << std::endl;
+			ILOG << "Testing for contamination..." << std::endl;
+			result.oneshot.dataSne = BarnesHutSNEAdapter::runBarnesHutSNE(result.oneshot.dataOrig, *opts);
+			result.isContaminated = Clustering::isMultiModal(result.oneshot.dataSne, 0, 0.001) || Clustering::isMultiModal(result.oneshot.dataPca, 0, 0.001);
+
+			unsigned kPca = 1;
+			unsigned kSne = 1;
+			if (result.isContaminated)
+			{
+				ILOG << "Clustering contamination..." << std::endl;
+				result.bootstraps = ClusterAnalysis::analyzeBootstraps(result.oneshot.dataOrig, *opts);
+
+				// find optimal K for pca and sne
+				std::map<unsigned, unsigned> optMapPca;
+				std::map<unsigned, unsigned> optMapSne;
+				for (auto & car : result.bootstraps)
+				{
+					optMapPca[car.clustPca.numClusters]++;
+					optMapSne[car.clustSne.numClusters]++;
+				}
+				unsigned maxCntPca = 0;
+				for (auto & it : optMapPca)
+				{
+					if (it.second > maxCntPca)
+					{
+						kPca = it.first;
+						maxCntPca = it.second;
+					}
+				}
+				unsigned maxCntSne = 0;
+				for (auto & it : optMapSne)
+				{
+					if (it.second > maxCntSne)
+					{
+						kSne = it.first;
+						maxCntSne = it.second;
+					}
+				}				
+			} 
+
+			ILOG << "One-shot clustering from most probable number of clusters..." << std::endl;
+			// Cluster oneshot using most probable k
+			result.oneshot.clustPca.numClusters = kPca;
+			result.oneshot.clustPca.labels = HierarchicalClustering::cluster(HierarchicalClustering::linkage(result.oneshot.dataPca), kPca);
+			result.oneshot.clustSne.numClusters = kSne;
+			result.oneshot.clustSne.labels = HierarchicalClustering::cluster(HierarchicalClustering::linkage(result.oneshot.dataSne), kSne);
+
+			ILOG << "Number of clusters PCA: " << kPca << std::endl;
+			ILOG << "Number of clusters SNE: " << kSne << std::endl;
+
+			// ILOG << "Writing result..." << std::endl;
 			rio.processResult(result);
 		} catch(const std::exception & e)
 		{
 			ELOG << "An error occurred processing this file: " << e.what() << std::endl;
-		}		
+		}
 	}
-
-	rio.finish();
 
 	return EXIT_SUCCESS;
 }

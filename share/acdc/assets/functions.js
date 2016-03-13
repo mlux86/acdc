@@ -41,35 +41,35 @@ function onlyUnique(value, index, self)
 function tabulateNumClusters(bootstraps)
 {
 	var result = new Array();
-	result["connComponents"] = new Array();
-	result["dipMeans"] = new Array();
+	result["pca"] = new Array();
+	result["sne"] = new Array();
 
 	for (var i in bootstraps)
 	{
 		var bs = bootstraps[i];
 
-		if (!result["connComponents"][bs.resConnComponents.numClusters])
+		if (!result["pca"][bs.clustPca.numClusters])
 		{			
-			result["connComponents"][bs.resConnComponents.numClusters] = 0;
+			result["pca"][bs.clustPca.numClusters] = 0;
 		}
 
-		if (!result["dipMeans"][bs.resDipMeans.numClusters])
+		if (!result["sne"][bs.clustSne.numClusters])
 		{			
-			result["dipMeans"][bs.resDipMeans.numClusters] = 0;
+			result["sne"][bs.clustSne.numClusters] = 0;
 		}
 
-		result["connComponents"][bs.resConnComponents.numClusters]++;
-		result["dipMeans"][bs.resDipMeans.numClusters]++;
+		result["pca"][bs.clustPca.numClusters]++;
+		result["sne"][bs.clustSne.numClusters]++;
 	}
 
-	for (var i in result["connComponents"])
+	for (var i in result["pca"])
 	{
-		result["connComponents"][i] /= bootstraps.length;	
+		result["pca"][i] /= bootstraps.length;	
 	}
 
-	for (var i in result["dipMeans"])
+	for (var i in result["sne"])
 	{
-		result["dipMeans"][i] /= bootstraps.length;	
+		result["sne"][i] /= bootstraps.length;	
 	}
 
 	return result;
@@ -86,9 +86,16 @@ function calculateStats(results)
 		var key = res.fasta;
 		stats[key] = {};
 
-		var tnc = tabulateNumClusters(res.bootstraps);
-		stats[key].connComponents = tnc["connComponents"];
-		stats[key].dipMeans = tnc["dipMeans"];
+		if (res.bootstraps.length == 0)
+		{
+			stats[key].clean = true;
+		} else
+		{
+			stats[key].clean = false;
+			var tnc = tabulateNumClusters(res.bootstraps);
+			stats[key].pca = tnc["pca"];
+			stats[key].sne = tnc["sne"];
+		}
 
 		if ("krakenLabels" in res)
 		{
@@ -205,8 +212,12 @@ function buildConfidenceTable(results)
 	var maxK = 0;
 	for (var i in stats)
 	{
-		var keys =      Object.keys(stats[i].connComponents).map(Number)
-				.concat(Object.keys(stats[i].dipMeans).map(Number));
+		if (stats[i].clean)
+		{
+			continue;
+		}
+		var keys =      Object.keys(stats[i].pca).map(Number)
+				.concat(Object.keys(stats[i].sne).map(Number));
 		var maxKey = Math.max.apply(Math, keys);		
 		maxK = Math.max(maxK, maxKey);
 	}
@@ -214,34 +225,42 @@ function buildConfidenceTable(results)
 	var firstKey = Object.keys(results)[0];
 	var krakenEnabled = "krakenLabels" in results[firstKey];
 
-	$('#confidences').append('<tr><th>Contamination<br/>status</th><th>Sample</th><th>Connected Components</th><th>Dip Means</th>' + (krakenEnabled ? '<th>Kraken</th>' : '') + '</tr>');
+	$('#confidences').append('<tr><th>ID</th><th>Contamination<br/>status</th><th>Sample</th><th>PCA</th><th>t-SNE</th>' + (krakenEnabled ? '<th>Kraken</th>' : '') + '</tr>');
 
 	for (var i in stats)
 	{
-		var ccClean = stats[i].connComponents[1] == 1;
-		var dipClean = stats[i].dipMeans[1] == 1;
+		var pcaClean = stats[i].clean || stats[i].pca[1] == 1;
+		var sneClean = stats[i].clean || stats[i].sne[1] == 1;
 		var kraken = krakenEnabled ? stats[i].kraken.numSpecies : 0;
-		var krakenClean = krakenEnabled && (stats[i].kraken.numSpecies == 1);
+		var krakenClean = krakenEnabled && (stats[i].kraken.numSpecies < 2);
 
 		var status = 'warning';
-		if (ccClean && dipClean && krakenClean)
+		if (pcaClean && sneClean && krakenClean)
 		{
 			status = 'clean';
-		} else if (!ccClean && !dipClean && !krakenClean)
+		} else if (!pcaClean && !sneClean && !krakenClean)
 		{
 			status = 'contaminated';
 		}
 
 		$('#confidences').append('<tr>' +
+			'<td>' + results[i].id + '</td>' +
 			'<td class="' + status + '">&nbsp;</td>' + 
-			'<td class="dataConf">' + i + '</td>' +
-			'<td class="ccConf"><div class="chart"></div></td>' +
-			'<td class="dipConf"><div class="chart"></div></td>' + 
-			(krakenEnabled ? '<td class="kraken"><span class="number">' + kraken + '</span><br/>species</td>' : '') +
+			'<td class="selectable dataConf">' + i + '</td>' +
+			'<td class="selectable pcaConf"><div class="chart"></div></td>' +
+			'<td class="selectable sneConf"><div class="chart"></div></td>' + 
+			(krakenEnabled ? '<td class="selectable kraken"><span class="number">' + kraken + '</span><br/>species</td>' : '') +
 			'</tr>');
 
-		cellBarChart($('#confidences tr:last td.ccConf div.chart'), stats[i].connComponents, maxK);
-		cellBarChart($('#confidences tr:last td.dipConf div.chart'), stats[i].dipMeans, maxK);
+		if (!stats[i].clean)
+		{
+			cellBarChart($('#confidences tr:last td.pcaConf div.chart'), stats[i].pca, maxK);
+			cellBarChart($('#confidences tr:last td.sneConf div.chart'), stats[i].sne, maxK);
+		} else
+		{
+			$('#confidences tr:last td.pcaConf').addClass('clean');
+			$('#confidences tr:last td.sneConf').addClass('clean');
+		}
 	}	
 }
 
@@ -321,12 +340,12 @@ function showVisualization()
 	{
 		// labels = numericLabels(x.fastaLabels);
 		labels = Array.apply(null, Array(x.fastaLabels.length)).map(Number.prototype.valueOf, -1); // no labels / black color
-	} else if(selectedLabels === 'cc')
+	} else if(selectedLabels === 'pca')
 	{
-		labels = clustAnaResult.resConnComponents.labels;
-	} else if(selectedLabels === 'dip')
+		labels = clustAnaResult.clustPca.labels;
+	} else if(selectedLabels === 'sne')
 	{
-		labels = clustAnaResult.resDipMeans.labels;
+		labels = clustAnaResult.clustSne.labels;
 	} else if(selectedLabels === 'kraken')
 	{
 		labels = numericLabels(x.krakenLabels);
