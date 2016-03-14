@@ -111,10 +111,10 @@ function calculateStats(results)
 			stats[key].kraken.numUnknown = krakenNumUnknown;
 			var krakenUnique = res.krakenLabels.filter(onlyUnique);
 			stats[key].kraken.numSpecies = krakenUnique.length;
-			if(krakenNumUnknown > 0)
-			{
-				stats[key].kraken.numSpecies--;
-			}
+			// if(krakenNumUnknown > 0)
+			// {
+			// 	stats[key].kraken.numSpecies--;
+			// }
 		}
 	}
 
@@ -232,13 +232,16 @@ function buildConfidenceTable(results)
 		var pcaClean = stats[i].clean || stats[i].pca[1] == 1;
 		var sneClean = stats[i].clean || stats[i].sne[1] == 1;
 		var kraken = krakenEnabled ? stats[i].kraken.numSpecies : 0;
-		var krakenClean = krakenEnabled && (stats[i].kraken.numSpecies < 2);
+		if (stats[i].kraken.numUnknown > 0)
+		{
+			kraken = '&ge; ' + kraken;
+		}
 
 		var status = 'warning';
-		if (pcaClean && sneClean && krakenClean)
+		if (pcaClean && sneClean)
 		{
 			status = 'clean';
-		} else if (!pcaClean && !sneClean && !krakenClean)
+		} else if (!pcaClean && !sneClean)
 		{
 			status = 'contaminated';
 		}

@@ -147,8 +147,15 @@ Eigen::MatrixXd SequenceVectorizer::vectorize(seqan::Dna5String & sequence) cons
 	if (normalize)
 	{
 		Eigen::MatrixXd m = mat.rowwise().sum().asDiagonal().inverse();
+		for (unsigned i; i < n; i++)
+		{
+			if (abs(m(i, i)) < 1e-10)
+			{
+				m(i, i) = 1;	
+			}
+		}
 		mat = m * mat; 
-	}
+	}	
 
 	return mat;
 }

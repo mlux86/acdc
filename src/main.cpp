@@ -147,9 +147,9 @@ int main(int argc, char *argv[])
 			VLOG << "Running PCA..." << std::endl;
 			result.oneshot.dataPca = MLUtil::pca(result.oneshot.dataOrig, opts->tsneDim());
 			VLOG << "Running t-SNE..." << std::endl;
-			
-			ILOG << "Testing for contamination..." << std::endl;
 			result.oneshot.dataSne = BarnesHutSNEAdapter::runBarnesHutSNE(result.oneshot.dataOrig, *opts);
+
+			ILOG << "Testing for contamination..." << std::endl;
 			result.isContaminated = Clustering::isMultiModal(result.oneshot.dataSne, 0, 0.001) || Clustering::isMultiModal(result.oneshot.dataPca, 0, 0.001);
 
 			unsigned kPca = 1;
