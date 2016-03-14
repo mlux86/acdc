@@ -43,23 +43,25 @@ std::vector< std::vector<unsigned> > ClusterAnalysis::stratifiedSubsamplingIndic
     return result;
 }
 
-ClusterAnalysisResult ClusterAnalysis::bootstrapTask(const Eigen::MatrixXd & dataOrig, const Opts & opts, const std::vector<unsigned> indices)
+ClusterAnalysisResult ClusterAnalysis::bootstrapTask(const Eigen::MatrixXd & dataOrig, const std::vector<std::string> & fastaLabels, const Opts & opts, const std::vector<unsigned> indices)
 {
 	Eigen::MatrixXd data = Eigen::MatrixXd::Zero(indices.size(), dataOrig.cols());
+	std::vector<std::string> labels(indices.size());
 
 	for (unsigned i = 0; i < indices.size(); i++)
 	{
 		data.row(i) = dataOrig.row(indices[i]);
+		labels[i] = fastaLabels[indices[i]];
 	}
 
-	auto res = ClusterAnalysis::analyze(data, opts);
+	auto res = ClusterAnalysis::analyze(data, labels, opts);
 
 	res.bootstrapIndexes = indices;
 
 	return res;
 }
 
-ClusterAnalysisResult ClusterAnalysis::analyze(const Eigen::MatrixXd & data, const Opts & opts)
+ClusterAnalysisResult ClusterAnalysis::analyze(const Eigen::MatrixXd & data, const std::vector<std::string> & fastaLabels, const Opts & opts)
 {
 	ClusterAnalysisResult res;
 
@@ -77,21 +79,33 @@ ClusterAnalysisResult ClusterAnalysis::analyze(const Eigen::MatrixXd & data, con
 	VLOG << "Clustering t-SNE...\n";
 	res.clustSne = Clustering::estimateK(res.dataSne, 5);
 
+	VLOG << "Clustering connected components" << std::endl;
+	res.clustCC = Clustering::connComponents(res.dataSne, 9);
+
+	Clustering::postprocess(res.clustPca, fastaLabels);	
+	Clustering::postprocess(res.clustSne, fastaLabels);
+	Clustering::postprocess(res.clustCC, fastaLabels);
+
 	return res;
 }
 
-std::vector<ClusterAnalysisResult> ClusterAnalysis::analyzeBootstraps(const Eigen::MatrixXd & data, const Opts & opts)
+std::vector<ClusterAnalysisResult> ClusterAnalysis::analyzeBootstraps(const Eigen::MatrixXd & data, const std::vector<std::string> & fastaLabels, const Opts & opts)
 {
 	ThreadPool pool(opts.numThreads());
 
 	std::vector< std::future<ClusterAnalysisResult> > futures;
+
+	// add oneshot task
+	futures.push_back(
+		pool.enqueue(&ClusterAnalysis::analyze, data, fastaLabels, opts)
+	);
 
 	// add bootstrap tasks
 	const std::vector< std::vector<unsigned> > bootstrapIndexes = ClusterAnalysis::stratifiedSubsamplingIndices(data.rows(), opts.numBootstraps(), opts.bootstrapRatio());
 	for (const auto & indices : bootstrapIndexes)
 	{
 		futures.push_back(
-			pool.enqueue(&ClusterAnalysis::bootstrapTask, data, opts, indices)
+			pool.enqueue(&ClusterAnalysis::bootstrapTask, data, fastaLabels, opts, indices)
 		);
 	}
 

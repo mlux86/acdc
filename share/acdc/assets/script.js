@@ -55,6 +55,14 @@ $(document).ready(function()
 		setActiveExclusively($(this));
 	});
 
+	$('.ccConf').click(function() {
+		selectedFasta = $(this).parent().find('td.dataConf').text();
+		selectedLabels = 'cc';
+		updateBootStrapsSelect();
+		showVisualization();
+		setActiveExclusively($(this));
+	});
+
 	$('.pcaConf').click(function() {
 		selectedFasta = $(this).parent().find('td.dataConf').text();
 		selectedLabels = 'pca';

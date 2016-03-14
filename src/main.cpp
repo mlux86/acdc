@@ -150,54 +150,20 @@ int main(int argc, char *argv[])
 			result.oneshot.dataSne = BarnesHutSNEAdapter::runBarnesHutSNE(result.oneshot.dataOrig, *opts);
 
 			ILOG << "Testing for contamination..." << std::endl;
-			result.isContaminated = Clustering::isMultiModal(result.oneshot.dataSne, 0, 0.001) || Clustering::isMultiModal(result.oneshot.dataPca, 0, 0.001);
+			auto resCC = Clustering::connComponents(result.oneshot.dataSne, 9);
+			Clustering::postprocess(resCC, result.fastaLabels);
+			result.hasSeparatedComponents = resCC.numClusters > 1;
+			result.isMultiModal = Clustering::isMultiModal(result.oneshot.dataSne, 0, 0.001) ||
+								  Clustering::isMultiModal(result.oneshot.dataPca, 0, 0.001);
 
-			unsigned kPca = 1;
-			unsigned kSne = 1;
-			if (result.isContaminated)
-			{
-				ILOG << "Clustering contamination..." << std::endl;
-				result.bootstraps = ClusterAnalysis::analyzeBootstraps(result.oneshot.dataOrig, *opts);
+			// if (result.hasSeparatedComponents || result.isMultiModal)
+			// {
+				ILOG << "Clustering..." << std::endl;
+				result.bootstraps = ClusterAnalysis::analyzeBootstraps(result.oneshot.dataOrig, result.fastaLabels, *opts);
+				result.oneshot = result.bootstraps.at(0);
+				result.bootstraps.erase(result.bootstraps.begin());
+			// } 
 
-				// find optimal K for pca and sne
-				std::map<unsigned, unsigned> optMapPca;
-				std::map<unsigned, unsigned> optMapSne;
-				for (auto & car : result.bootstraps)
-				{
-					optMapPca[car.clustPca.numClusters]++;
-					optMapSne[car.clustSne.numClusters]++;
-				}
-				unsigned maxCntPca = 0;
-				for (auto & it : optMapPca)
-				{
-					if (it.second > maxCntPca)
-					{
-						kPca = it.first;
-						maxCntPca = it.second;
-					}
-				}
-				unsigned maxCntSne = 0;
-				for (auto & it : optMapSne)
-				{
-					if (it.second > maxCntSne)
-					{
-						kSne = it.first;
-						maxCntSne = it.second;
-					}
-				}				
-			} 
-
-			ILOG << "One-shot clustering from most probable number of clusters..." << std::endl;
-			// Cluster oneshot using most probable k
-			result.oneshot.clustPca.numClusters = kPca;
-			result.oneshot.clustPca.labels = HierarchicalClustering::cluster(HierarchicalClustering::linkage(result.oneshot.dataPca), kPca);
-			result.oneshot.clustSne.numClusters = kSne;
-			result.oneshot.clustSne.labels = HierarchicalClustering::cluster(HierarchicalClustering::linkage(result.oneshot.dataSne), kSne);
-
-			ILOG << "Number of clusters PCA: " << kPca << std::endl;
-			ILOG << "Number of clusters SNE: " << kSne << std::endl;
-
-			// ILOG << "Writing result..." << std::endl;
 			rio.processResult(result);
 		} catch(const std::exception & e)
 		{

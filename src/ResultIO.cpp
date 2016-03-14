@@ -99,6 +99,7 @@ Json::Value ResultIO::clusterAnalysisResultToJSON(const ClusterAnalysisResult & 
 
 	root["clustPca"] = clusteringResultToJSON(car.clustPca);
 	root["clustSne"] = clusteringResultToJSON(car.clustSne);
+    root["clustCC"] = clusteringResultToJSON(car.clustCC);
 
 	return root;
 }
@@ -109,6 +110,8 @@ void ResultIO::writeResultContainerToJSON(ResultContainer result, const std::str
 
 	root["fasta"] = result.fasta;
 	root["id"] = result.id;
+    root["isMultiModal"] = result.isMultiModal;
+    root["hasSeparatedComponents"] = result.hasSeparatedComponents;
 
 	root["fastaLabels"] = Json::Value(Json::arrayValue);
 	for (auto & lbl : result.fastaLabels)
@@ -123,6 +126,7 @@ void ResultIO::writeResultContainerToJSON(ResultContainer result, const std::str
 	{
 		// align bootstrap data to oneshot data (data points and labels)
 		bs.dataSne = MLUtil::alignBootstrap(result.oneshot.dataSne, bs.dataSne, bs.bootstrapIndexes);        
+        bs.clustCC.labels = MLUtil::alignBootstrapLabels(result.oneshot.clustCC.labels, bs.clustCC.labels, bs.bootstrapIndexes);
 		bs.clustPca.labels = MLUtil::alignBootstrapLabels(result.oneshot.clustPca.labels, bs.clustPca.labels, bs.bootstrapIndexes);
 		bs.clustSne.labels = MLUtil::alignBootstrapLabels(result.oneshot.clustSne.labels, bs.clustSne.labels, bs.bootstrapIndexes);
 
@@ -251,6 +255,15 @@ void ResultIO::processResult(const ResultContainer & result)
     ss.str("");
     ss << outputDir << "/export/" << result.id <<  ".oneshot.pca";
     MatrixUtil::saveMatrix(result.oneshot.dataPca, ss.str(), '\t');
+
+    ss.str("");
+    ss << outputDir << "/export/" << result.id << ".oneshot.contigs";
+    std::ofstream ofs(ss.str(), std::ofstream::out);
+    for (auto & lbl : result.fastaLabels) 
+    {
+        ofs << lbl << std::endl;
+    }
+    ofs.close();     
 }
 
 void ResultIO::finish()

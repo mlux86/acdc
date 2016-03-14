@@ -5,6 +5,7 @@
 #include "MatrixUtil.h"
 #include "Kmeans.h"
 #include "HierarchicalClustering.h"
+#include "TarjansAlgorithm.h"
 
 #include <math.h>
 #include <numeric>
@@ -20,6 +21,13 @@ Clustering::Clustering()
 
 Clustering::~Clustering()
 {
+}
+
+ClusteringResult Clustering::connComponents(const Eigen::MatrixXd & data, unsigned knnK)
+{
+    Eigen::MatrixXd aff = MLUtil::knnAffinityMatrix(data, knnK, true);
+    TarjansAlgorithm ta;
+    return ta.run(aff);
 }
 
 bool Clustering::isMultiModal(const Eigen::MatrixXd & data, double alpha, double splitThreshold)
@@ -170,4 +178,69 @@ ClusteringResult Clustering::estimateK(const Eigen::MatrixXd & data, unsigned ma
     }
 
     return res;
+}
+
+void Clustering::postprocess(ClusteringResult & cr, const std::vector<std::string> & contigs)
+{
+    unsigned n = cr.labels.size();
+
+    if (n != contigs.size())
+    {
+        throw std::runtime_error("Number of labels must match number of contigs.");
+    }
+
+    auto uniqueContigs = contigs;
+    std::sort(uniqueContigs.begin(), uniqueContigs.end());
+    auto it = std::unique(uniqueContigs.begin(), uniqueContigs.end());
+    uniqueContigs.resize(std::distance(uniqueContigs.begin(), it));
+
+    for (auto contig : uniqueContigs)
+    {
+        std::map<unsigned, unsigned> labelSizes;
+        for (unsigned i = 0; i < n; i++)            
+        {
+            if (contigs.at(i) != contig)
+            {
+                continue;
+            }
+            unsigned lbl = cr.labels.at(i);
+            if(labelSizes.count(lbl) == 0)
+            {
+                labelSizes[lbl] = 0;
+            } else
+            {
+                labelSizes[lbl]++;
+            }
+        }
+
+        if (labelSizes.size() > 1) // multiple clusters for one contig
+        {
+            unsigned newLbl = 0;
+            unsigned maxClustSize = 0;
+            for (const auto it : labelSizes)
+            {
+                if (it.second > maxClustSize)
+                {
+                    newLbl = it.first;
+                    maxClustSize = it.second;
+                }
+            }   
+            for (unsigned i = 0; i < n; i++)            
+            {
+                if (contigs.at(i) == contig)
+                {
+                    cr.labels[i] = newLbl;
+                }
+            }
+        }
+
+    }
+
+    // count clusters
+    auto uniqueLabels = cr.labels;
+    std::sort(uniqueLabels.begin(), uniqueLabels.end());
+    auto it2 = std::unique(uniqueLabels.begin(), uniqueLabels.end());
+    uniqueLabels.resize(std::distance(uniqueLabels.begin(), it2));
+    cr.numClusters = uniqueLabels.size();
+
 }

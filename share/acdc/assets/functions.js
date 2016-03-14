@@ -43,6 +43,7 @@ function tabulateNumClusters(bootstraps)
 	var result = new Array();
 	result["pca"] = new Array();
 	result["sne"] = new Array();
+	result["cc"] = new Array();
 
 	for (var i in bootstraps)
 	{
@@ -58,8 +59,14 @@ function tabulateNumClusters(bootstraps)
 			result["sne"][bs.clustSne.numClusters] = 0;
 		}
 
+		if (!result["cc"][bs.clustCC.numClusters])
+		{			
+			result["cc"][bs.clustCC.numClusters] = 0;
+		}
+
 		result["pca"][bs.clustPca.numClusters]++;
 		result["sne"][bs.clustSne.numClusters]++;
+		result["cc"][bs.clustCC.numClusters]++;
 	}
 
 	for (var i in result["pca"])
@@ -70,6 +77,11 @@ function tabulateNumClusters(bootstraps)
 	for (var i in result["sne"])
 	{
 		result["sne"][i] /= bootstraps.length;	
+	}
+
+	for (var i in result["cc"])
+	{
+		result["cc"][i] /= bootstraps.length;	
 	}
 
 	return result;
@@ -86,16 +98,10 @@ function calculateStats(results)
 		var key = res.fasta;
 		stats[key] = {};
 
-		if (res.bootstraps.length == 0)
-		{
-			stats[key].clean = true;
-		} else
-		{
-			stats[key].clean = false;
-			var tnc = tabulateNumClusters(res.bootstraps);
-			stats[key].pca = tnc["pca"];
-			stats[key].sne = tnc["sne"];
-		}
+		var tnc = tabulateNumClusters(res.bootstraps);
+		stats[key].pca = tnc["pca"];
+		stats[key].sne = tnc["sne"];
+		stats[key].cc = tnc["cc"];
 
 		if ("krakenLabels" in res)
 		{
@@ -212,12 +218,9 @@ function buildConfidenceTable(results)
 	var maxK = 0;
 	for (var i in stats)
 	{
-		if (stats[i].clean)
-		{
-			continue;
-		}
 		var keys =      Object.keys(stats[i].pca).map(Number)
-				.concat(Object.keys(stats[i].sne).map(Number));
+				.concat(Object.keys(stats[i].sne).map(Number))
+				.concat(Object.keys(stats[i].cc).map(Number));
 		var maxKey = Math.max.apply(Math, keys);		
 		maxK = Math.max(maxK, maxKey);
 	}
@@ -225,10 +228,11 @@ function buildConfidenceTable(results)
 	var firstKey = Object.keys(results)[0];
 	var krakenEnabled = "krakenLabels" in results[firstKey];
 
-	$('#confidences').append('<tr><th>ID</th><th>Contamination<br/>status</th><th>Sample</th><th>PCA</th><th>t-SNE</th>' + (krakenEnabled ? '<th>Kraken</th>' : '') + '</tr>');
+	$('#confidences').append('<tr><th>ID</th><th>Contamination<br/>status</th><th>Sample</th><th>CC</th><th>PCA</th><th>t-SNE</th>' + (krakenEnabled ? '<th>Kraken</th>' : '') + '</tr>');
 
 	for (var i in stats)
 	{
+		var ccClean = stats[i].clean || stats[i].cc[1] == 1;
 		var pcaClean = stats[i].clean || stats[i].pca[1] == 1;
 		var sneClean = stats[i].clean || stats[i].sne[1] == 1;
 		var kraken = krakenEnabled ? stats[i].kraken.numSpecies : 0;
@@ -238,10 +242,10 @@ function buildConfidenceTable(results)
 		}
 
 		var status = 'warning';
-		if (pcaClean && sneClean)
+		if (!results[i].isMultiModal && !results[i].hasSeparatedComponents)
 		{
 			status = 'clean';
-		} else if (!pcaClean && !sneClean)
+		} else if (results[i].isMultiModal && results[i].hasSeparatedComponents)
 		{
 			status = 'contaminated';
 		}
@@ -250,20 +254,15 @@ function buildConfidenceTable(results)
 			'<td>' + results[i].id + '</td>' +
 			'<td class="' + status + '">&nbsp;</td>' + 
 			'<td class="selectable dataConf">' + i + '</td>' +
+			'<td class="selectable ccConf"><div class="chart"></div></td>' +
 			'<td class="selectable pcaConf"><div class="chart"></div></td>' +
 			'<td class="selectable sneConf"><div class="chart"></div></td>' + 
 			(krakenEnabled ? '<td class="selectable kraken"><span class="number">' + kraken + '</span><br/>species</td>' : '') +
 			'</tr>');
 
-		if (!stats[i].clean)
-		{
-			cellBarChart($('#confidences tr:last td.pcaConf div.chart'), stats[i].pca, maxK);
-			cellBarChart($('#confidences tr:last td.sneConf div.chart'), stats[i].sne, maxK);
-		} else
-		{
-			$('#confidences tr:last td.pcaConf').addClass('clean');
-			$('#confidences tr:last td.sneConf').addClass('clean');
-		}
+		cellBarChart($('#confidences tr:last td.ccConf div.chart'), stats[i].cc, maxK);
+		cellBarChart($('#confidences tr:last td.pcaConf div.chart'), stats[i].pca, maxK);
+		cellBarChart($('#confidences tr:last td.sneConf div.chart'), stats[i].sne, maxK);
 	}	
 }
 
@@ -343,6 +342,9 @@ function showVisualization()
 	{
 		// labels = numericLabels(x.fastaLabels);
 		labels = Array.apply(null, Array(x.fastaLabels.length)).map(Number.prototype.valueOf, -1); // no labels / black color
+	} else if(selectedLabels === 'cc')
+	{
+		labels = clustAnaResult.clustCC.labels;	
 	} else if(selectedLabels === 'pca')
 	{
 		labels = clustAnaResult.clustPca.labels;

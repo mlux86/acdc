@@ -15,6 +15,7 @@ struct ClusterAnalysisResult
 
 	ClusteringResult clustPca;
 	ClusteringResult clustSne;
+	ClusteringResult clustCC;
 };
 
 class ClusterAnalysis
@@ -25,10 +26,10 @@ private:
 	~ClusterAnalysis();
 	
 	static std::vector< std::vector<unsigned> > stratifiedSubsamplingIndices(const unsigned n, const unsigned k, const double ratio = 0.8);
-	static ClusterAnalysisResult bootstrapTask(const Eigen::MatrixXd & dataOrig, const Opts & opts, const std::vector<unsigned> indices);
+	static ClusterAnalysisResult bootstrapTask(const Eigen::MatrixXd & dataOrig, const std::vector<std::string> & fastaLabels, const Opts & opts, const std::vector<unsigned> indices);
 
 public:
-	static ClusterAnalysisResult analyze(const Eigen::MatrixXd & data, const Opts & opts);
-	static std::vector<ClusterAnalysisResult> analyzeBootstraps(const Eigen::MatrixXd & data, const Opts & opts);
+	static ClusterAnalysisResult analyze(const Eigen::MatrixXd & data, const std::vector<std::string> & fastaLabels, const Opts & opts);
+	static std::vector<ClusterAnalysisResult> analyzeBootstraps(const Eigen::MatrixXd & data, const std::vector<std::string> & fastaLabels, const Opts & opts);
 	
 };

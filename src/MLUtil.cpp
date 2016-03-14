@@ -42,10 +42,6 @@ Eigen::MatrixXd MLUtil::knnAffinityMatrix(const Eigen::MatrixXd & data, const un
         {
             unsigned idx = indexes[j];
             affinities(i, idx) = sqrt(dists[j]);
-            if (!mutual)
-            {
-                affinities(idx, i) = sqrt(dists[j]); // for normal k-nn
-            }
         }
     }
 
@@ -53,7 +49,7 @@ Eigen::MatrixXd MLUtil::knnAffinityMatrix(const Eigen::MatrixXd & data, const un
     {
         for (unsigned i = 0; i < n; i++)
         {
-            for (unsigned j = 0; j <= i; j++)
+            for (unsigned j = 0; j < n; j++)
             {
                 auto m = std::min(affinities(i, j), affinities(j, i));
                 affinities(i, j) = m;
