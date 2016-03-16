@@ -73,7 +73,7 @@ Json::Value ResultIO::clusteringResultToJSON(const ClusteringResult & cr)
 {
 	auto root = Json::Value();
 
-	root["numClusters"] = cr.numClusters;
+	root["numClusters"] = cr.numClusters;    
 
 	root["labels"] = Json::Value(Json::arrayValue);
 	for (const auto & lbl : cr.labels)
@@ -84,21 +84,43 @@ Json::Value ResultIO::clusteringResultToJSON(const ClusteringResult & cr)
 	return root;
 }
 
-Json::Value ResultIO::clusterAnalysisResultToJSON(const ClusterAnalysisResult & car)
+Json::Value ResultIO::clusterAnalysisResultToJSON(const ResultContainer & result, const ClusterAnalysisResult & car, bool alignToOneshot)
 {
 	auto root = Json::Value();
 
-	root["dataSne"] = MatrixUtil::matrixToJSON(car.dataSne);
+    if (alignToOneshot)
+    {
+       root["dataSne"] = MatrixUtil::matrixToJSON(MLUtil::alignBootstrap(result.oneshot.dataSne, car.dataSne, car.bootstrapIndexes));
+    } else
+    {
+	   root["dataSne"] = MatrixUtil::matrixToJSON(car.dataSne);
+    }
 	root["dataPca"] = MatrixUtil::matrixToJSON(car.dataPca);
 
-	root["bootstrapIndices"] = Json::Value(Json::arrayValue);
+	root["bootstrapIndexes"] = Json::Value(Json::arrayValue);
 	for (const auto & idx : car.bootstrapIndexes)
 	{
-		root["bootstrapIndices"].append(idx);
+		root["bootstrapIndexes"].append(idx);
 	}
 
-	root["clustPca"] = clusteringResultToJSON(car.clustPca);
-	root["clustSne"] = clusteringResultToJSON(car.clustSne);
+    root["isMultiModal"] = car.isMultiModal;
+
+    root["numClustPca"] = car.numClustPca;
+	root["clustsPca"] = Json::Value(Json::arrayValue);
+    for (auto & c : car.clustsPca)
+    {
+        root["clustsPca"].append(clusteringResultToJSON(c));
+    }
+
+    root["numClustSne"] = car.numClustSne;
+    root["clustsSne"] = Json::Value(Json::arrayValue);
+    for (auto & c : car.clustsSne)
+    {
+        root["clustsSne"].append(clusteringResultToJSON(c));
+    }
+
+    root["hasSeparatedComponents"] = car.hasSeparatedComponents;
+    root["numClustCC"] = car.numClustCC;
     root["clustCC"] = clusteringResultToJSON(car.clustCC);
 
 	return root;
@@ -110,8 +132,6 @@ void ResultIO::writeResultContainerToJSON(ResultContainer result, const std::str
 
 	root["fasta"] = result.fasta;
 	root["id"] = result.id;
-    root["isMultiModal"] = result.isMultiModal;
-    root["hasSeparatedComponents"] = result.hasSeparatedComponents;
 
 	root["fastaLabels"] = Json::Value(Json::arrayValue);
 	for (auto & lbl : result.fastaLabels)
@@ -119,18 +139,12 @@ void ResultIO::writeResultContainerToJSON(ResultContainer result, const std::str
 		root["fastaLabels"].append(lbl);
 	}
 
-	root["oneshot"] = clusterAnalysisResultToJSON(result.oneshot);
+	root["oneshot"] = clusterAnalysisResultToJSON(result, result.oneshot, false);
 	
 	root["bootstraps"] = Json::Value(Json::arrayValue);
 	for (auto & bs : result.bootstraps)
 	{
-		// align bootstrap data to oneshot data (data points and labels)
-		bs.dataSne = MLUtil::alignBootstrap(result.oneshot.dataSne, bs.dataSne, bs.bootstrapIndexes);        
-        bs.clustCC.labels = MLUtil::alignBootstrapLabels(result.oneshot.clustCC.labels, bs.clustCC.labels, bs.bootstrapIndexes);
-		bs.clustPca.labels = MLUtil::alignBootstrapLabels(result.oneshot.clustPca.labels, bs.clustPca.labels, bs.bootstrapIndexes);
-		bs.clustSne.labels = MLUtil::alignBootstrapLabels(result.oneshot.clustSne.labels, bs.clustSne.labels, bs.bootstrapIndexes);
-
-		root["bootstraps"].append(clusterAnalysisResultToJSON(bs));
+		root["bootstraps"].append(clusterAnalysisResultToJSON(result, bs, true));
 	}	
 
     if (krakenEnabled)
@@ -168,72 +182,72 @@ void ResultIO::exportClusteringFastas(const ResultContainer & result)
 		throw std::runtime_error("Could not create output directory, aborting.");
 	}
 
-	// first, we need the kraken result as actual labels
-	std::vector<std::string> krakenLabels;
-    for (auto & lbl : result.fastaLabels)
-    {
-        std::string krakenLbl = "unknown";
-        if (result.kraken.classification.find(lbl) != result.kraken.classification.end())
-        {
-            krakenLbl = result.kraken.classification.at(lbl);
-        }
-        krakenLabels.push_back(krakenLbl);
-    }
+	// // first, we need the kraken result as actual labels
+	// std::vector<std::string> krakenLabels;
+ //    for (auto & lbl : result.fastaLabels)
+ //    {
+ //        std::string krakenLbl = "unknown";
+ //        if (result.kraken.classification.find(lbl) != result.kraken.classification.end())
+ //        {
+ //            krakenLbl = result.kraken.classification.at(lbl);
+ //        }
+ //        krakenLabels.push_back(krakenLbl);
+ //    }
 
-    // start export
+ //    // start export
 
-	std::map<unsigned, std::set<std::string>> contigIdsPca; // export a set of contigs per label
-	std::map<unsigned, std::set<std::string>> contigIdsSne; // export a set of contigs per label
-	std::map<unsigned, std::set<std::string>> contigIdsKraken; // export a set of contigs per label
+	// std::map<unsigned, std::set<std::string>> contigIdsPca; // export a set of contigs per label
+	// std::map<unsigned, std::set<std::string>> contigIdsSne; // export a set of contigs per label
+	// std::map<unsigned, std::set<std::string>> contigIdsKraken; // export a set of contigs per label
 
-    for (unsigned i = 0; i < result.fastaLabels.size(); ++i)
-    {        
-        contigIdsPca[result.oneshot.clustPca.labels.at(i)].insert(result.fastaLabels.at(i));
-        contigIdsSne[result.oneshot.clustSne.labels.at(i)].insert(result.fastaLabels.at(i));
-        contigIdsKraken[numericLabels(krakenLabels).at(i)].insert(result.fastaLabels.at(i));
-    }	
+ //    for (unsigned i = 0; i < result.fastaLabels.size(); ++i)
+ //    {        
+ //        contigIdsPca[result.oneshot.clustPca.labels.at(i)].insert(result.fastaLabels.at(i));
+ //        contigIdsSne[result.oneshot.clustSne.labels.at(i)].insert(result.fastaLabels.at(i));
+ //        contigIdsKraken[numericLabels(krakenLabels).at(i)].insert(result.fastaLabels.at(i));
+ //    }	
 
-    // Pca
-    for (auto & kv : contigIdsPca) 
-    {
-    	unsigned lbl = kv.first;
-    	auto & contigs = kv.second;
-    	std::stringstream ss;
-    	ss << outputDir << "/export/" << result.id << "-pca-" << lbl << ".fasta";
-    	filterFasta(result.fasta, contigs, ss.str());
-    }
+ //    // Pca
+ //    for (auto & kv : contigIdsPca) 
+ //    {
+ //    	unsigned lbl = kv.first;
+ //    	auto & contigs = kv.second;
+ //    	std::stringstream ss;
+ //    	ss << outputDir << "/export/" << result.id << "-pca-" << lbl << ".fasta";
+ //    	filterFasta(result.fasta, contigs, ss.str());
+ //    }
 
-    // Sne
-    for (auto & kv : contigIdsSne) 
-    {
-    	unsigned lbl = kv.first;
-    	auto & contigs = kv.second;
-    	std::stringstream ss;
-    	ss << outputDir << "/export/" << result.id << "-sne-" << lbl << ".fasta";
-    	filterFasta(result.fasta, contigs, ss.str());
-    }
+ //    // Sne
+ //    for (auto & kv : contigIdsSne) 
+ //    {
+ //    	unsigned lbl = kv.first;
+ //    	auto & contigs = kv.second;
+ //    	std::stringstream ss;
+ //    	ss << outputDir << "/export/" << result.id << "-sne-" << lbl << ".fasta";
+ //    	filterFasta(result.fasta, contigs, ss.str());
+ //    }
 
-    // kraken
-    if (krakenEnabled)
-    {
-        for (auto & kv : contigIdsKraken) 
-        {
-        	unsigned lbl = kv.first;
-        	auto & contigs = kv.second;
-        	std::stringstream ss;
-        	ss << outputDir << "/export/" << result.id << "-kraken-" << lbl << ".fasta";
-        	filterFasta(result.fasta, contigs, ss.str());
-        }
+ //    // kraken
+ //    if (krakenEnabled)
+ //    {
+ //        for (auto & kv : contigIdsKraken) 
+ //        {
+ //        	unsigned lbl = kv.first;
+ //        	auto & contigs = kv.second;
+ //        	std::stringstream ss;
+ //        	ss << outputDir << "/export/" << result.id << "-kraken-" << lbl << ".fasta";
+ //        	filterFasta(result.fasta, contigs, ss.str());
+ //        }
 
-        std::stringstream ss;
-        ss << outputDir << "/export/" << result.id << ".oneshot.kraken";
-        std::ofstream ofs(ss.str(), std::ofstream::out);
-        for (auto & lbl : krakenLabels) 
-        {
-            ofs << lbl << std::endl;
-        }
-        ofs.close(); 
-    }
+ //        std::stringstream ss;
+ //        ss << outputDir << "/export/" << result.id << ".oneshot.kraken";
+ //        std::ofstream ofs(ss.str(), std::ofstream::out);
+ //        for (auto & lbl : krakenLabels) 
+ //        {
+ //            ofs << lbl << std::endl;
+ //        }
+ //        ofs.close(); 
+ //    }
 
 }
 
@@ -255,7 +269,6 @@ void ResultIO::processResult(const ResultContainer & result)
     ss.str("");
     ss << outputDir << "/export/" << result.id <<  ".oneshot.pca";
     MatrixUtil::saveMatrix(result.oneshot.dataPca, ss.str(), '\t');
-
     ss.str("");
     ss << outputDir << "/export/" << result.id << ".oneshot.contigs";
     std::ofstream ofs(ss.str(), std::ofstream::out);

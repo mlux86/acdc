@@ -16,9 +16,6 @@ struct ResultContainer
 	std::string fasta;
 	std::vector<std::string> fastaLabels;
 
-	bool isMultiModal;
-	bool hasSeparatedComponents;
-	
 	ClusterAnalysisResult oneshot;
 	std::vector<ClusterAnalysisResult> bootstraps;
 
@@ -33,7 +30,7 @@ private:
 	void filterFasta(const std::string & fasta, const std::set<std::string> contigs, const std::string & exportFilename);	
 
     Json::Value clusteringResultToJSON(const ClusteringResult & cr);
-    Json::Value clusterAnalysisResultToJSON(const ClusterAnalysisResult & car);
+    Json::Value clusterAnalysisResultToJSON(const ResultContainer & result, const ClusterAnalysisResult & car, bool alignToOneshot);
 	void writeResultContainerToJSON(ResultContainer result, const std::string & filename);
     void exportClusteringFastas(const ResultContainer & result);
 

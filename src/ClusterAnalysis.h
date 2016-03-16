@@ -13,8 +13,14 @@ struct ClusterAnalysisResult
 
 	std::vector<unsigned> bootstrapIndexes;
 
-	ClusteringResult clustPca;
-	ClusteringResult clustSne;
+	bool isMultiModal; // true if sne or pca multi modal
+	unsigned numClustPca; // one if not multi-modal
+	std::vector<ClusteringResult> clustsPca;
+	unsigned numClustSne; // one if not multi-modal
+	std::vector<ClusteringResult> clustsSne;
+
+	bool hasSeparatedComponents; // true if numClustCC > 1
+	unsigned numClustCC; 
 	ClusteringResult clustCC;
 };
 
@@ -26,10 +32,10 @@ private:
 	~ClusterAnalysis();
 	
 	static std::vector< std::vector<unsigned> > stratifiedSubsamplingIndices(const unsigned n, const unsigned k, const double ratio = 0.8);
-	static ClusterAnalysisResult bootstrapTask(const Eigen::MatrixXd & dataOrig, const std::vector<std::string> & fastaLabels, const Opts & opts, const std::vector<unsigned> indices);
+	static ClusterAnalysisResult bootstrapTask(const Eigen::MatrixXd & dataOrig, const std::vector<std::string> & contigs, const Opts & opts, const std::vector<unsigned> indices);
 
 public:
-	static ClusterAnalysisResult analyze(const Eigen::MatrixXd & data, const std::vector<std::string> & fastaLabels, const Opts & opts);
-	static std::vector<ClusterAnalysisResult> analyzeBootstraps(const Eigen::MatrixXd & data, const std::vector<std::string> & fastaLabels, const Opts & opts);
+	static ClusterAnalysisResult analyze(const Eigen::MatrixXd & data, const std::vector<std::string> & contigs, const Opts & opts);
+	static std::vector<ClusterAnalysisResult> analyzeBootstraps(const Eigen::MatrixXd & data, const std::vector<std::string> & contigs, const Opts & opts);
 	
 };

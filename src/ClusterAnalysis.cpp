@@ -43,7 +43,7 @@ std::vector< std::vector<unsigned> > ClusterAnalysis::stratifiedSubsamplingIndic
     return result;
 }
 
-ClusterAnalysisResult ClusterAnalysis::bootstrapTask(const Eigen::MatrixXd & dataOrig, const std::vector<std::string> & fastaLabels, const Opts & opts, const std::vector<unsigned> indices)
+ClusterAnalysisResult ClusterAnalysis::bootstrapTask(const Eigen::MatrixXd & dataOrig, const std::vector<std::string> & contigs, const Opts & opts, const std::vector<unsigned> indices)
 {
 	Eigen::MatrixXd data = Eigen::MatrixXd::Zero(indices.size(), dataOrig.cols());
 	std::vector<std::string> labels(indices.size());
@@ -51,7 +51,7 @@ ClusterAnalysisResult ClusterAnalysis::bootstrapTask(const Eigen::MatrixXd & dat
 	for (unsigned i = 0; i < indices.size(); i++)
 	{
 		data.row(i) = dataOrig.row(indices[i]);
-		labels[i] = fastaLabels[indices[i]];
+		labels[i] = contigs[indices[i]];
 	}
 
 	auto res = ClusterAnalysis::analyze(data, labels, opts);
@@ -61,7 +61,7 @@ ClusterAnalysisResult ClusterAnalysis::bootstrapTask(const Eigen::MatrixXd & dat
 	return res;
 }
 
-ClusterAnalysisResult ClusterAnalysis::analyze(const Eigen::MatrixXd & data, const std::vector<std::string> & fastaLabels, const Opts & opts)
+ClusterAnalysisResult ClusterAnalysis::analyze(const Eigen::MatrixXd & data, const std::vector<std::string> & contigs, const Opts & opts)
 {
 	ClusterAnalysisResult res;
 
@@ -73,23 +73,29 @@ ClusterAnalysisResult ClusterAnalysis::analyze(const Eigen::MatrixXd & data, con
 	VLOG << "Running t-SNE..." << std::endl;
 	res.dataSne = BarnesHutSNEAdapter::runBarnesHutSNE(data, opts);
 
+	VLOG << "Testing for multi-modality..." << std::endl;
+	res.isMultiModal = Clustering::isMultiModal(res.dataSne, 0, 0.001) ||
+		               Clustering::isMultiModal(res.dataPca, 0, 0.001);
+
 	VLOG << "Clustering PCA...\n";
-	res.clustPca = Clustering::estimateK(res.dataPca, 5);
+	auto resPca = Clustering::estimateK(res.dataPca, 5, contigs);
+	res.numClustPca = !res.isMultiModal ? 1 : resPca.first;
+	res.clustsPca = resPca.second;	
 
 	VLOG << "Clustering t-SNE...\n";
-	res.clustSne = Clustering::estimateK(res.dataSne, 5);
+	auto resSne = Clustering::estimateK(res.dataSne, 5, contigs);
+	res.numClustSne = !res.isMultiModal ? 1 : resSne.first;
+	res.clustsSne = resSne.second;
 
 	VLOG << "Clustering connected components" << std::endl;
-	res.clustCC = Clustering::connComponents(res.dataSne, 9);
-
-	Clustering::postprocess(res.clustPca, fastaLabels);	
-	Clustering::postprocess(res.clustSne, fastaLabels);
-	Clustering::postprocess(res.clustCC, fastaLabels);
+	res.clustCC = Clustering::connComponents(res.dataSne, 9, contigs);
+	res.numClustCC = res.clustCC.numClusters;
+	res.hasSeparatedComponents = res.numClustCC > 1;
 
 	return res;
 }
 
-std::vector<ClusterAnalysisResult> ClusterAnalysis::analyzeBootstraps(const Eigen::MatrixXd & data, const std::vector<std::string> & fastaLabels, const Opts & opts)
+std::vector<ClusterAnalysisResult> ClusterAnalysis::analyzeBootstraps(const Eigen::MatrixXd & data, const std::vector<std::string> & contigs, const Opts & opts)
 {
 	ThreadPool pool(opts.numThreads());
 
@@ -97,7 +103,7 @@ std::vector<ClusterAnalysisResult> ClusterAnalysis::analyzeBootstraps(const Eige
 
 	// add oneshot task
 	futures.push_back(
-		pool.enqueue(&ClusterAnalysis::analyze, data, fastaLabels, opts)
+		pool.enqueue(&ClusterAnalysis::analyze, data, contigs, opts)
 	);
 
 	// add bootstrap tasks
@@ -105,7 +111,7 @@ std::vector<ClusterAnalysisResult> ClusterAnalysis::analyzeBootstraps(const Eige
 	for (const auto & indices : bootstrapIndexes)
 	{
 		futures.push_back(
-			pool.enqueue(&ClusterAnalysis::bootstrapTask, data, fastaLabels, opts, indices)
+			pool.enqueue(&ClusterAnalysis::bootstrapTask, data, contigs, opts, indices)
 		);
 	}
 

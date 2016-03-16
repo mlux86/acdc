@@ -38,95 +38,6 @@ function onlyUnique(value, index, self)
     return self.indexOf(value) === index;
 }
 
-function tabulateNumClusters(bootstraps)
-{
-	var result = new Array();
-	result["pca"] = new Array();
-	result["sne"] = new Array();
-	result["cc"] = new Array();
-
-	for (var i in bootstraps)
-	{
-		var bs = bootstraps[i];
-
-		if (!result["pca"][bs.clustPca.numClusters])
-		{			
-			result["pca"][bs.clustPca.numClusters] = 0;
-		}
-
-		if (!result["sne"][bs.clustSne.numClusters])
-		{			
-			result["sne"][bs.clustSne.numClusters] = 0;
-		}
-
-		if (!result["cc"][bs.clustCC.numClusters])
-		{			
-			result["cc"][bs.clustCC.numClusters] = 0;
-		}
-
-		result["pca"][bs.clustPca.numClusters]++;
-		result["sne"][bs.clustSne.numClusters]++;
-		result["cc"][bs.clustCC.numClusters]++;
-	}
-
-	for (var i in result["pca"])
-	{
-		result["pca"][i] /= bootstraps.length;	
-	}
-
-	for (var i in result["sne"])
-	{
-		result["sne"][i] /= bootstraps.length;	
-	}
-
-	for (var i in result["cc"])
-	{
-		result["cc"][i] /= bootstraps.length;	
-	}
-
-	return result;
-}
-
-function calculateStats(results)
-{
-	stats = new Array();
-
-	for (var i in results)
-	{
-		var res = results[i];
-		
-		var key = res.fasta;
-		stats[key] = {};
-
-		var tnc = tabulateNumClusters(res.bootstraps);
-		stats[key].pca = tnc["pca"];
-		stats[key].sne = tnc["sne"];
-		stats[key].cc = tnc["cc"];
-
-		if ("krakenLabels" in res)
-		{
-			stats[key].kraken = {};
-			var krakenNumUnknown = 0;
-			$.each(res.krakenLabels, function (idx, val) 
-			{
-				if (val === "unknown")
-				{
-					krakenNumUnknown++;
-				}
-			});
-			stats[key].kraken.numUnknown = krakenNumUnknown;
-			var krakenUnique = res.krakenLabels.filter(onlyUnique);
-			stats[key].kraken.numSpecies = krakenUnique.length;
-			// if(krakenNumUnknown > 0)
-			// {
-			// 	stats[key].kraken.numSpecies--;
-			// }
-		}
-	}
-
-	return stats;
-}
-
 function cellBarChart(containerCell, confidences, maxK)
 {
 	// convert confidences into data array
@@ -145,7 +56,7 @@ function cellBarChart(containerCell, confidences, maxK)
 	}
 
 	var margin = {top: 10, right: 20, bottom: 25, left: 20},
-	width = 80 - margin.left - margin.right,
+	width = 160 - margin.left - margin.right,
 	height = 60 - margin.top - margin.bottom;
 
 	var x = d3.scale.ordinal().rangeRoundBands([0, width], .1);
@@ -213,56 +124,56 @@ function buildConfidenceTable(results)
 		return;
 	}
 
-	var stats = calculateStats(results);
+	var krakenEnabled = "krakenLabels" in results[Object.keys(results)[0]];
 
-	var maxK = 0;
-	for (var i in stats)
+	$('#confidences').append('<tr><th>ID</th><th>Contamination<br/>status</th><th>Sample</th><th>CC</th><th>Dip</th>' + (krakenEnabled ? '<th>Kraken</th>' : '') + '</tr>');
+
+	for (var i in results)
 	{
-		var keys =      Object.keys(stats[i].pca).map(Number)
-				.concat(Object.keys(stats[i].sne).map(Number))
-				.concat(Object.keys(stats[i].cc).map(Number));
-		var maxKey = Math.max.apply(Math, keys);		
-		maxK = Math.max(maxK, maxKey);
-	}
-
-	var firstKey = Object.keys(results)[0];
-	var krakenEnabled = "krakenLabels" in results[firstKey];
-
-	$('#confidences').append('<tr><th>ID</th><th>Contamination<br/>status</th><th>Sample</th><th>CC</th><th>PCA</th><th>t-SNE</th>' + (krakenEnabled ? '<th>Kraken</th>' : '') + '</tr>');
-
-	for (var i in stats)
-	{
-		var ccClean = stats[i].clean || stats[i].cc[1] == 1;
-		var pcaClean = stats[i].clean || stats[i].pca[1] == 1;
-		var sneClean = stats[i].clean || stats[i].sne[1] == 1;
-		var kraken = krakenEnabled ? stats[i].kraken.numSpecies : 0;
-		if (stats[i].kraken.numUnknown > 0)
+		var kraken = '';
+		if (krakenEnabled)
 		{
-			kraken = '&ge; ' + kraken;
+			var krakenNumUnknown = 0;
+			$.each(results[i].krakenLabels, function (idx, val) 
+			{
+				if (val === "unknown")
+				{
+					krakenNumUnknown++;
+				}
+			});
+			var krakenUnique = results[i].krakenLabels.filter(onlyUnique);
+			var numSpecies = krakenUnique.length;
+			kraken = krakenNumUnknown > 0 ? '&ge; ' + numSpecies : '' + numSpecies;
+		}		
+
+		var contProbCC = 0;
+		var contProbDip = 0;
+		for (var j = 0; j < results[i].bootstraps.length; j++)
+		{
+			contProbCC += results[i].bootstraps[j].hasSeparatedComponents ? 1 : 0;
+			contProbDip += results[i].bootstraps[j].isMultiModal ? 1 : 0;
 		}
+		contProbCC /= results[i].bootstraps.length;
+		contProbDip /= results[i].bootstraps.length;
 
 		var status = 'warning';
-		if (!results[i].isMultiModal && !results[i].hasSeparatedComponents)
+		if (contProbCC == 0 && contProbDip == 0)
 		{
 			status = 'clean';
-		} else if (results[i].isMultiModal && results[i].hasSeparatedComponents)
+		} else if (contProbCC > 0.5 && contProbDip > 0.5)
 		{
 			status = 'contaminated';
-		}
+		}	
 
 		$('#confidences').append('<tr>' +
 			'<td>' + results[i].id + '</td>' +
 			'<td class="' + status + '">&nbsp;</td>' + 
 			'<td class="selectable dataConf">' + i + '</td>' +
-			'<td class="selectable ccConf"><div class="chart"></div></td>' +
-			'<td class="selectable pcaConf"><div class="chart"></div></td>' +
-			'<td class="selectable sneConf"><div class="chart"></div></td>' + 
+			'<td class="selectable ccConf">p = ' + contProbCC + '</td>' +
+			'<td class="selectable dipConf">p = ' + contProbDip + '</td>' +
 			(krakenEnabled ? '<td class="selectable kraken"><span class="number">' + kraken + '</span><br/>species</td>' : '') +
 			'</tr>');
 
-		cellBarChart($('#confidences tr:last td.ccConf div.chart'), stats[i].cc, maxK);
-		cellBarChart($('#confidences tr:last td.pcaConf div.chart'), stats[i].pca, maxK);
-		cellBarChart($('#confidences tr:last td.sneConf div.chart'), stats[i].sne, maxK);
 	}	
 }
 
@@ -345,22 +256,43 @@ function showVisualization()
 	} else if(selectedLabels === 'cc')
 	{
 		labels = clustAnaResult.clustCC.labels;	
-	} else if(selectedLabels === 'pca')
+	} else if(selectedLabels === 'dip')
 	{
-		labels = clustAnaResult.clustPca.labels;
-	} else if(selectedLabels === 'sne')
-	{
-		labels = clustAnaResult.clustSne.labels;
+		if (selectedReduction === 'dataPca')
+		{
+			if (!selectedNumClusters)
+			{
+				selectedNumClusters = clustAnaResult.numClustPca;
+				$('#numClusters' + selectedNumClusters).prop('checked', true);
+			}
+			labels = clustAnaResult.clustsPca[selectedNumClusters-1].labels;
+		} else if (selectedReduction === 'dataSne')
+		{
+			if (!selectedNumClusters)
+			{
+				selectedNumClusters = clustAnaResult.numClustSne;
+				$('#numClusters' + selectedNumClusters).prop('checked', true);
+			}			
+			labels = clustAnaResult.clustsSne[selectedNumClusters-1].labels;
+		}
 	} else if(selectedLabels === 'kraken')
 	{
-		labels = numericLabels(x.krakenLabels);
+		labels = x.krakenLabels;
 	}
+
+	labels = numericLabels(labels);
 
 	var tooltips = results[selectedFasta].fastaLabels;
 	if(selectedLabels === 'kraken')
 	{
 		tooltips = x.krakenLabels;
-	}	
+	} else
+	{
+		if (selectedData !== 'oneshot') // align bootstrap tooltips
+		{
+			tooltips = bootstrapLabels(tooltips, clustAnaResult.bootstrapIndexes);
+		}
+	}
 
 	showData(dataMat, labels, tooltips, width, height, padding);
 	updateExport(labels);
@@ -418,7 +350,7 @@ function updateExport(labels)
 function numericLabels(labels)
 {
 	var mp = new Array();
-	k = 0;
+	k = 1;
 	for (var i in labels) 
 	{
 		var key = labels[i];
@@ -428,6 +360,7 @@ function numericLabels(labels)
 			k++;
 		}
 	}
+	mp["unknown"] = 0;
 	var result = Array(labels.length);
 	for (var i in labels) 
 	{
@@ -436,12 +369,12 @@ function numericLabels(labels)
 	return result;
 }
 
-function bootstrapLabels(labelsOneshot, bootstrapIndices)
+function bootstrapLabels(labelsOneshot, bootstrapIndexes)
 {
-	result = Array(bootstrapIndices.length);
-	for (var i in bootstrapIndices)
+	result = Array(bootstrapIndexes.length);
+	for (var i in bootstrapIndexes)
 	{
-		result[i] = labelsOneshot[bootstrapIndices[i]];
+		result[i] = labelsOneshot[bootstrapIndexes[i]];
 	}	
 	return result;
 }

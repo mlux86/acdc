@@ -23,11 +23,13 @@ Clustering::~Clustering()
 {
 }
 
-ClusteringResult Clustering::connComponents(const Eigen::MatrixXd & data, unsigned knnK)
+ClusteringResult Clustering::connComponents(const Eigen::MatrixXd & data, unsigned knnK, const std::vector<std::string> & contigs)
 {
     Eigen::MatrixXd aff = MLUtil::knnAffinityMatrix(data, knnK, true);
     TarjansAlgorithm ta;
-    return ta.run(aff);
+    auto res = ta.run(aff);
+    Clustering::postprocess(res, contigs); 
+    return res;
 }
 
 bool Clustering::isMultiModal(const Eigen::MatrixXd & data, double alpha, double splitThreshold)
@@ -39,7 +41,7 @@ bool Clustering::isMultiModal(const Eigen::MatrixXd & data, double alpha, double
     DipStatistic ds;
     double splitPerc = 0.0;
     // for each cluster member, see if it is a split viewer
-    #pragma omp parallel for shared(splitPerc)
+    // #pragma omp parallel for shared(splitPerc)
     for (unsigned i = 0; i < n; i++)
     {
         if (splitPerc < splitThreshold)
@@ -157,27 +159,34 @@ double Clustering::daviesBouldin(const Eigen::MatrixXd & data, const std::vector
     return db;
 }
 
-ClusteringResult Clustering::estimateK(const Eigen::MatrixXd & data, unsigned maxK)
+std::pair<unsigned, std::vector<ClusteringResult>> Clustering::estimateK(const Eigen::MatrixXd & data, unsigned maxK, const std::vector<std::string> & contigs)
 {
-    ClusteringResult res;
+    std::vector<ClusteringResult> results(maxK);
+
+    results[0].numClusters = 1;
+    std::fill(results[0].labels.begin(),results[0].labels.end(), 1);
 
     Eigen::MatrixXd z = HierarchicalClustering::linkage(data);
 
     double minDb = std::numeric_limits<double>::max();
-    for (unsigned k = 2; k < maxK; k++)
+    unsigned optK = 0;
+
+    for (unsigned k = 2; k <= maxK; k++)
     {
-        std::vector<unsigned> labels = HierarchicalClustering::cluster(z, k);
-        double db = Clustering::daviesBouldin(data, labels);
+        results[k-1].numClusters = k;
+        results[k-1].labels = HierarchicalClustering::cluster(z, k);        
+        Clustering::postprocess(results[k-1], contigs);
+
+        double db = Clustering::daviesBouldin(data, results[k-1].labels);
 
         if (db < minDb)
         {
             minDb = db;
-            res.labels = labels;
-            res.numClusters = k;
+            optK = results[k-1].numClusters;
         }
     }
 
-    return res;
+    return std::make_pair(optK, results);
 }
 
 void Clustering::postprocess(ClusteringResult & cr, const std::vector<std::string> & contigs)
@@ -207,10 +216,8 @@ void Clustering::postprocess(ClusteringResult & cr, const std::vector<std::strin
             if(labelSizes.count(lbl) == 0)
             {
                 labelSizes[lbl] = 0;
-            } else
-            {
-                labelSizes[lbl]++;
             }
+            labelSizes[lbl]++;
         }
 
         if (labelSizes.size() > 1) // multiple clusters for one contig

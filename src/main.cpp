@@ -144,25 +144,11 @@ int main(int argc, char *argv[])
 			auto dat = sv.vectorize();
 			result.oneshot.dataOrig = dat.first;
 			result.fastaLabels = dat.second;
-			VLOG << "Running PCA..." << std::endl;
-			result.oneshot.dataPca = MLUtil::pca(result.oneshot.dataOrig, opts->tsneDim());
-			VLOG << "Running t-SNE..." << std::endl;
-			result.oneshot.dataSne = BarnesHutSNEAdapter::runBarnesHutSNE(result.oneshot.dataOrig, *opts);
 
-			ILOG << "Testing for contamination..." << std::endl;
-			auto resCC = Clustering::connComponents(result.oneshot.dataSne, 9);
-			Clustering::postprocess(resCC, result.fastaLabels);
-			result.hasSeparatedComponents = resCC.numClusters > 1;
-			result.isMultiModal = Clustering::isMultiModal(result.oneshot.dataSne, 0, 0.001) ||
-								  Clustering::isMultiModal(result.oneshot.dataPca, 0, 0.001);
-
-			// if (result.hasSeparatedComponents || result.isMultiModal)
-			// {
-				ILOG << "Clustering..." << std::endl;
-				result.bootstraps = ClusterAnalysis::analyzeBootstraps(result.oneshot.dataOrig, result.fastaLabels, *opts);
-				result.oneshot = result.bootstraps.at(0);
-				result.bootstraps.erase(result.bootstraps.begin());
-			// } 
+			ILOG << "Clustering..." << std::endl;
+			result.bootstraps = ClusterAnalysis::analyzeBootstraps(result.oneshot.dataOrig, result.fastaLabels, *opts);
+			result.oneshot = result.bootstraps.at(0);
+			result.bootstraps.erase(result.bootstraps.begin());
 
 			rio.processResult(result);
 		} catch(const std::exception & e)

@@ -1,4 +1,4 @@
-var colors = ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33", "#a65628", "#f781bf", "#999999"];
+var colors = ["#b5b5b5", "#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33", "#a65628", "#f781bf", "#999999"];
 
 var width = 500;
 var height = 500;
@@ -8,6 +8,7 @@ var selectedFasta = '';
 var selectedLabels = 'fasta';
 var selectedReduction = 'dataSne';
 var selectedData = 'oneshot';
+var selectedNumClusters = NaN;
 
 $(document).ready(function() 
 {
@@ -48,6 +49,7 @@ $(document).ready(function()
 	});
 
 	$('.dataConf').click(function() {
+		$('.numClusters').prop("disabled", true);
 		selectedFasta = $(this).text();
 		selectedLabels = 'fasta';
 		updateBootStrapsSelect();
@@ -56,6 +58,7 @@ $(document).ready(function()
 	});
 
 	$('.ccConf').click(function() {
+		$('.numClusters').prop("disabled", true);
 		selectedFasta = $(this).parent().find('td.dataConf').text();
 		selectedLabels = 'cc';
 		updateBootStrapsSelect();
@@ -63,23 +66,18 @@ $(document).ready(function()
 		setActiveExclusively($(this));
 	});
 
-	$('.pcaConf').click(function() {
+	$('.dipConf').click(function() {
+		$('.numClusters').prop("disabled", false);
+		selectedNumClusters = NaN;
 		selectedFasta = $(this).parent().find('td.dataConf').text();
-		selectedLabels = 'pca';
-		updateBootStrapsSelect();
-		showVisualization();
-		setActiveExclusively($(this));
-	});
-	
-	$('.sneConf').click(function() {
-		selectedFasta = $(this).parent().find('td.dataConf').text();
-		selectedLabels = 'sne';
+		selectedLabels = 'dip';
 		updateBootStrapsSelect();
 		showVisualization();
 		setActiveExclusively($(this));
 	});
 
 	$('.kraken').click(function() {
+		$('.numClusters').prop("disabled", true);
 		selectedFasta = $(this).parent().find('td.dataConf').text();
 		selectedLabels = 'kraken';
 		updateBootStrapsSelect();
@@ -92,7 +90,13 @@ $(document).ready(function()
 		showVisualization();
 	});
 
+	$('.numClusters').click(function() {
+		selectedNumClusters = $(this).val();
+		showVisualization();
+	});
+
 	$('#bootstraps').change(function() {
+		selectedNumClusters = NaN;
 		selectedData = $(this).val();
 		showVisualization();
 	});
@@ -107,6 +111,7 @@ $(document).ready(function()
 		return;
 	}
 
+	$('.numClusters').prop("disabled", true);
 	updateBootStrapsSelect();	
 	showVisualization();
 

@@ -17,9 +17,9 @@ private:
 	~Clustering();
 
 public:
-	static ClusteringResult connComponents(const Eigen::MatrixXd & data, unsigned knnK);
+	static ClusteringResult connComponents(const Eigen::MatrixXd & data, unsigned knnK, const std::vector<std::string> & contigs);
 	static bool isMultiModal(const Eigen::MatrixXd & data, double alpha, double splitThreshold);
 	static double daviesBouldin(const Eigen::MatrixXd & data, const std::vector<unsigned> & labels);
-	static ClusteringResult estimateK(const Eigen::MatrixXd & data, unsigned maxK);
+	static std::pair<unsigned, std::vector<ClusteringResult>> estimateK(const Eigen::MatrixXd & data, unsigned maxK, const std::vector<std::string> & contigs);
 	static void postprocess(ClusteringResult & cr, const std::vector<std::string> & contigs);
 };
