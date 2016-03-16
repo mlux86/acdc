@@ -61,7 +61,7 @@ void Opts::initialize(int argc, char *argv[])
 	    ("num-threads,T", boost::program_options::value<unsigned>()->default_value(threads), "Number of threads for bootstrap analysis  (default: detect number of cores)")
 	    ("output-dir,o", boost::program_options::value<std::string>()->default_value("./results"), "Result output directory")
 	    ("kraken-db,K", boost::program_options::value<std::string>()->default_value(""), "Database to use for Kraken classification")
-	    ("aggressive-threshold,a", boost::program_options::value<unsigned>()->default_value(0), "Aggressive threshold: Treat clusters having a bp size below this threshold as outliers. (Default = 0 = aggressive mode disabled)")
+	    ("aggressive-threshold,a", boost::program_options::value<unsigned>()->default_value(500), "Aggressive threshold: Treat clusters having a bp size below this threshold as outliers. (Default = 0 = aggressive mode disabled)")
 	    ;
 	
 	boost::program_options::variables_map vm;

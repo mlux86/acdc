@@ -171,10 +171,10 @@ function buildConfidenceTable(results)
 		contProbDip /= results[i].bootstraps.length;
 
 		var status = 'warning';
-		if (contProbCC < 0.1 && contProbDip < 0.1)
+		if (contProbCC < 0.25 && contProbDip < 0.25)
 		{
 			status = 'clean';
-		} else if (contProbCC > 0.9 || contProbDip > 0.9)
+		} else if (contProbCC > 0.75 || contProbDip > 0.75)
 		{
 			status = 'contaminated';
 		}	
@@ -207,9 +207,11 @@ function dimMin(data, dim)
 	}, Infinity);
 }
 
-function showData(dataMat, labels, tooltips, width, height, padding)
+function showData(dataMat, labels, tooltips, greyedOut, width, height, padding)
 {	
 	var svg = d3.select("#scatter").html("").append("svg").attr("width", width).attr("height", height);
+
+	var doGrey = typeof greyedOut != 'undefined' && greyedOut.length == labels.length;
 
 	svg.append("rect")
 	   .attr("x", 0)
@@ -242,7 +244,7 @@ function showData(dataMat, labels, tooltips, width, height, padding)
 			.attr("cx", function(d) { return xScale(d[0]); })
        		.attr("cy", function(d) { return yScale(d[1]); })
        		.attr("r", function(d) {return 3; })
-       		.style("fill", function(d, i) {return colors[labels[i] % colors.length]; })
+       		.style("fill", function(d, i) {return (doGrey && greyedOut[i]) ? '#b3b3b3' : colors[labels[i] % colors.length]; })
 			.on('mouseover', tip.show)
 			.on('mouseout', tip.hide);	
 }
@@ -263,6 +265,7 @@ function showVisualization()
 	var dataMat = clustAnaResult[selectedReduction];
 
 	var labels;
+	var greyedOut = new Array();
 	var outliers = new Array();
 	if (selectedLabels === 'fasta')
 	{
@@ -295,8 +298,17 @@ function showVisualization()
 		}
 	} else if(selectedLabels === 'kraken')
 	{
-		labels = x.krakenLabels;
-		labels = numericLabels(labels);
+		labels = numericLabels(x.krakenLabels);
+		for (var i = 0; i < x.krakenLabels.length; i++)
+		{
+			if (x.krakenLabels[i] === 'unknown')
+			{
+				greyedOut.push(true);
+			} else
+			{
+				greyedOut.push(false);
+			}
+		}
 	}	
 
 	var tooltips = results[selectedFasta].fastaLabels;
@@ -331,7 +343,7 @@ function showVisualization()
 		tooltips = removeIndexes(tooltips, rmIdx);
 	}
 
-	showData(dataMat, labels, tooltips, width, height, padding);
+	showData(dataMat, labels, tooltips, greyedOut, width, height, padding);
 	updateExport(labels);
 }
 
@@ -403,7 +415,6 @@ function numericLabels(labels)
 			k++;
 		}
 	}
-	// mp["unknown"] = 0;
 
 	var result = Array(labels.length);
 	for (var i in labels) 
