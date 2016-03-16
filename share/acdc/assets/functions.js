@@ -183,8 +183,8 @@ function buildConfidenceTable(results)
 			'<td>' + results[i].id + '</td>' +
 			'<td class="' + status + '">&nbsp;</td>' + 
 			'<td class="selectable dataConf">' + i + '</td>' +
-			'<td class="selectable ccConf">p = ' + contProbCC + '</td>' +
-			'<td class="selectable dipConf">p = ' + contProbDip + '</td>' +
+			'<td class="selectable ccConf">p = ' + contProbCC.toFixed(2) + '</td>' +
+			'<td class="selectable dipConf">p = ' + contProbDip.toFixed(2) + '</td>' +
 			(krakenEnabled ? '<td class="selectable kraken"><span class="number">' + kraken + '</span><br/>species</td>' : '') +
 			'</tr>');
 
