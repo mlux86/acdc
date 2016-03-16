@@ -1,9 +1,11 @@
 #pragma once 
 
 #include <vector>
+#include <map>
+
 #include "Clustering.h"
 #include "Opts.h"
-#include <eigen3/Eigen/Dense>
+#include "SequenceVectorizer.h"
 
 struct ClusterAnalysisResult
 {
@@ -32,10 +34,10 @@ private:
 	~ClusterAnalysis();
 	
 	static std::vector< std::vector<unsigned> > stratifiedSubsamplingIndices(const unsigned n, const unsigned k, const double ratio = 0.8);
-	static ClusterAnalysisResult bootstrapTask(const Eigen::MatrixXd & dataOrig, const std::vector<std::string> & contigs, const Opts & opts, const std::vector<unsigned> indices);
+	static ClusterAnalysisResult bootstrapTask(const SequenceVectorizationResult & svr, const Opts & opts, const std::vector<unsigned> indices);
 
 public:
-	static ClusterAnalysisResult analyze(const Eigen::MatrixXd & data, const std::vector<std::string> & contigs, const Opts & opts);
-	static std::vector<ClusterAnalysisResult> analyzeBootstraps(const Eigen::MatrixXd & data, const std::vector<std::string> & contigs, const Opts & opts);
+	static ClusterAnalysisResult analyze(const Eigen::MatrixXd & data, const std::vector<std::string> & contigs,  const std::map<std::string, unsigned> & contigSizes, const Opts & opts);
+	static std::vector<ClusterAnalysisResult> analyzeBootstraps(const SequenceVectorizationResult & svr, const Opts & opts);
 	
 };

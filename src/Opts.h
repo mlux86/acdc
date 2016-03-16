@@ -35,6 +35,8 @@ private:
 
 	std::string _krakenDb = "";
 
+	unsigned _aggressiveThreshold = 0;
+
 	void initialize(int argc, char *argv[]);
 
 public:
@@ -61,5 +63,5 @@ public:
 	double bootstrapRatio() const;
 	std::string outputDir() const;
 	std::string krakenDb() const;
-	
+	unsigned aggressiveThreshold() const;	
 };

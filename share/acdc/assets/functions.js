@@ -38,6 +38,20 @@ function onlyUnique(value, index, self)
     return self.indexOf(value) === index;
 }
 
+function removeIndexes(arr, rmIdx)
+{
+	rmIdx.sort(function(a,b){return a - b});
+	rmIdx.reverse();
+	var narr = arr.slice();
+
+	for (var i = 0; i < rmIdx.length; i++)
+	{
+		narr.splice(rmIdx[i], 1);
+	}
+
+	return narr;
+}
+
 function cellBarChart(containerCell, confidences, maxK)
 {
 	// convert confidences into data array
@@ -157,10 +171,10 @@ function buildConfidenceTable(results)
 		contProbDip /= results[i].bootstraps.length;
 
 		var status = 'warning';
-		if (contProbCC == 0 && contProbDip == 0)
+		if (contProbCC < 0.1 && contProbDip < 0.1)
 		{
 			status = 'clean';
-		} else if (contProbCC > 0.5 && contProbDip > 0.5)
+		} else if (contProbCC > 0.9 || contProbDip > 0.9)
 		{
 			status = 'contaminated';
 		}	
@@ -249,6 +263,7 @@ function showVisualization()
 	var dataMat = clustAnaResult[selectedReduction];
 
 	var labels;
+	var outliers = new Array();
 	if (selectedLabels === 'fasta')
 	{
 		// labels = numericLabels(x.fastaLabels);
@@ -256,6 +271,7 @@ function showVisualization()
 	} else if(selectedLabels === 'cc')
 	{
 		labels = clustAnaResult.clustCC.labels;	
+		outliers = clustAnaResult.clustCC.outlierClusters;	
 	} else if(selectedLabels === 'dip')
 	{
 		if (selectedReduction === 'dataPca')
@@ -266,6 +282,7 @@ function showVisualization()
 				$('#numClusters' + selectedNumClusters).prop('checked', true);
 			}
 			labels = clustAnaResult.clustsPca[selectedNumClusters-1].labels;
+			outliers = clustAnaResult.clustsPca[selectedNumClusters-1].outlierClusters;	
 		} else if (selectedReduction === 'dataSne')
 		{
 			if (!selectedNumClusters)
@@ -274,13 +291,13 @@ function showVisualization()
 				$('#numClusters' + selectedNumClusters).prop('checked', true);
 			}			
 			labels = clustAnaResult.clustsSne[selectedNumClusters-1].labels;
+			outliers = clustAnaResult.clustsSne[selectedNumClusters-1].outlierClusters;	
 		}
 	} else if(selectedLabels === 'kraken')
 	{
 		labels = x.krakenLabels;
-	}
-
-	labels = numericLabels(labels);
+		labels = numericLabels(labels);
+	}	
 
 	var tooltips = results[selectedFasta].fastaLabels;
 	if(selectedLabels === 'kraken')
@@ -292,6 +309,26 @@ function showVisualization()
 		{
 			tooltips = bootstrapLabels(tooltips, clustAnaResult.bootstrapIndexes);
 		}
+	}
+
+
+	if (!showOutliers && typeof outliers != 'undefined' && outliers.length > 0)
+	{		
+		var n = dataMat.length;
+		var rmIdx = new Array();
+
+		for (var i = 0; i < n; i++)
+		{
+			if ($.inArray(labels[i], outliers) >= 0)
+			{
+				rmIdx.push(i);
+			}			
+		}
+		rmIdx = arrayUnique(rmIdx);
+
+		dataMat = removeIndexes(dataMat, rmIdx);
+		labels = removeIndexes(labels, rmIdx);
+		tooltips = removeIndexes(tooltips, rmIdx);
 	}
 
 	showData(dataMat, labels, tooltips, width, height, padding);
@@ -340,7 +377,13 @@ function updateExport(labels)
 	{
 		var lbl = uniqueLabels[i];
 		var color = colors[lbl % colors.length];
-		var href = 'export/' + results[selectedFasta].id + "-" + selectedLabels + "-" + lbl + ".fasta";
+		if (selectedLabels !== 'dip')
+		{
+			var href = 'export/' + results[selectedFasta].id + "-" + selectedLabels + "-" + lbl + ".fasta";
+		} else
+		{
+			var href = 'export/' + results[selectedFasta].id + "-dip-" + selectedReduction + "-" + selectedNumClusters + "-" + lbl + ".fasta";
+		}
 		$('#exportColors').append('<span><a style="color: ' + color + ';" href="' + href + '">&#x25CF;</a></span>&nbsp;');
 	}
 
@@ -350,7 +393,7 @@ function updateExport(labels)
 function numericLabels(labels)
 {
 	var mp = new Array();
-	k = 1;
+	k = 0;
 	for (var i in labels) 
 	{
 		var key = labels[i];
@@ -360,7 +403,8 @@ function numericLabels(labels)
 			k++;
 		}
 	}
-	mp["unknown"] = 0;
+	// mp["unknown"] = 0;
+
 	var result = Array(labels.length);
 	for (var i in labels) 
 	{

@@ -8,6 +8,13 @@
 #include <vector>
 #include "Opts.h"
 
+struct SequenceVectorizationResult
+{
+	Eigen::MatrixXd data;
+	std::vector<std::string> contigs;
+	std::map<std::string, unsigned> contigSizes;
+};
+
 class SequenceVectorizer
 {
 protected:
@@ -47,6 +54,6 @@ public:
 	bool getNormalize() const;
 
 	Eigen::MatrixXd vectorize(seqan::Dna5String & sequence) const;
-	std::pair< Eigen::MatrixXd, std::vector<std::string> > vectorize() const;
+	SequenceVectorizationResult vectorize() const;
 	
 };

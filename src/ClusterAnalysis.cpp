@@ -43,25 +43,25 @@ std::vector< std::vector<unsigned> > ClusterAnalysis::stratifiedSubsamplingIndic
     return result;
 }
 
-ClusterAnalysisResult ClusterAnalysis::bootstrapTask(const Eigen::MatrixXd & dataOrig, const std::vector<std::string> & contigs, const Opts & opts, const std::vector<unsigned> indices)
+ClusterAnalysisResult ClusterAnalysis::bootstrapTask(const SequenceVectorizationResult & svr, const Opts & opts, const std::vector<unsigned> indices)
 {
-	Eigen::MatrixXd data = Eigen::MatrixXd::Zero(indices.size(), dataOrig.cols());
-	std::vector<std::string> labels(indices.size());
+	Eigen::MatrixXd data = Eigen::MatrixXd::Zero(indices.size(), svr.data.cols());
+	std::vector<std::string> contigs(indices.size());
 
 	for (unsigned i = 0; i < indices.size(); i++)
 	{
-		data.row(i) = dataOrig.row(indices[i]);
-		labels[i] = contigs[indices[i]];
+		data.row(i) = svr.data.row(indices[i]);
+		contigs[i] = svr.contigs[indices[i]];
 	}
 
-	auto res = ClusterAnalysis::analyze(data, labels, opts);
+	auto res = ClusterAnalysis::analyze(data, contigs, svr.contigSizes, opts);
 
 	res.bootstrapIndexes = indices;
 
 	return res;
 }
 
-ClusterAnalysisResult ClusterAnalysis::analyze(const Eigen::MatrixXd & data, const std::vector<std::string> & contigs, const Opts & opts)
+ClusterAnalysisResult ClusterAnalysis::analyze(const Eigen::MatrixXd & data, const std::vector<std::string> & contigs, const std::map<std::string, unsigned> & contigSizes, const Opts & opts)
 {
 	ClusterAnalysisResult res;
 
@@ -73,29 +73,32 @@ ClusterAnalysisResult ClusterAnalysis::analyze(const Eigen::MatrixXd & data, con
 	VLOG << "Running t-SNE..." << std::endl;
 	res.dataSne = BarnesHutSNEAdapter::runBarnesHutSNE(data, opts);
 
+	Clustering cSne(opts, res.dataSne, contigs, contigSizes);
+	Clustering cPca(opts, res.dataPca, contigs, contigSizes);
+
 	VLOG << "Testing for multi-modality..." << std::endl;
-	res.isMultiModal = Clustering::isMultiModal(res.dataSne, 0, 0.001) ||
-		               Clustering::isMultiModal(res.dataPca, 0, 0.001);
+	res.isMultiModal = cSne.isMultiModal(0, 0.001) ||
+		               cPca.isMultiModal(0, 0.001);
 
 	VLOG << "Clustering PCA...\n";
-	auto resPca = Clustering::estimateK(res.dataPca, 5, contigs);
+	auto resPca = cPca.estimateK(5);
 	res.numClustPca = !res.isMultiModal ? 1 : resPca.first;
 	res.clustsPca = resPca.second;	
 
 	VLOG << "Clustering t-SNE...\n";
-	auto resSne = Clustering::estimateK(res.dataSne, 5, contigs);
+	auto resSne = cSne.estimateK(5);
 	res.numClustSne = !res.isMultiModal ? 1 : resSne.first;
 	res.clustsSne = resSne.second;
 
 	VLOG << "Clustering connected components" << std::endl;
-	res.clustCC = Clustering::connComponents(res.dataSne, 9, contigs);
+	res.clustCC = cSne.connComponents(9);
 	res.numClustCC = res.clustCC.numClusters;
 	res.hasSeparatedComponents = res.numClustCC > 1;
 
 	return res;
 }
 
-std::vector<ClusterAnalysisResult> ClusterAnalysis::analyzeBootstraps(const Eigen::MatrixXd & data, const std::vector<std::string> & contigs, const Opts & opts)
+std::vector<ClusterAnalysisResult> ClusterAnalysis::analyzeBootstraps(const SequenceVectorizationResult & svr, const Opts & opts)
 {
 	ThreadPool pool(opts.numThreads());
 
@@ -103,15 +106,15 @@ std::vector<ClusterAnalysisResult> ClusterAnalysis::analyzeBootstraps(const Eige
 
 	// add oneshot task
 	futures.push_back(
-		pool.enqueue(&ClusterAnalysis::analyze, data, contigs, opts)
+		pool.enqueue(&ClusterAnalysis::analyze, svr.data, svr.contigs, svr.contigSizes, opts)
 	);
 
 	// add bootstrap tasks
-	const std::vector< std::vector<unsigned> > bootstrapIndexes = ClusterAnalysis::stratifiedSubsamplingIndices(data.rows(), opts.numBootstraps(), opts.bootstrapRatio());
+	const std::vector< std::vector<unsigned> > bootstrapIndexes = ClusterAnalysis::stratifiedSubsamplingIndices(svr.data.rows(), opts.numBootstraps(), opts.bootstrapRatio());
 	for (const auto & indices : bootstrapIndexes)
 	{
 		futures.push_back(
-			pool.enqueue(&ClusterAnalysis::bootstrapTask, data, contigs, opts, indices)
+			pool.enqueue(&ClusterAnalysis::bootstrapTask, svr, opts, indices)
 		);
 	}
 

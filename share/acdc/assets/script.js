@@ -1,4 +1,4 @@
-var colors = ["#b5b5b5", "#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33", "#a65628", "#f781bf", "#999999"];
+var colors = ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33", "#a65628", "#f781bf", "#999999"];
 
 var width = 500;
 var height = 500;
@@ -9,6 +9,7 @@ var selectedLabels = 'fasta';
 var selectedReduction = 'dataSne';
 var selectedData = 'oneshot';
 var selectedNumClusters = NaN;
+var showOutliers = true;
 
 $(document).ready(function() 
 {
@@ -98,6 +99,11 @@ $(document).ready(function()
 	$('#bootstraps').change(function() {
 		selectedNumClusters = NaN;
 		selectedData = $(this).val();
+		showVisualization();
+	});
+
+	$('#showOutliers').click(function() {
+		showOutliers = $(this).prop('checked');
 		showVisualization();
 	});
 

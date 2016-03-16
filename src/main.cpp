@@ -20,8 +20,6 @@
 #include <eigen3/Eigen/Dense>
 #include "MatrixUtil.h"
 
-// TODO better leverage parallelism (don't use it only for bootstrapping if possible)
-
 int main(int argc, char *argv[])
 {
 	std::unique_ptr<Opts> opts;
@@ -141,12 +139,11 @@ int main(int argc, char *argv[])
 
 			ILOG << "Vectorizing contigs & dimensionality reduction..." << std::endl;
 			SequenceVectorizer sv(fasta, *opts);
-			auto dat = sv.vectorize();
-			result.oneshot.dataOrig = dat.first;
-			result.fastaLabels = dat.second;
+			auto svr = sv.vectorize();
+			result.fastaLabels = svr.contigs;
 
 			ILOG << "Clustering..." << std::endl;
-			result.bootstraps = ClusterAnalysis::analyzeBootstraps(result.oneshot.dataOrig, result.fastaLabels, *opts);
+			result.bootstraps = ClusterAnalysis::analyzeBootstraps(svr, *opts);
 			result.oneshot = result.bootstraps.at(0);
 			result.bootstraps.erase(result.bootstraps.begin());
 

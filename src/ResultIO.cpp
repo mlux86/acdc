@@ -81,6 +81,12 @@ Json::Value ResultIO::clusteringResultToJSON(const ClusteringResult & cr)
 		root["labels"].append(lbl);
 	}
 
+    root["outlierClusters"] = Json::Value(Json::arrayValue);
+    for (const auto & lbl : cr.outlierClusters)
+    {
+        root["outlierClusters"].append(lbl);
+    }
+
 	return root;
 }
 
@@ -182,72 +188,94 @@ void ResultIO::exportClusteringFastas(const ResultContainer & result)
 		throw std::runtime_error("Could not create output directory, aborting.");
 	}
 
-	// // first, we need the kraken result as actual labels
-	// std::vector<std::string> krakenLabels;
- //    for (auto & lbl : result.fastaLabels)
- //    {
- //        std::string krakenLbl = "unknown";
- //        if (result.kraken.classification.find(lbl) != result.kraken.classification.end())
- //        {
- //            krakenLbl = result.kraken.classification.at(lbl);
- //        }
- //        krakenLabels.push_back(krakenLbl);
- //    }
+	// first, we need the kraken result as actual labels
+	std::vector<std::string> krakenLabels;
+    for (auto & lbl : result.fastaLabels)
+    {
+        std::string krakenLbl = "unknown";
+        if (result.kraken.classification.find(lbl) != result.kraken.classification.end())
+        {
+            krakenLbl = result.kraken.classification.at(lbl);
+        }
+        krakenLabels.push_back(krakenLbl);
+    }
 
- //    // start export
+    // start export
 
-	// std::map<unsigned, std::set<std::string>> contigIdsPca; // export a set of contigs per label
-	// std::map<unsigned, std::set<std::string>> contigIdsSne; // export a set of contigs per label
-	// std::map<unsigned, std::set<std::string>> contigIdsKraken; // export a set of contigs per label
+	std::map<unsigned, std::set<std::string>> contigIdsCC; // export a set of contigs per label
+	std::map<unsigned, std::set<std::string>> contigIdsKraken; // export a set of contigs per label
 
- //    for (unsigned i = 0; i < result.fastaLabels.size(); ++i)
- //    {        
- //        contigIdsPca[result.oneshot.clustPca.labels.at(i)].insert(result.fastaLabels.at(i));
- //        contigIdsSne[result.oneshot.clustSne.labels.at(i)].insert(result.fastaLabels.at(i));
- //        contigIdsKraken[numericLabels(krakenLabels).at(i)].insert(result.fastaLabels.at(i));
- //    }	
+    for (unsigned i = 0; i < result.fastaLabels.size(); ++i)
+    {
+        contigIdsCC[result.oneshot.clustCC.labels.at(i)].insert(result.fastaLabels.at(i));
+        contigIdsKraken[numericLabels(krakenLabels).at(i)].insert(result.fastaLabels.at(i));
+    }
 
- //    // Pca
- //    for (auto & kv : contigIdsPca) 
- //    {
- //    	unsigned lbl = kv.first;
- //    	auto & contigs = kv.second;
- //    	std::stringstream ss;
- //    	ss << outputDir << "/export/" << result.id << "-pca-" << lbl << ".fasta";
- //    	filterFasta(result.fasta, contigs, ss.str());
- //    }
+    // CC
+    for (auto & kv : contigIdsCC) 
+    {
+        unsigned lbl = kv.first;
+        auto & contigs = kv.second;
+        std::stringstream ss;
+        ss << outputDir << "/export/" << result.id << "-cc-" << lbl << ".fasta";
+        filterFasta(result.fasta, contigs, ss.str());
+    }
 
- //    // Sne
- //    for (auto & kv : contigIdsSne) 
- //    {
- //    	unsigned lbl = kv.first;
- //    	auto & contigs = kv.second;
- //    	std::stringstream ss;
- //    	ss << outputDir << "/export/" << result.id << "-sne-" << lbl << ".fasta";
- //    	filterFasta(result.fasta, contigs, ss.str());
- //    }
+    // kraken
+    if (krakenEnabled)
+    {
+        for (auto & kv : contigIdsKraken) 
+        {
+            unsigned lbl = kv.first;
+            auto & contigs = kv.second;
+            std::stringstream ss;
+            ss << outputDir << "/export/" << result.id << "-kraken-" << lbl << ".fasta";
+            filterFasta(result.fasta, contigs, ss.str());
+        }
 
- //    // kraken
- //    if (krakenEnabled)
- //    {
- //        for (auto & kv : contigIdsKraken) 
- //        {
- //        	unsigned lbl = kv.first;
- //        	auto & contigs = kv.second;
- //        	std::stringstream ss;
- //        	ss << outputDir << "/export/" << result.id << "-kraken-" << lbl << ".fasta";
- //        	filterFasta(result.fasta, contigs, ss.str());
- //        }
+        std::stringstream ss;
+        ss << outputDir << "/export/" << result.id << ".oneshot.kraken";
+        std::ofstream ofs(ss.str(), std::ofstream::out);
+        for (auto & lbl : krakenLabels) 
+        {
+            ofs << lbl << std::endl;
+        }
+        ofs.close(); 
+    }
 
- //        std::stringstream ss;
- //        ss << outputDir << "/export/" << result.id << ".oneshot.kraken";
- //        std::ofstream ofs(ss.str(), std::ofstream::out);
- //        for (auto & lbl : krakenLabels) 
- //        {
- //            ofs << lbl << std::endl;
- //        }
- //        ofs.close(); 
- //    }
+    // dip sne & dip pca
+
+    unsigned maxK = 5;
+    for (unsigned k = 0; k < maxK; k++)
+    {
+        std::map<unsigned, std::set<std::string>> contigIdsSne; // export a set of contigs per label
+        std::map<unsigned, std::set<std::string>> contigIdsPca; // export a set of contigs per label
+
+        for (unsigned i = 0; i < result.fastaLabels.size(); ++i)
+        {        
+            contigIdsSne[result.oneshot.clustsSne.at(k).labels.at(i)].insert(result.fastaLabels.at(i));
+            contigIdsPca[result.oneshot.clustsPca.at(k).labels.at(i)].insert(result.fastaLabels.at(i));
+        }	
+
+        for (auto & kv : contigIdsSne) 
+        {
+        	unsigned lbl = kv.first;
+        	auto & contigs = kv.second;
+        	std::stringstream ss;
+        	ss << outputDir << "/export/" << result.id << "-dip-dataSne-" << (k+1) << "-" << lbl << ".fasta";
+        	filterFasta(result.fasta, contigs, ss.str());
+        }
+
+        for (auto & kv : contigIdsPca) 
+        {
+            unsigned lbl = kv.first;
+            auto & contigs = kv.second;
+            std::stringstream ss;
+            ss << outputDir << "/export/" << result.id << "-dip-dataPca-" << (k+1) << "-" << lbl << ".fasta";
+            filterFasta(result.fasta, contigs, ss.str());
+        }        
+    }
+
 
 }
 

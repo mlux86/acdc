@@ -15,7 +15,7 @@
 #include <limits>
 #include <vector>
 
-Clustering::Clustering()
+Clustering::Clustering(const Opts & opts_, const Eigen::MatrixXd & data_, const std::vector<std::string> & contigs_, const std::map<std::string, unsigned> & contigSizes_) : opts(opts_), data(data_), contigs(contigs_), contigSizes(contigSizes_)
 {
 }
 
@@ -23,16 +23,16 @@ Clustering::~Clustering()
 {
 }
 
-ClusteringResult Clustering::connComponents(const Eigen::MatrixXd & data, unsigned knnK, const std::vector<std::string> & contigs)
+ClusteringResult Clustering::connComponents(unsigned knnK)
 {
     Eigen::MatrixXd aff = MLUtil::knnAffinityMatrix(data, knnK, true);
     TarjansAlgorithm ta;
     auto res = ta.run(aff);
-    Clustering::postprocess(res, contigs); 
+    postprocess(res); 
     return res;
 }
 
-bool Clustering::isMultiModal(const Eigen::MatrixXd & data, double alpha, double splitThreshold)
+bool Clustering::isMultiModal(double alpha, double splitThreshold)
 {
     unsigned n = data.rows();
 
@@ -65,7 +65,7 @@ bool Clustering::isMultiModal(const Eigen::MatrixXd & data, double alpha, double
     return splitPerc >= splitThreshold;
 }
 
-double Clustering::daviesBouldin(const Eigen::MatrixXd & data, const std::vector<unsigned> & labels)
+double Clustering::daviesBouldin(const std::vector<unsigned> & labels)
 {    
     unsigned n = data.rows();
     unsigned dim = data.cols();
@@ -159,11 +159,12 @@ double Clustering::daviesBouldin(const Eigen::MatrixXd & data, const std::vector
     return db;
 }
 
-std::pair<unsigned, std::vector<ClusteringResult>> Clustering::estimateK(const Eigen::MatrixXd & data, unsigned maxK, const std::vector<std::string> & contigs)
+std::pair<unsigned, std::vector<ClusteringResult>> Clustering::estimateK(unsigned maxK)
 {
     std::vector<ClusteringResult> results(maxK);
 
     results[0].numClusters = 1;
+    results[0].labels.resize(data.rows());
     std::fill(results[0].labels.begin(),results[0].labels.end(), 1);
 
     Eigen::MatrixXd z = HierarchicalClustering::linkage(data);
@@ -175,9 +176,9 @@ std::pair<unsigned, std::vector<ClusteringResult>> Clustering::estimateK(const E
     {
         results[k-1].numClusters = k;
         results[k-1].labels = HierarchicalClustering::cluster(z, k);        
-        Clustering::postprocess(results[k-1], contigs);
+        postprocess(results[k-1]);
 
-        double db = Clustering::daviesBouldin(data, results[k-1].labels);
+        double db = daviesBouldin(results[k-1].labels);
 
         if (db < minDb)
         {
@@ -189,7 +190,7 @@ std::pair<unsigned, std::vector<ClusteringResult>> Clustering::estimateK(const E
     return std::make_pair(optK, results);
 }
 
-void Clustering::postprocess(ClusteringResult & cr, const std::vector<std::string> & contigs)
+void Clustering::postprocess(ClusteringResult & cr)
 {
     unsigned n = cr.labels.size();
 
@@ -197,6 +198,8 @@ void Clustering::postprocess(ClusteringResult & cr, const std::vector<std::strin
     {
         throw std::runtime_error("Number of labels must match number of contigs.");
     }
+
+    // first, assign points in contigs which occur in distinct clusters, the cluster with the most points
 
     auto uniqueContigs = contigs;
     std::sort(uniqueContigs.begin(), uniqueContigs.end());
@@ -249,5 +252,40 @@ void Clustering::postprocess(ClusteringResult & cr, const std::vector<std::strin
     auto it2 = std::unique(uniqueLabels.begin(), uniqueLabels.end());
     uniqueLabels.resize(std::distance(uniqueLabels.begin(), it2));
     cr.numClusters = uniqueLabels.size();
+
+
+
+    // second, throw out outlier clusters if aggressive mode is on
+
+    if (opts.aggressiveThreshold() > 0)
+    {
+        // for each label, add up sizes of contained contigs and see if they are below threshold
+
+        std::map<unsigned, unsigned> clusterSizes; // cluster label => num nucleotides in there
+
+        for (auto contig : uniqueContigs)
+        {
+            for (unsigned i = 0; i < n; i++)
+            {
+                if (contigs.at(i) == contig)
+                {
+                    clusterSizes[cr.labels.at(i)] += contigSizes.at(contig);
+                    break;
+                }
+            }
+        }
+
+        for (auto & it : clusterSizes)
+        {
+            unsigned lbl = it.first;
+            unsigned clusterSize = it.second;
+
+            if (clusterSize < opts.aggressiveThreshold())
+            {
+                cr.outlierClusters.push_back(lbl);
+                cr.numClusters--;
+            }
+        }
+    }
 
 }

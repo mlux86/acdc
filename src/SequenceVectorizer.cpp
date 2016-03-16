@@ -160,12 +160,13 @@ Eigen::MatrixXd SequenceVectorizer::vectorize(seqan::Dna5String & sequence) cons
 	return mat;
 }
 
-std::pair< Eigen::MatrixXd, std::vector<std::string> > SequenceVectorizer::vectorize() const
+SequenceVectorizationResult SequenceVectorizer::vectorize() const
 {
 	unsigned n = ids.size();
 
-	Eigen::MatrixXd result(0, getDim());
-	std::vector<std::string> labels;
+	SequenceVectorizationResult svr;
+
+	Eigen::MatrixXd data(0, getDim());
 
 	for (unsigned i = 0; i < n; i++)
 	{
@@ -178,13 +179,13 @@ std::pair< Eigen::MatrixXd, std::vector<std::string> > SequenceVectorizer::vecto
 			unsigned rows = mat.rows();
 
 			// concatenate matrices TODO that's quite expensive
-			auto tmp = result;
-			result = Eigen::MatrixXd(tmp.rows() + mat.rows(), getDim());
-			result << tmp, mat;
+			auto tmp = data;
+			data = Eigen::MatrixXd(tmp.rows() + mat.rows(), getDim());
+			data << tmp, mat;
 			
 			for (unsigned j = 0; j < rows; j++)
 			{
-				labels.push_back(id);
+				svr.contigs.push_back(id);				
 			}
 		}
 		catch(const std::exception& e) 
@@ -192,9 +193,13 @@ std::pair< Eigen::MatrixXd, std::vector<std::string> > SequenceVectorizer::vecto
 			DLOG << e.what() << '\n';
 		}
 
+		svr.contigSizes[id] = seqan::length(seq);
+
 	}
-	
-	return std::make_pair(result, labels);
+		
+	svr.data = data;
+
+	return svr;
 }
 
 unsigned SequenceVectorizer::getDim() const { return uniqueKmers.size(); }
