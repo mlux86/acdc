@@ -41,6 +41,10 @@ td.active {
   background-color: #edf8b1;
 }
 
+pre {
+  margin: 0;
+}
+
 /* scatter */
 
 #scatterContainer {
