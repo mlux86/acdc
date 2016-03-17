@@ -382,7 +382,16 @@ function updateExport(labels, greyedOut)
 		return;
 	}
 
-	var doGrey = typeof greyedOut != 'undefined' && greyedOut.length == labels.length;
+	// find unknown label
+	var unknownLbl = -1;
+	for (var i in labels)
+	{
+		if (greyedOut[i])
+		{
+			unknownLbl = labels[i];
+			break;
+		}
+	}
 
 	var uniqueLabels = arrayUnique(labels).sort();
 
@@ -390,7 +399,7 @@ function updateExport(labels, greyedOut)
 	for (var i in uniqueLabels)
 	{
 		var lbl = uniqueLabels[i];
-		var color = (doGrey && greyedOut[i]) ? greyColor : colors[lbl % colors.length]
+		var color = (lbl == unknownLbl) ? greyColor : colors[lbl % colors.length];
 		if (selectedLabels !== 'dip')
 		{
 			var href = 'export/' + results[selectedFasta].id + "-" + selectedLabels + "-" + lbl + ".fasta";
