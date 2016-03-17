@@ -244,7 +244,7 @@ function showData(dataMat, labels, tooltips, greyedOut, width, height, padding)
 			.attr("cx", function(d) { return xScale(d[0]); })
        		.attr("cy", function(d) { return yScale(d[1]); })
        		.attr("r", function(d) {return 3; })
-       		.style("fill", function(d, i) {return (doGrey && greyedOut[i]) ? '#b3b3b3' : colors[labels[i] % colors.length]; })
+       		.style("fill", function(d, i) {return (doGrey && greyedOut[i]) ? greyColor : colors[labels[i] % colors.length]; })
 			.on('mouseover', tip.show)
 			.on('mouseout', tip.hide);	
 }
@@ -344,7 +344,7 @@ function showVisualization()
 	}
 
 	showData(dataMat, labels, tooltips, greyedOut, width, height, padding);
-	updateExport(labels);
+	updateExport(labels, greyedOut);
 }
 
 function updateBootStrapsSelect()
@@ -374,7 +374,7 @@ function updateBootStrapsSelect()
 
 }
 
-function updateExport(labels)
+function updateExport(labels, greyedOut)
 {
 	if (selectedLabels === 'fasta' || selectedData !== 'oneshot')
 	{
@@ -382,13 +382,15 @@ function updateExport(labels)
 		return;
 	}
 
+	var doGrey = typeof greyedOut != 'undefined' && greyedOut.length == labels.length;
+
 	var uniqueLabels = arrayUnique(labels).sort();
 
 	$('#exportColors').html('');
 	for (var i in uniqueLabels)
 	{
 		var lbl = uniqueLabels[i];
-		var color = colors[lbl % colors.length];
+		var color = (doGrey && greyedOut[i]) ? greyColor : colors[lbl % colors.length]
 		if (selectedLabels !== 'dip')
 		{
 			var href = 'export/' + results[selectedFasta].id + "-" + selectedLabels + "-" + lbl + ".fasta";
