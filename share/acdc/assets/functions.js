@@ -52,6 +52,35 @@ function removeIndexes(arr, rmIdx)
 	return narr;
 }
 
+function calculateStar(centerX, centerY, arms, outerRadius, innerRadius)
+{
+   var results = "";
+
+   var angle = Math.PI / arms;
+
+   for (var i = 0; i < 2 * arms; i++)
+   {
+      // Use outer or inner radius depending on what iteration we are in.
+      var r = (i & 1) == 0 ? outerRadius : innerRadius;
+      
+      var currX = centerX + Math.cos(i * angle) * r;
+      var currY = centerY + Math.sin(i * angle) * r;
+
+      // Our first time we simply append the coordinates, subsequet times
+      // we append a ", " to distinguish each coordinate pair.
+      if (i == 0)
+      {
+         results = currX + "," + currY;
+      }
+      else
+      {
+         results += ", " + currX + "," + currY;
+      }
+   }
+
+   return results;
+}
+
 function cellBarChart(containerCell, confidences, maxK)
 {
 	// convert confidences into data array
@@ -257,6 +286,15 @@ function showData(dataMat, labels, tooltips, greyedOut, highlighted, width, heig
 		  .on('mouseover', tip.show)
 		  .on('mouseout', tip.hide);
 
+	shapes.append("svg:polygon")
+		  .filter(function(d, i){ return highlighted[i]; })
+		  .attr("id", "star_1")
+		  .attr("visibility", "visible")
+		  .attr("points", function(d) { return calculateStar(xScale(d[0]), yScale(d[1]), 6, 20, 10); })
+		  .style("fill", function(d, i) {return (doGrey && greyedOut[i]) ? greyColor : colors[labels[i] % colors.length]; })
+		  .on('mouseover', tip.show)
+		  .on('mouseout', tip.hide);
+
 	
 }
 
@@ -279,14 +317,16 @@ function showVisualization()
 	var greyedOut = new Array();
 	var highlighted = new Array();
 	var outliers = new Array();
+	
+	if (highlight16S && "contains16S" in x && x.contains16S.length > 0)
+	{
+		highlighted = x.contains16S;
+	}
+
 	if (selectedLabels === 'fasta')
 	{
 		// labels = numericLabels(x.fastaLabels);
 		labels = Array.apply(null, Array(x.fastaLabels.length)).map(Number.prototype.valueOf, -1); // no labels / black color
-		if ("contains16S" in x && x.contains16S.length > 0)
-		{
-			highlighted = x.contains16S;
-		}
 	} else if(selectedLabels === 'cc')
 	{
 		labels = clustAnaResult.clustCC.labels;	

@@ -11,6 +11,7 @@ var selectedReduction = 'dataSne';
 var selectedData = 'oneshot';
 var selectedNumClusters = NaN;
 var showOutliers = true;
+var highlight16S = true;
 
 $(document).ready(function() 
 {
@@ -105,6 +106,11 @@ $(document).ready(function()
 
 	$('#showOutliers').click(function() {
 		showOutliers = $(this).prop('checked');
+		showVisualization();
+	});
+
+	$('#highlight16S').click(function() {
+		highlight16S = $(this).prop('checked');
 		showVisualization();
 	});
 
