@@ -20,7 +20,7 @@ struct ResultContainer
 	std::vector<ClusterAnalysisResult> bootstraps;
 
 	KrakenResult kraken;
-	std::vector<std::string> sixteenSContigs;
+	std::vector<bool> contains16S; 
 };
 
 class ResultIO

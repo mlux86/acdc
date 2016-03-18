@@ -3,6 +3,15 @@
 #include <string>
 #include <vector>
 
+#include "SequenceVectorizer.h"
+
+struct RnammerResult
+{
+	std::string contig;
+	unsigned startPos;
+	unsigned endPos;
+};
+
 class RnammerAdapter
 {
 private:
@@ -11,6 +20,6 @@ private:
 	
 public:
 	static bool rnammerExists();
-	static std::vector<std::string> find16SContigs(const std::string & fasta);
+	static std::vector<bool> mark16S(const std::string & fasta, const SequenceVectorizationResult & svr);
 	
 };

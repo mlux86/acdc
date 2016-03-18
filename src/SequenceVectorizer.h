@@ -8,10 +8,17 @@
 #include <vector>
 #include "Opts.h"
 
+struct WindowRange
+{
+	unsigned from;
+	unsigned to;
+};
+
 struct SequenceVectorizationResult
 {
 	Eigen::MatrixXd data;
 	std::vector<std::string> contigs;
+	std::vector<WindowRange> windows;
 	std::map<std::string, unsigned> contigSizes;
 };
 
@@ -53,7 +60,7 @@ public:
 	void setNormalize(const bool normalize_);
 	bool getNormalize() const;
 
-	Eigen::MatrixXd vectorize(seqan::Dna5String & sequence) const;
+	std::pair<Eigen::MatrixXd, std::vector<WindowRange>> vectorize(seqan::Dna5String & sequence) const;
 	SequenceVectorizationResult vectorize() const;
 	
 };

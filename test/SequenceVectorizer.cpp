@@ -53,7 +53,7 @@ TEST_CASE("Vectorize different sequences", "[SequenceVectorizer]")
 	{	
 		SequenceVectorizer sv(2, 5, 1); 
 		sv.setNormalize(false);
-		auto mat = sv.vectorize(seq1);
+		auto mat = sv.vectorize(seq1).first;
 		Eigen::MatrixXd target(1,10);
 		target << 0, 0, 1, 0, 1, 1, 0, 1, 0, 0;
 		REQUIRE(mat.isApprox(target));
@@ -61,7 +61,7 @@ TEST_CASE("Vectorize different sequences", "[SequenceVectorizer]")
 	{
 		SequenceVectorizer sv(2, 8, 5); 	
 		sv.setNormalize(false);
-		auto mat = sv.vectorize(seq2);
+		auto mat = sv.vectorize(seq2).first;
 		Eigen::MatrixXd target(5, 10);
 		target << 0, 0, 0, 1, 1, 1, 2, 0, 2, 0,
 		          2, 1, 0, 1, 1, 1, 0, 0, 0, 1,
@@ -73,7 +73,7 @@ TEST_CASE("Vectorize different sequences", "[SequenceVectorizer]")
 	{
 		SequenceVectorizer sv(3, 15, 15); 	
 		sv.setNormalize(false);
-		auto mat = sv.vectorize(seq2);
+		auto mat = sv.vectorize(seq2).first;
 		Eigen::MatrixXd target(2, 32);
 		target << 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 2, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0,
                   0, 0, 0, 0, 1, 0, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 2, 0, 0, 0, 1, 0, 0;
@@ -82,7 +82,7 @@ TEST_CASE("Vectorize different sequences", "[SequenceVectorizer]")
 	{
 		SequenceVectorizer sv(4, 10, 5);
 		sv.setNormalize(false); 	
-		auto mat = sv.vectorize(seq3);
+		auto mat = sv.vectorize(seq3).first;
 		Eigen::MatrixXd target(9, 136);
 		target << 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
 		          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -133,7 +133,7 @@ TEST_CASE("Normalization", "[SequenceVectorizer]")
 	{	
 		SequenceVectorizer sv(2, 5, 2); 
 		sv.setNormalize(true);		
-		auto mat = sv.vectorize(seq);
+		auto mat = sv.vectorize(seq).first;
 		Eigen::MatrixXd target(2,10);
 		target << 0.25, 0, 0.25, 0, 0.25, 0, 0, 0.25, 0, 0, 
                   0.25, 0.25, 0, 0, 0, 0, 0.25, 0.25, 0, 0;

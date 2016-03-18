@@ -283,12 +283,9 @@ function showVisualization()
 	{
 		// labels = numericLabels(x.fastaLabels);
 		labels = Array.apply(null, Array(x.fastaLabels.length)).map(Number.prototype.valueOf, -1); // no labels / black color
-		if ("sixteenSContigs" in x)
+		if ("contains16S" in x && x.contains16S.length > 0)
 		{
-			for (var i = 0; i < x.krakenLabels.length; i++)
-			{
-				highlighted.push($.inArray(x.fastaLabels[i], x.sixteenSContigs) >= 0);
-			}			
+			highlighted = x.contains16S;
 		}
 	} else if(selectedLabels === 'cc')
 	{

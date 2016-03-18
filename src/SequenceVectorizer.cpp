@@ -112,7 +112,7 @@ void SequenceVectorizer::buildFeatureKmers()
 	}	
 }
 
-Eigen::MatrixXd SequenceVectorizer::vectorize(seqan::Dna5String & sequence) const
+std::pair<Eigen::MatrixXd, std::vector<WindowRange>> SequenceVectorizer::vectorize(seqan::Dna5String & sequence) const
 {
 
 	unsigned len = seqan::length(sequence);
@@ -124,12 +124,16 @@ Eigen::MatrixXd SequenceVectorizer::vectorize(seqan::Dna5String & sequence) cons
 	}
 
 	Eigen::MatrixXd mat = Eigen::MatrixXd::Zero(n, getDim());
+	std::vector<WindowRange> windows(n);
 
 	for (unsigned i = 0; i < n; i++)
 	{
-		unsigned from = i*windowStep;
-		unsigned to = std::min(len, i*windowStep+windowWidth);
-		seqan::Infix<seqan::Dna5String>::Type window = infix(sequence, from, to);
+		WindowRange wr;
+		wr.from = i*windowStep;
+		wr.to = std::min(len, i*windowStep+windowWidth);
+		seqan::Infix<seqan::Dna5String>::Type window = infix(sequence, wr.from, wr.to);
+
+		windows[i] = wr;
 
 		seqan::String<unsigned> counts;
 		seqan::countKmers(counts, window, kmerLength);
@@ -157,7 +161,7 @@ Eigen::MatrixXd SequenceVectorizer::vectorize(seqan::Dna5String & sequence) cons
 		mat = m.inverse() * mat; 
 	}	
 
-	return mat;
+	return std::make_pair(mat, windows);
 }
 
 SequenceVectorizationResult SequenceVectorizer::vectorize() const
@@ -175,7 +179,8 @@ SequenceVectorizationResult SequenceVectorizer::vectorize() const
 
 		try 
 		{
-			Eigen::MatrixXd mat = vectorize(seq);
+			std::pair<Eigen::MatrixXd, std::vector<WindowRange>> r = vectorize(seq);
+			Eigen::MatrixXd & mat = r.first;
 			unsigned rows = mat.rows();
 
 			// concatenate matrices TODO that's quite expensive
@@ -187,6 +192,8 @@ SequenceVectorizationResult SequenceVectorizer::vectorize() const
 			{
 				svr.contigs.push_back(id);				
 			}
+
+			svr.windows.insert(svr.windows.end(), r.second.begin(), r.second.end());
 		}
 		catch(const std::exception& e) 
 		{

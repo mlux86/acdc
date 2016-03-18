@@ -138,22 +138,22 @@ int main(int argc, char *argv[])
 
 		try
 		{
-			if (rmrExists)
-			{
-				ILOG << "Running Rnammer..." << std::endl;
-				result.sixteenSContigs = RnammerAdapter::find16SContigs(fasta);
-			}
-
 			if (krakenExists)
 			{
 				ILOG << "Running Kraken..." << std::endl;
 				result.kraken = krk.runKraken(fasta);
 			}
 
-			ILOG << "Vectorizing contigs & dimensionality reduction..." << std::endl;
+			ILOG << "Vectorizing contigs..." << std::endl;
 			SequenceVectorizer sv(fasta, *opts);
 			auto svr = sv.vectorize();
 			result.fastaLabels = svr.contigs;
+
+			if (rmrExists)
+			{
+				ILOG << "Running Rnammer..." << std::endl;
+				result.contains16S = RnammerAdapter::mark16S(fasta, svr);
+			}
 
 			ILOG << "Clustering..." << std::endl;
 			result.bootstraps = ClusterAnalysis::analyzeBootstraps(svr, *opts);

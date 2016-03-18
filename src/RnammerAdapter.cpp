@@ -1,5 +1,6 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/lexical_cast.hpp>
 #include <cstdio>
 #include <string>
 
@@ -31,12 +32,12 @@ bool RnammerAdapter::rnammerExists()
     return true;
 }
 
-std::vector<std::string> RnammerAdapter::find16SContigs(const std::string & fasta)
+std::vector<bool> RnammerAdapter::mark16S(const std::string & fasta, const SequenceVectorizationResult & svr)
 {
     boost::filesystem::path temp = boost::filesystem::unique_path();
     const std::string fname = temp.native();
 
-	std::string rnammerCommand = "rnammer -s bacterial -m lsu,ssu,tsu -gff '" + fname + "' '" + fasta + "' > /dev/null 2>&1";
+	std::string rnammerCommand = "rnammer -s bac,arch -m lsu,ssu,tsu -gff '" + fname + "' '" + fasta + "' > /dev/null 2>&1";
 
     DLOG << "Executing: " << rnammerCommand << "\n";
  	FILE * f = popen(rnammerCommand.c_str(), "r");
@@ -53,7 +54,7 @@ std::vector<std::string> RnammerAdapter::find16SContigs(const std::string & fast
     auto rnammerOut = IOUtil::fileLinesToVec(fname);
     std::remove(fname.c_str());
 
-    std::vector<std::string> result;
+    std::vector<RnammerResult> result;
 
     for (const auto & line : rnammerOut)
     {
@@ -66,14 +67,42 @@ std::vector<std::string> RnammerAdapter::find16SContigs(const std::string & fast
         }
 
         std::string contig = parts[0];
+        unsigned startPos = boost::lexical_cast<unsigned>(parts[3]);
+        unsigned endPos = boost::lexical_cast<unsigned>(parts[4]); 
         std::string attr = parts[8];
 
         if (attr == "16s_rRNA")
         {
-            result.push_back(contig);
             VLOG << "[rnammer] Found 16S sequence in contig " << contig << std::endl;
+            RnammerResult res;
+            res.contig = contig;
+            res.startPos = startPos;
+            res.endPos = endPos;
+            result.push_back(res);
         }
     }
 
-    return result;
+    unsigned n = svr.contigs.size();
+    std::vector<bool> contains16S(n);
+
+    for (unsigned i = 0; i < n; i++)
+    {
+        const std::string & contig = svr.contigs.at(i);
+        auto win = svr.windows.at(i);
+
+        contains16S[i] = false;
+        for (const auto & rr : result)
+        {
+            if (rr.contig == contig)
+            {
+                VLOG << "[rnammer] " << contig << ": 16S[startPos=" << rr.startPos << ", endPos=" << rr.endPos << "], window[from=" << win.from << ", to=" << win.to << "]" << std::endl;
+            }
+            contains16S[i] = (rr.contig == contig) && ( 
+                                                       (win.from >= rr.startPos && win.from <= rr.endPos) || //overlap left
+                                                       (win.to >= rr.startPos && win.to <= rr.endPos) || //overlap right
+                                                       (rr.startPos >= win.from && rr.endPos <= win.to)); //contained
+        }
+    }
+
+    return contains16S;
 }
