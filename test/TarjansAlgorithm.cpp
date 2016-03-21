@@ -9,8 +9,8 @@
 
 TEST_CASE("Tarjans algorithm, two clusters", "[tarjan]")
 {
-	Eigen::MatrixXd clustData = MatrixUtil::loadMatrix("../testdata/twoclusters.txt", ' ');
-	Eigen::MatrixXd clustDataLabels = MatrixUtil::loadMatrix("../testdata/twoclusters.labels.txt", ' ');
+	Eigen::MatrixXd clustData = MatrixUtil::loadMatrix("../testdata/twoclusters.txt", '\t');
+	Eigen::MatrixXd clustDataLabels = MatrixUtil::loadMatrix("../testdata/twoclusters.labels.txt", '\t');
 
 	Eigen::MatrixXd affinities = MLUtil::knnAffinityMatrix(clustData, 7, false);
 	TarjansAlgorithm ta;
@@ -27,12 +27,12 @@ TEST_CASE("Tarjans algorithm, two clusters", "[tarjan]")
 
 }
 
-TEST_CASE("Tarjans algorithm, two clusters & one mini cluster", "[tarjan]")
+TEST_CASE("Tarjans algorithm, chess board", "[tarjan]")
 {
-	Eigen::MatrixXd clustData = MatrixUtil::loadMatrix("../testdata/threeclusters.txt", ' ');
-	Eigen::MatrixXd clustDataLabels = MatrixUtil::loadMatrix("../testdata/threeclusters.labels.txt", ' ');
+	Eigen::MatrixXd clustData = MatrixUtil::loadMatrix("../testdata/chessboard.txt", '\t');
+	Eigen::MatrixXd clustDataLabels = MatrixUtil::loadMatrix("../testdata/chessboard.labels.txt", '\t');
 
-	Eigen::MatrixXd affinities = MLUtil::knnAffinityMatrix(clustData, 7, false);
+	Eigen::MatrixXd affinities = MLUtil::knnAffinityMatrix(clustData, 49, true);
 	TarjansAlgorithm ta;
 	auto ccRes = ta.run(affinities);
 
@@ -42,11 +42,11 @@ TEST_CASE("Tarjans algorithm, two clusters & one mini cluster", "[tarjan]")
 		labels(i, 0) = ccRes.labels.at(i);
 	}
 
-	REQUIRE(ccRes.numClusters == 3);
+	REQUIRE(ccRes.numClusters == 64);
 	REQUIRE(labels.isApprox(clustDataLabels));
 
 
-	affinities = MLUtil::knnAffinityMatrix(clustData, 8, false); // one more, but cluster is only 8 points large, not enough for 8 neighbors
+	affinities = MLUtil::knnAffinityMatrix(clustData, 50, true); // all clusters contain only 50 points, sho if neighborhood is larger, only one big cluster should "survive"
 	ccRes = ta.run(affinities);
 
 	labels = Eigen::MatrixXd(ccRes.labels.size(), 1);
@@ -55,7 +55,7 @@ TEST_CASE("Tarjans algorithm, two clusters & one mini cluster", "[tarjan]")
 		labels(i, 0) = ccRes.labels.at(i);
 	}
 
-	REQUIRE(ccRes.numClusters == 2);
+	REQUIRE(ccRes.numClusters == 1);
 	REQUIRE(!labels.isApprox(clustDataLabels));
 
 }
