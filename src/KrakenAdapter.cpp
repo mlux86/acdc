@@ -6,8 +6,9 @@
 #include "KrakenAdapter.h"
 #include "Logger.h"
 #include "IOUtil.h"
+#include "Opts.h"
 
-KrakenAdapter::KrakenAdapter(const Opts & o) : opts(o)
+KrakenAdapter::KrakenAdapter()
 {
 }
 
@@ -17,7 +18,7 @@ KrakenAdapter::~KrakenAdapter()
 
 bool KrakenAdapter::krakenExists()
 {
-    if (opts.krakenDb().empty())
+    if (Opts::krakenDb().empty())
     {
         return false;
     }
@@ -55,12 +56,12 @@ KrakenResult KrakenAdapter::runKraken(const std::string & fasta)
     const std::string fname = temp.native(); 
     const std::string fnameT = fname + ".t";
 
-	std::string krakenCommand = "kraken --db '" + opts.krakenDb() + "' --output '" + fname + "' '" + fasta + "'";
+	std::string krakenCommand = "kraken --db '" + Opts::krakenDb() + "' --output '" + fname + "' '" + fasta + "'";
     if (!(Logger::getInstance().getLevel() == Verbose || Logger::getInstance().getLevel() == Debug))
     {
         krakenCommand = krakenCommand + " > /dev/null 2>&1";
     }
-    std::string krakenTranslateCommand = "kraken-translate --db '" + opts.krakenDb() + "' '" + fname + "' > '" + fnameT + "'";
+    std::string krakenTranslateCommand = "kraken-translate --db '" + Opts::krakenDb() + "' '" + fname + "' > '" + fnameT + "'";
 
     DLOG << "Executing: " << krakenCommand << "\n";
  	FILE * f1 = popen(krakenCommand.c_str(), "r");

@@ -2,7 +2,6 @@
 
 #include <string>
 #include <map>
-#include "Opts.h"
 #include "Clustering.h"
 
 struct KrakenResult
@@ -14,10 +13,9 @@ class KrakenAdapter
 {
 
 private:
-	const Opts & opts;
 	
 public:
-	KrakenAdapter(const Opts & opts);
+	KrakenAdapter();
 	~KrakenAdapter();
 	
 	bool krakenExists();

@@ -5,6 +5,7 @@
 #include "TarjansAlgorithm.h"
 #include "MatrixUtil.h"
 #include "MLUtil.h"
+#include "Opts.h"
 
 ClusterAnalysis::ClusterAnalysis()
 {
@@ -43,7 +44,7 @@ std::vector< std::vector<unsigned> > ClusterAnalysis::stratifiedSubsamplingIndic
     return result;
 }
 
-ClusterAnalysisResult ClusterAnalysis::bootstrapTask(const SequenceVectorizationResult & svr, const Opts & opts, const std::vector<unsigned> indices)
+ClusterAnalysisResult ClusterAnalysis::bootstrapTask(const SequenceVectorizationResult & svr, const std::vector<unsigned> indices)
 {
 	Eigen::MatrixXd data = Eigen::MatrixXd::Zero(indices.size(), svr.data.cols());
 	std::vector<std::string> contigs(indices.size());
@@ -54,27 +55,27 @@ ClusterAnalysisResult ClusterAnalysis::bootstrapTask(const SequenceVectorization
 		contigs[i] = svr.contigs[indices[i]];
 	}
 
-	auto res = ClusterAnalysis::analyze(data, contigs, svr.contigSizes, opts);
+	auto res = ClusterAnalysis::analyze(data, contigs, svr.contigSizes);
 
 	res.bootstrapIndexes = indices;
 
 	return res;
 }
 
-ClusterAnalysisResult ClusterAnalysis::analyze(const Eigen::MatrixXd & data, const std::vector<std::string> & contigs, const std::map<std::string, unsigned> & contigSizes, const Opts & opts)
+ClusterAnalysisResult ClusterAnalysis::analyze(const Eigen::MatrixXd & data, const std::vector<std::string> & contigs, const std::map<std::string, unsigned> & contigSizes)
 {
 	ClusterAnalysisResult res;
 
 	res.dataOrig = data;
 
 	VLOG << "PCA..." << std::endl;
-	res.dataPca = MLUtil::pca(data, opts.tsneDim());
+	res.dataPca = MLUtil::pca(data, Opts::tsneDim());
 
 	VLOG << "Running t-SNE..." << std::endl;
-	res.dataSne = BarnesHutSNEAdapter::runBarnesHutSNE(data, opts);
+	res.dataSne = BarnesHutSNEAdapter::runBarnesHutSNE(data);
 
-	Clustering cSne(opts, res.dataSne, contigs, contigSizes);
-	Clustering cPca(opts, res.dataPca, contigs, contigSizes);
+	Clustering cSne(res.dataSne, contigs, contigSizes);
+	Clustering cPca(res.dataPca, contigs, contigSizes);
 
 	VLOG << "Testing for multi-modality..." << std::endl;
 	res.isMultiModal = cSne.isMultiModal(0, 0.001) ||
@@ -98,23 +99,23 @@ ClusterAnalysisResult ClusterAnalysis::analyze(const Eigen::MatrixXd & data, con
 	return res;
 }
 
-std::vector<ClusterAnalysisResult> ClusterAnalysis::analyzeBootstraps(const SequenceVectorizationResult & svr, const Opts & opts)
+std::vector<ClusterAnalysisResult> ClusterAnalysis::analyzeBootstraps(const SequenceVectorizationResult & svr)
 {
-	ThreadPool pool(opts.numThreads());
+	ThreadPool pool(Opts::numThreads());
 
 	std::vector< std::future<ClusterAnalysisResult> > futures;
 
 	// add oneshot task
 	futures.push_back(
-		pool.enqueue(&ClusterAnalysis::analyze, svr.data, svr.contigs, svr.contigSizes, opts)
+		pool.enqueue(&ClusterAnalysis::analyze, svr.data, svr.contigs, svr.contigSizes)
 	);
 
 	// add bootstrap tasks
-	const std::vector< std::vector<unsigned> > bootstrapIndexes = ClusterAnalysis::stratifiedSubsamplingIndices(svr.data.rows(), opts.numBootstraps(), opts.bootstrapRatio());
+	const std::vector< std::vector<unsigned> > bootstrapIndexes = ClusterAnalysis::stratifiedSubsamplingIndices(svr.data.rows(), Opts::numBootstraps(), Opts::bootstrapRatio());
 	for (const auto & indices : bootstrapIndexes)
 	{
 		futures.push_back(
-			pool.enqueue(&ClusterAnalysis::bootstrapTask, svr, opts, indices)
+			pool.enqueue(&ClusterAnalysis::bootstrapTask, svr, indices)
 		);
 	}
 

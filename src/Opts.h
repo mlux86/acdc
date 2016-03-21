@@ -37,31 +37,34 @@ private:
 
 	unsigned _aggressiveThreshold = 0;
 
-	void initialize(int argc, char *argv[]);
+	Opts();
+	~Opts();
+	Opts(Opts const &) = delete;
+    void operator=(Opts const &) = delete;	
+	static Opts & getInstance();
 
 public:
-	Opts(int argc, char *argv[]);
-	~Opts();
+	static void initializeOnce(int argc, char *argv[]);
 
-	std::string execPath() const;
-	std::string sharePath() const;
-	bool needsHelp() const;
-	unsigned logLevel() const;
-	std::string helpDesc() const;
-	std::vector<std::string> inputFASTAs() const;
-	unsigned tsneDim() const;
-	unsigned tsnePcaDim() const;
-	unsigned tsnePerplexity() const;
-	float tsneTheta() const;
-	unsigned minContigLength() const;
-	unsigned windowKmerLength() const;
-	unsigned windowWidth() const;
-	unsigned windowStep() const;
-	unsigned targetNumPoints() const;
-	unsigned numThreads() const;
-	unsigned numBootstraps() const;
-	double bootstrapRatio() const;
-	std::string outputDir() const;
-	std::string krakenDb() const;
-	unsigned aggressiveThreshold() const;	
+	static std::string execPath();
+	static std::string sharePath();
+	static bool needsHelp();
+	static unsigned logLevel();
+	static std::string helpDesc();
+	static std::vector<std::string> inputFASTAs();
+	static unsigned tsneDim();
+	static unsigned tsnePcaDim();
+	static unsigned tsnePerplexity();
+	static float tsneTheta();
+	static unsigned minContigLength();
+	static unsigned windowKmerLength();
+	static unsigned windowWidth();
+	static unsigned windowStep();
+	static unsigned targetNumPoints();
+	static unsigned numThreads();
+	static unsigned numBootstraps();
+	static double bootstrapRatio();
+	static std::string outputDir();
+	static std::string krakenDb();
+	static unsigned aggressiveThreshold();	
 };

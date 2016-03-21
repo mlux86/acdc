@@ -6,6 +6,7 @@
 #include "Kmeans.h"
 #include "HierarchicalClustering.h"
 #include "TarjansAlgorithm.h"
+#include "Opts.h"
 
 #include <math.h>
 #include <numeric>
@@ -15,7 +16,7 @@
 #include <limits>
 #include <vector>
 
-Clustering::Clustering(const Opts & opts_, const Eigen::MatrixXd & data_, const std::vector<std::string> & contigs_, const std::map<std::string, unsigned> & contigSizes_) : opts(opts_), data(data_), contigs(contigs_), contigSizes(contigSizes_)
+Clustering::Clustering(const Eigen::MatrixXd & data_, const std::vector<std::string> & contigs_, const std::map<std::string, unsigned> & contigSizes_) : data(data_), contigs(contigs_), contigSizes(contigSizes_)
 {
 }
 
@@ -257,7 +258,7 @@ void Clustering::postprocess(ClusteringResult & cr)
 
     // second, throw out outlier clusters if aggressive mode is on
 
-    if (opts.aggressiveThreshold() > 0)
+    if (Opts::aggressiveThreshold() > 0)
     {
         // for each label, add up sizes of contained contigs and see if they are below threshold
 
@@ -280,7 +281,7 @@ void Clustering::postprocess(ClusteringResult & cr)
             unsigned lbl = it.first;
             unsigned clusterSize = it.second;
 
-            if (clusterSize < opts.aggressiveThreshold())
+            if (clusterSize < Opts::aggressiveThreshold())
             {
                 cr.outlierClusters.push_back(lbl);
                 cr.numClusters--;

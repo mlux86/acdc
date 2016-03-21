@@ -2,6 +2,7 @@
 #include "SequenceVectorizer.h"
 #include "SequenceUtil.h"
 #include "IOUtil.h"
+#include "Opts.h"
 
 #include <string>
 #include <vector>
@@ -18,22 +19,22 @@ SequenceVectorizer::SequenceVectorizer(const unsigned kmerLength_, const unsigne
 }
 
 
-SequenceVectorizer::SequenceVectorizer(const std::string & fasta, const Opts & opts)
+SequenceVectorizer::SequenceVectorizer(const std::string & fasta)
 {
 	inputFasta = fasta;
-	buildParams(opts);
+	buildParams();
 	buildFeatureKmers();
 }
 
 SequenceVectorizer::~SequenceVectorizer() {}
 
-void SequenceVectorizer::buildParams(const Opts & opts)
+void SequenceVectorizer::buildParams()
 {
-	minContigLength = opts.minContigLength();
-	kmerLength = opts.windowKmerLength();
-	windowWidth = opts.windowWidth();
-	windowStep = opts.windowStep();
-	targetNumPoints = opts.targetNumPoints();
+	minContigLength = Opts::minContigLength();
+	kmerLength = Opts::windowKmerLength();
+	windowWidth = Opts::windowWidth();
+	windowStep = Opts::windowStep();
+	targetNumPoints = Opts::targetNumPoints();
 
 	loadFasta();
 	estimateWindowParams();

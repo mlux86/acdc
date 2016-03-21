@@ -23,17 +23,15 @@
 
 int main(int argc, char *argv[])
 {
-	std::unique_ptr<Opts> opts;
-
 	std::string banner = "";
 
 	// build program arguments
 
 	try
 	{
-		opts.reset(new Opts(argc, argv));
+		Opts::initializeOnce(argc, argv);
 
-		std::ifstream ifs(opts->sharePath() + "/banner.txt");
+		std::ifstream ifs(Opts::sharePath() + "/banner.txt");
 		banner = std::string((std::istreambuf_iterator<char>(ifs)),
 		                 std::istreambuf_iterator<char>());
 	}
@@ -45,16 +43,16 @@ int main(int argc, char *argv[])
 
 	// show help
 
-	if (opts->needsHelp())
+	if (Opts::needsHelp())
 	{
 		std::cout << banner << std::endl;
-		std::cout << opts->helpDesc() << std::endl;
+		std::cout << Opts::helpDesc() << std::endl;
 		return EXIT_SUCCESS;
 	}
 
 	// configure logger
 
-	switch (opts->logLevel())
+	switch (Opts::logLevel())
 	{
 		case -1: Logger::getInstance().setLevel(Off); break;
 		case 0: Logger::getInstance().setLevel(Error); break;
@@ -66,7 +64,7 @@ int main(int argc, char *argv[])
 
 	// check for input files
 
-	if (opts->inputFASTAs().empty())
+	if (Opts::inputFASTAs().empty())
 	{
 		ELOG << "No input FASTA file(s) given (--input-fasta,-i)." << std::endl;
 		return EXIT_FAILURE;
@@ -74,7 +72,7 @@ int main(int argc, char *argv[])
 
 	// setup Kraken
 
-	KrakenAdapter krk(*opts);
+	KrakenAdapter krk;
 	bool krakenExists = krk.krakenExists();
 	if (!krakenExists)
 	{
@@ -90,7 +88,7 @@ int main(int argc, char *argv[])
 
     // create output / export directory
 
-	boost::filesystem::path exportPath (opts->outputDir() + "/export");
+	boost::filesystem::path exportPath (Opts::outputDir() + "/export");
 	boost::system::error_code returnedError;
 	boost::filesystem::create_directories(exportPath, returnedError);
 	if (returnedError)
@@ -103,7 +101,7 @@ int main(int argc, char *argv[])
 
 	try
 	{
-		IOUtil::copyDir(boost::filesystem::path(opts->sharePath() + "/assets"), opts->outputDir(), true);
+		IOUtil::copyDir(boost::filesystem::path(Opts::sharePath() + "/assets"), Opts::outputDir(), true);
 	} catch(const boost::filesystem::filesystem_error & e)
 	{
 		ELOG << e.what() << std::endl;
@@ -112,7 +110,7 @@ int main(int argc, char *argv[])
 
 	// remove old data.js file if necessary
 
-	std::string dataFile = opts->outputDir() + "/data.js";
+	std::string dataFile = Opts::outputDir() + "/data.js";
 	if (boost::filesystem::exists(boost::filesystem::path(dataFile)))
 	{
 		std::remove(dataFile.c_str());
@@ -120,10 +118,10 @@ int main(int argc, char *argv[])
 
     // process files
 
-	ResultIO rio(opts->outputDir(), krakenExists);
+	ResultIO rio(Opts::outputDir(), krakenExists);
 	unsigned idCnt = 1;
 
-	for (const auto & fasta : opts->inputFASTAs())
+	for (const auto & fasta : Opts::inputFASTAs())
 	{
 		if (!boost::filesystem::is_regular_file(boost::filesystem::path(fasta)))
 		{
@@ -146,7 +144,7 @@ int main(int argc, char *argv[])
 			}
 
 			ILOG << "Vectorizing contigs..." << std::endl;
-			SequenceVectorizer sv(fasta, *opts);
+			SequenceVectorizer sv(fasta);
 			auto svr = sv.vectorize();
 			result.fastaLabels = svr.contigs;
 
@@ -157,7 +155,7 @@ int main(int argc, char *argv[])
 			}
 
 			ILOG << "Clustering..." << std::endl;
-			result.bootstraps = ClusterAnalysis::analyzeBootstraps(svr, *opts);
+			result.bootstraps = ClusterAnalysis::analyzeBootstraps(svr);
 			result.oneshot = result.bootstraps.at(0);
 			result.bootstraps.erase(result.bootstraps.begin());
 

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Eigen/Dense>
-#include "Opts.h"
 #include "tsne.h"
 
 class BarnesHutSNEAdapter
@@ -17,6 +16,6 @@ private:
 	static Eigen::MatrixXd saveData(double* data, int n, int d);
 
 public:
-	static Eigen::MatrixXd runBarnesHutSNE(const Eigen::MatrixXd & eigendata, const Opts & opts);
+	static Eigen::MatrixXd runBarnesHutSNE(const Eigen::MatrixXd & eigendata);
 	
 };

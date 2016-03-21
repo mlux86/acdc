@@ -10,17 +10,24 @@
 #include <sstream>
 #include <thread>
 
-Opts::Opts(int argc, char *argv[])
+Opts::Opts()
 {
-	initialize(argc, argv);
 }
 
 Opts::~Opts()
 {
 }
 
-void Opts::initialize(int argc, char *argv[])
+Opts & Opts::getInstance()
 {
+	static Opts instance;
+	return instance;
+}
+
+void Opts::initializeOnce(int argc, char *argv[])
+{
+	Opts & opts = getInstance();
+
 	boost::program_options::options_description description("Usage", 250);
 
 	unsigned threads = std::thread::hardware_concurrency();
@@ -38,12 +45,12 @@ void Opts::initialize(int argc, char *argv[])
 
     boost::filesystem::path path(selfExe);
     boost::filesystem::path fullPath = boost::filesystem::canonical(boost::filesystem::system_complete(path));
-    _execPath = fullPath.parent_path().string();
-    _sharePath = _execPath + "/../share/acdc";
+    opts._execPath = fullPath.parent_path().string();
+    opts._sharePath = opts._execPath + "/../share/acdc";
 
 	description.add_options()
 	    ("help,h", "Display this help message")
-	    ("verbose,v", accumulator<int>(&_logLevel)->implicit_value(1), "Verbose output (use -vv for more or -vvv for maximum verbosity)")
+	    ("verbose,v", accumulator<int>(&(opts._logLevel))->implicit_value(1), "Verbose output (use -vv for more or -vvv for maximum verbosity)")
 	    ("quiet,q", "No output")
 	    ("input-fasta,i", boost::program_options::value<std::string>(), "Input FASTA file")
 	    ("input-list,I", boost::program_options::value<std::string>(), "File with a list of input FASTA files, one per line")
@@ -71,158 +78,158 @@ void Opts::initialize(int argc, char *argv[])
 
 	std::stringstream ss;
 	ss << description;
-	_helpDesc = ss.str();
+	opts._helpDesc = ss.str();
 
 	if(vm.count("quiet")) 
 	{
-		_logLevel = -1;
+		opts._logLevel = -1;
 	} else
 	{
-		_logLevel = std::min(_logLevel, 3);
+		opts._logLevel = std::min(opts._logLevel, 3);
 	}
 
-	_needsHelp = vm.count("help");
+	opts._needsHelp = vm.count("help");
 	if (vm.count("input-list"))
 	{
 		std::string fastaListFile = vm["input-list"].as<std::string>();
 		boost::algorithm::trim(fastaListFile);	
-		_inputFASTAs = IOUtil::fileLinesToVec(fastaListFile);
+		opts._inputFASTAs = IOUtil::fileLinesToVec(fastaListFile);
 	} else if (vm.count("input-fasta"))
 	{
 		std::string singleFasta = vm["input-fasta"].as<std::string>();
 		boost::algorithm::trim(singleFasta);
-		_inputFASTAs.push_back(singleFasta);
+		opts._inputFASTAs.push_back(singleFasta);
 	}
-	_tsneDim = vm["tsne-dimension"].as<unsigned>();
-	_tsnePcaDim = vm["tsne-pca-dimension"].as<unsigned>();
+	opts._tsneDim = vm["tsne-dimension"].as<unsigned>();
+	opts._tsnePcaDim = vm["tsne-pca-dimension"].as<unsigned>();
 	if (vm.count("tsne-perplexity"))
 	{
-		_tsnePerplexity = vm["tsne-perplexity"].as<unsigned>();
+		opts._tsnePerplexity = vm["tsne-perplexity"].as<unsigned>();
 	}
-	_tsneTheta = vm["tsne-theta"].as<float>();
-	_minContigLength = vm["min-contig-length"].as<unsigned>();
-	_minContigLength = std::max(100u, _minContigLength);
-	_windowKmerLength = vm["window-kmer-length"].as<unsigned>();
+	opts._tsneTheta = vm["tsne-theta"].as<float>();
+	opts._minContigLength = vm["min-contig-length"].as<unsigned>();
+	opts._minContigLength = std::max(100u, opts._minContigLength);
+	opts._windowKmerLength = vm["window-kmer-length"].as<unsigned>();
 	if (vm.count("window-width"))
 	{
-		_windowWidth = vm["window-width"].as<unsigned>();
+		opts._windowWidth = vm["window-width"].as<unsigned>();
 	}
 	if (vm.count("window-step"))
 	{
-		_windowStep = vm["window-step"].as<unsigned>();
+		opts._windowStep = vm["window-step"].as<unsigned>();
 	}	
-	_targetNumPoints = vm["target-num-points"].as<unsigned>();
-	_numThreads = vm["num-threads"].as<unsigned>();
-	_numThreads = std::max(1u, _numThreads);
-	_numBootstraps = vm["num-bootstraps"].as<unsigned>();
-	_numBootstraps = std::max(1u, _numBootstraps);
-	_bootstrapRatio = vm["bootstrap-ratio"].as<double>();
-	_outputDir = vm["output-dir"].as<std::string>();
-	_krakenDb = vm["kraken-db"].as<std::string>();
-	_aggressiveThreshold = vm["aggressive-threshold"].as<unsigned>();
+	opts._targetNumPoints = vm["target-num-points"].as<unsigned>();
+	opts._numThreads = vm["num-threads"].as<unsigned>();
+	opts._numThreads = std::max(1u, opts._numThreads);
+	opts._numBootstraps = vm["num-bootstraps"].as<unsigned>();
+	opts._numBootstraps = std::max(1u, opts._numBootstraps);
+	opts._bootstrapRatio = vm["bootstrap-ratio"].as<double>();
+	opts._outputDir = vm["output-dir"].as<std::string>();
+	opts._krakenDb = vm["kraken-db"].as<std::string>();
+	opts._aggressiveThreshold = vm["aggressive-threshold"].as<unsigned>();
 }
 
-std::string Opts::execPath() const
+std::string Opts::execPath()
 {
-	return _execPath;
+	return Opts::getInstance()._execPath;
 }
 
-std::string Opts::sharePath() const
+std::string Opts::sharePath()
 {
-	return _sharePath;
+	return Opts::getInstance()._sharePath;
 }
 
-bool Opts::needsHelp() const
+bool Opts::needsHelp()
 {
-	return _needsHelp;
+	return Opts::getInstance()._needsHelp;
 }
 
-unsigned Opts::logLevel() const
+unsigned Opts::logLevel()
 {
-	return _logLevel;
+	return Opts::getInstance()._logLevel;
 }
 
-std::string Opts::helpDesc() const
+std::string Opts::helpDesc()
 {
-	return _helpDesc;
+	return Opts::getInstance()._helpDesc;
 }
 
-std::vector<std::string> Opts::inputFASTAs() const
+std::vector<std::string> Opts::inputFASTAs()
 {
-	return _inputFASTAs;
+	return Opts::getInstance()._inputFASTAs;
 }
 
-unsigned Opts::tsneDim() const
+unsigned Opts::tsneDim()
 {
-	return _tsneDim;
+	return Opts::getInstance()._tsneDim;
 }
 
-unsigned Opts::tsnePcaDim() const
+unsigned Opts::tsnePcaDim()
 {
-	return _tsnePcaDim;
+	return Opts::getInstance()._tsnePcaDim;
 }
 
-unsigned Opts::tsnePerplexity() const
+unsigned Opts::tsnePerplexity()
 {
-	return _tsnePerplexity;
+	return Opts::getInstance()._tsnePerplexity;
 }
 
-float Opts::tsneTheta() const
+float Opts::tsneTheta()
 {
-	return _tsneTheta;
+	return Opts::getInstance()._tsneTheta;
 }
 
-unsigned Opts::minContigLength() const
+unsigned Opts::minContigLength()
 {
-	return _minContigLength;
+	return Opts::getInstance()._minContigLength;
 }
 
-unsigned Opts::windowKmerLength() const
+unsigned Opts::windowKmerLength()
 {
-	return _windowKmerLength;
+	return Opts::getInstance()._windowKmerLength;
 }
 
-unsigned Opts::windowWidth() const
+unsigned Opts::windowWidth()
 {
-	return _windowWidth;
+	return Opts::getInstance()._windowWidth;
 }
 
-unsigned Opts::windowStep() const
+unsigned Opts::windowStep()
 {
-	return _windowStep;
+	return Opts::getInstance()._windowStep;
 }
 
-unsigned Opts::targetNumPoints() const
+unsigned Opts::targetNumPoints()
 {
-	return _targetNumPoints;
+	return Opts::getInstance()._targetNumPoints;
 }
 
-unsigned Opts::numThreads() const
+unsigned Opts::numThreads()
 {
-	return _numThreads;
+	return Opts::getInstance()._numThreads;
 }
 
-unsigned Opts::numBootstraps() const
+unsigned Opts::numBootstraps()
 {
-	return _numBootstraps;
+	return Opts::getInstance()._numBootstraps;
 }
 
-double Opts::bootstrapRatio() const
+double Opts::bootstrapRatio()
 {
-	return _bootstrapRatio;
+	return Opts::getInstance()._bootstrapRatio;
 }
 
-std::string Opts::outputDir() const
+std::string Opts::outputDir()
 {
-	return _outputDir;
+	return Opts::getInstance()._outputDir;
 }
 
-std::string Opts::krakenDb() const
+std::string Opts::krakenDb()
 {
-	return _krakenDb;
+	return Opts::getInstance()._krakenDb;
 }
 
-unsigned Opts::aggressiveThreshold() const
+unsigned Opts::aggressiveThreshold()
 {
-	return _aggressiveThreshold;
+	return Opts::getInstance()._aggressiveThreshold;
 }

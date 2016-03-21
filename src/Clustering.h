@@ -4,8 +4,6 @@
 #include <vector>
 #include <map>
 
-#include "Opts.h"
-
 struct ClusteringResult
 {
 	unsigned numClusters = 0;
@@ -17,13 +15,12 @@ class Clustering
 {
 
 private:
-	const Opts & opts;
 	const Eigen::MatrixXd & data;
 	const std::vector<std::string> & contigs;
 	const std::map<std::string, unsigned> & contigSizes;
 
 public:
-	Clustering(const Opts & opts_, const Eigen::MatrixXd & data_, const std::vector<std::string> & contigs_, const std::map<std::string, unsigned> & contigSizes_);
+	Clustering(const Eigen::MatrixXd & data_, const std::vector<std::string> & contigs_, const std::map<std::string, unsigned> & contigSizes_);
 	~Clustering();
 
 	ClusteringResult connComponents(unsigned knnK);

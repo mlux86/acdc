@@ -1,6 +1,7 @@
 #include "Logger.h"
 #include "BarnesHutSNEAdapter.h"
 #include "MLUtil.h"
+#include "Opts.h"
 
 BarnesHutSNEAdapter::BarnesHutSNEAdapter()
 {
@@ -52,13 +53,13 @@ Eigen::MatrixXd BarnesHutSNEAdapter::saveData(double* data, int N, int D)
 }
 
 // copied and modified from the original BH-SNE implementation
-Eigen::MatrixXd BarnesHutSNEAdapter::runBarnesHutSNE(const Eigen::MatrixXd & eigendata, const Opts & opts)
+Eigen::MatrixXd BarnesHutSNEAdapter::runBarnesHutSNE(const Eigen::MatrixXd & eigendata)
 {
     Eigen::MatrixXd tsneData;
-    if (eigendata.cols() > opts.tsnePcaDim())
+    if (eigendata.cols() > Opts::tsnePcaDim())
     {
-        DLOG << "Initially reducing dimension to " << opts.tsnePcaDim() << " using PCA...\n";
-        tsneData = MLUtil::pca(eigendata, opts.tsnePcaDim());
+        DLOG << "Initially reducing dimension to " << Opts::tsnePcaDim() << " using PCA...\n";
+        tsneData = MLUtil::pca(eigendata, Opts::tsnePcaDim());
     } else
     {
         tsneData = eigendata;
@@ -70,7 +71,7 @@ Eigen::MatrixXd BarnesHutSNEAdapter::runBarnesHutSNE(const Eigen::MatrixXd & eig
     int D = tsneData.cols();
     
     // estimate perplexity if necessary
-    unsigned perplexity = opts.tsnePerplexity();
+    unsigned perplexity = Opts::tsnePerplexity();
     if (perplexity == 0)
     {
         perplexity = BarnesHutSNEAdapter::estimateTsnePerplexity(tsneData);
@@ -80,7 +81,7 @@ Eigen::MatrixXd BarnesHutSNEAdapter::runBarnesHutSNE(const Eigen::MatrixXd & eig
 	double * data = BarnesHutSNEAdapter::loadData(tsneData);
 	
 	// fire up the SNE implementation
-	double * Y = (double*) malloc(N * opts.tsneDim() * sizeof(double));
+	double * Y = (double*) malloc(N * Opts::tsneDim() * sizeof(double));
     if (Y == NULL)
 	{ 
 		throw std::runtime_error("Memory allocation failed.");
@@ -89,13 +90,13 @@ Eigen::MatrixXd BarnesHutSNEAdapter::runBarnesHutSNE(const Eigen::MatrixXd & eig
     
     DLOG << "n=" << N << "   " 
             << "dim=" << D << "   " 
-            << "targetDim=" << opts.tsneDim() << "   "
+            << "targetDim=" << Opts::tsneDim() << "   "
             << "perplexity=" << perplexity << "   "
-            << "theta=" << opts.tsneTheta() << "\n";
-	tsne->run(data, N, D, Y, opts.tsneDim(), perplexity, opts.tsneTheta());
+            << "theta=" << Opts::tsneTheta() << "\n";
+	tsne->run(data, N, D, Y, Opts::tsneDim(), perplexity, Opts::tsneTheta());
 	
 	// save the results
-	Eigen::MatrixXd result = BarnesHutSNEAdapter::saveData(Y, N, opts.tsneDim());
+	Eigen::MatrixXd result = BarnesHutSNEAdapter::saveData(Y, N, Opts::tsneDim());
     
     // clean up
 	free(data); 

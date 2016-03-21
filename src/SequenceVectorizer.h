@@ -6,7 +6,6 @@
 #include <map>
 #include <string>
 #include <vector>
-#include "Opts.h"
 
 struct WindowRange
 {
@@ -41,14 +40,14 @@ protected:
 	std::vector<std::string> ids;
 	std::vector<seqan::Dna5String> sequences;	
 
-	void buildParams(const Opts & opts);
+	void buildParams();
 	void loadFasta();
 	void estimateWindowParams();
 	void buildFeatureKmers();
 
 public:
 	SequenceVectorizer(const unsigned kmerLength, const unsigned windowWidth, const unsigned windowStep);
-	SequenceVectorizer(const std::string & inputFasta, const Opts & opts);
+	SequenceVectorizer(const std::string & inputFasta);
 	~SequenceVectorizer();
 
 	unsigned getDim() const;
