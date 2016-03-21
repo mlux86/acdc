@@ -236,12 +236,12 @@ function dimMin(data, dim)
 	}, Infinity);
 }
 
-function showData(dataMat, labels, tooltips, greyedOut, highlighted, width, height, padding)
+function showData(id, dataMat, labels, tooltips, greyedOut, sixteenS, width, height, padding)
 {	
 	var svg = d3.select("#scatter").html("").append("svg").attr("width", width).attr("height", height);
 
 	var doGrey = typeof greyedOut != 'undefined' && greyedOut.length == labels.length;
-	var doHighlight = typeof highlighted != 'undefined' && highlighted.length == labels.length;
+	var do16S = typeof sixteenS != 'undefined' && sixteenS.length == labels.length;
 
 	svg.append("rect")
 	   .attr("x", 0)
@@ -277,23 +277,21 @@ function showData(dataMat, labels, tooltips, greyedOut, highlighted, width, heig
 		  .on('mouseover', tip.show)
 		  .on('mouseout', tip.hide);
 
-	shapes.append("circle")
-		  .filter(function(d, i){ return highlighted[i]; })
-		  .attr("cx", function(d) { return xScale(d[0]); })
-		  .attr("cy", function(d) { return yScale(d[1]); })
-		  .attr("r", function(d) {return 6; })
-		  .style("fill", function(d, i) {return '#F53BFF'; })
-		  .on('mouseover', tip.show)
-		  .on('mouseout', tip.hide);
-
-	shapes.append("svg:polygon")
-		  .filter(function(d, i){ return highlighted[i]; })
-		  .attr("id", "star_1")
-		  .attr("visibility", "visible")
-		  .attr("points", function(d) { return calculateStar(xScale(d[0]), yScale(d[1]), 6, 20, 10); })
-		  .style("fill", function(d, i) {return (doGrey && greyedOut[i]) ? greyColor : colors[labels[i] % colors.length]; })
-		  .on('mouseover', tip.show)
-		  .on('mouseout', tip.hide);
+	if (do16S)
+	{
+		shapes.append("svg:polygon")
+			  .select(function(d, i){ return sixteenS[i] ? this : null; })
+			  .attr("id", "star_1")
+			  .attr("visibility", "visible")
+			  .attr("points", function(d) { return calculateStar(xScale(d[0]), yScale(d[1]), 8, 50, 6); })
+			  .style("stroke", highlightColor)
+			  .style("stroke-width", 1)
+			  .style("fill", highlightColor)
+			  .style("fill-opacity", .5)
+			  .on('mouseover', tip.show)
+			  .on('mouseout', tip.hide)
+			  .on('click', function(d, i) { window.location.href = 'export/' + id + '-' + i + '.16s'; });
+	}
 
 	
 }
@@ -315,12 +313,12 @@ function showVisualization()
 
 	var labels;
 	var greyedOut = new Array();
-	var highlighted = new Array();
+	var sixteenS = new Array();
 	var outliers = new Array();
 	
 	if (highlight16S && "contains16S" in x && x.contains16S.length > 0)
 	{
-		highlighted = x.contains16S;
+		sixteenS = x.contains16S;
 	}
 
 	if (selectedLabels === 'fasta')
@@ -397,9 +395,10 @@ function showVisualization()
 		dataMat = removeIndexes(dataMat, rmIdx);
 		labels = removeIndexes(labels, rmIdx);
 		tooltips = removeIndexes(tooltips, rmIdx);
+		sixteenS = removeIndexes(sixteenS, rmIdx);
 	}
 
-	showData(dataMat, labels, tooltips, greyedOut, highlighted, width, height, padding);
+	showData(x.id, dataMat, labels, tooltips, greyedOut, sixteenS, width, height, padding);
 	updateExport(labels, greyedOut);
 }
 

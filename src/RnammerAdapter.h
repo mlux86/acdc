@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 
+#include "Opts.h"
 #include "SequenceVectorizer.h"
 
 struct RnammerResult
@@ -20,6 +21,7 @@ private:
 	
 public:
 	static bool rnammerExists();
-	static std::vector<bool> mark16S(const std::string & fasta, const SequenceVectorizationResult & svr);
+	static std::vector<std::string> find16S(const std::string & fasta, const SequenceVectorizationResult & svr);
+	static std::string get16S(const std::string & fasta, const RnammerResult & rr);
 	
 };

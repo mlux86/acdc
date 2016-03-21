@@ -20,7 +20,7 @@ struct ResultContainer
 	std::vector<ClusterAnalysisResult> bootstraps;
 
 	KrakenResult kraken;
-	std::vector<bool> contains16S; 
+	std::vector<std::string> _16S; 
 };
 
 class ResultIO
@@ -28,11 +28,11 @@ class ResultIO
 
 private:    
 	std::vector<unsigned> numericLabels(const std::vector<std::string> & labels);	
-	void filterFasta(const std::string & fasta, const std::set<std::string> contigs, const std::string & exportFilename);	
 
     Json::Value clusteringResultToJSON(const ClusteringResult & cr);
     Json::Value clusterAnalysisResultToJSON(const ResultContainer & result, const ClusterAnalysisResult & car, bool alignToOneshot);
 	void writeResultContainerToJSON(ResultContainer result, const std::string & filename);
+	void export16S(const ResultContainer & result);
     void exportClusteringFastas(const ResultContainer & result);
 
 	std::string outputDir;

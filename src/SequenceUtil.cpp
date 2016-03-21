@@ -2,6 +2,10 @@
 
 #include "SequenceUtil.h"
 
+#include <seqan/alignment_free.h> 
+#include <seqan/sequence.h> 
+#include <seqan/seq_io.h>
+
 void SequenceUtil::allPermsRepetition(std::vector<std::string> & perms, const std::vector<char> & alphabet, std::string elem, const unsigned length)
 {
     if (length == 0)
@@ -49,4 +53,64 @@ std::string SequenceUtil::reverseComplement(const std::string & seq)
     }
 
     return revCompl;
+}
+
+std::vector<std::string> SequenceUtil::filterFasta(const std::string & fasta, const std::set<std::string> contigs)
+{
+
+    std::stringstream ss;
+    
+    seqan::SeqFileIn seqFileIn(fasta.c_str());
+    seqan::StringSet<seqan::CharString> ids;
+    seqan::StringSet<seqan::String<seqan::Iupac> > seqs;
+
+    seqan::readRecords(ids, seqs, seqFileIn);
+
+    std::vector<std::string> sequences;
+
+    unsigned n = seqan::length(ids);
+
+    for (unsigned i = 0; i < n; i++)
+    {
+        std::string id;
+        move(id, ids[i]);
+        if (std::find(contigs.begin(), contigs.end(), id) != contigs.end())
+        {
+            std::string seq;
+            move(seq, seqs[i]);
+            sequences.push_back(seq);
+        }
+    }
+
+    return sequences;
+}
+
+void SequenceUtil::exportFilteredFasta(const std::string & fasta, const std::set<std::string> contigs, const std::string & exportFilename)
+{
+
+    std::stringstream ss;
+    
+    seqan::SeqFileIn seqFileIn(fasta.c_str());
+    seqan::StringSet<seqan::CharString> ids;
+    seqan::StringSet<seqan::String<seqan::Iupac> > seqs;
+
+    seqan::readRecords(ids, seqs, seqFileIn);
+
+    unsigned n = seqan::length(ids);
+
+    for (unsigned i = 0; i < n; i++)
+    {
+        std::string id;
+        move(id, ids[i]);
+        if (std::find(contigs.begin(), contigs.end(), id) != contigs.end())
+        {
+            std::string seq;
+            move(seq, seqs[i]);
+            ss << '>' << id << '\n' << seq << '\n';
+        }
+    }
+
+    std::ofstream ofs(exportFilename, std::ofstream::out);
+    ofs << ss.str();
+    ofs.close();
 }

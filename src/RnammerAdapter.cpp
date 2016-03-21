@@ -3,8 +3,11 @@
 #include <boost/lexical_cast.hpp>
 #include <cstdio>
 #include <string>
+#include <sstream>
+#include <set>
 
 #include "RnammerAdapter.h"
+#include "SequenceUtil.h"
 #include "Logger.h"
 #include "IOUtil.h"
 
@@ -32,7 +35,7 @@ bool RnammerAdapter::rnammerExists()
     return true;
 }
 
-std::vector<bool> RnammerAdapter::mark16S(const std::string & fasta, const SequenceVectorizationResult & svr)
+std::vector<std::string> RnammerAdapter::find16S(const std::string & fasta, const SequenceVectorizationResult & svr)
 {
     boost::filesystem::path temp = boost::filesystem::unique_path();
     const std::string fname = temp.native();
@@ -83,26 +86,42 @@ std::vector<bool> RnammerAdapter::mark16S(const std::string & fasta, const Seque
     }
 
     unsigned n = svr.contigs.size();
-    std::vector<bool> contains16S(n);
+    std::vector<std::string> _16s(n);
+    std::stringstream ss;
+
+    std::set<unsigned> processedResults;
 
     for (unsigned i = 0; i < n; i++)
     {
         const std::string & contig = svr.contigs.at(i);
         auto win = svr.windows.at(i);
 
-        contains16S[i] = false;
-        for (const auto & rr : result)
+        _16s[i] = "";
+        for (unsigned j = 0; j < result.size(); j++)            
         {
-            if (rr.contig == contig)
+            const auto & rr = result.at(j);
+            if ((rr.contig == contig) && (processedResults.find(j) == processedResults.end()) && ( 
+                                        (win.from >= rr.startPos && win.from <= rr.endPos) || //overlap left
+                                        (win.to >= rr.startPos && win.to <= rr.endPos) || //overlap right
+                                        (rr.startPos >= win.from && rr.endPos <= win.to))) //contained
             {
-                VLOG << "[rnammer] " << contig << ": 16S[startPos=" << rr.startPos << ", endPos=" << rr.endPos << "], window[from=" << win.from << ", to=" << win.to << "]" << std::endl;
+               _16s[i] = get16S(fasta, rr);
+               processedResults.insert(j);
             }
-            contains16S[i] = (rr.contig == contig) && ( 
-                                                       (win.from >= rr.startPos && win.from <= rr.endPos) || //overlap left
-                                                       (win.to >= rr.startPos && win.to <= rr.endPos) || //overlap right
-                                                       (rr.startPos >= win.from && rr.endPos <= win.to)); //contained
         }
     }
 
-    return contains16S;
+    return _16s;
+}
+
+std::string RnammerAdapter::get16S(const std::string & fasta, const RnammerResult & rr)
+{
+    std::set<std::string> contigs = { rr.contig };
+    auto fRes = SequenceUtil::filterFasta(fasta, contigs);
+    if (fRes.size() != 1)
+    {
+        throw std::runtime_error("[export16S] Couldn't find unique contig.");
+    }
+    std::string seq = fRes[0];
+    return seq.substr(rr.startPos, rr.endPos-rr.startPos);
 }

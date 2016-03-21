@@ -88,13 +88,14 @@ int main(int argc, char *argv[])
 		ELOG << "Rnammer not found! It will be disabled.\n- Please make sure that the folders containing the 'rnammer' executable is in your $PATH." << std::endl;
 	}
 
-	// create output directory
-	boost::filesystem::path outPath (opts->outputDir());
+    // create output / export directory
+
+	boost::filesystem::path exportPath (opts->outputDir() + "/export");
 	boost::system::error_code returnedError;
-	boost::filesystem::create_directories(outPath, returnedError);
+	boost::filesystem::create_directories(exportPath, returnedError);
 	if (returnedError)
 	{
-		ELOG << "Could not create output directory, aborting." << std::endl;
+		ELOG << "Could not create output/export directory, aborting." << std::endl;
 		return EXIT_FAILURE;
 	}
 
@@ -102,7 +103,7 @@ int main(int argc, char *argv[])
 
 	try
 	{
-		IOUtil::copyDir(boost::filesystem::path(opts->sharePath() + "/assets"), outPath, true);
+		IOUtil::copyDir(boost::filesystem::path(opts->sharePath() + "/assets"), opts->outputDir(), true);
 	} catch(const boost::filesystem::filesystem_error & e)
 	{
 		ELOG << e.what() << std::endl;
@@ -152,7 +153,7 @@ int main(int argc, char *argv[])
 			if (rmrExists)
 			{
 				ILOG << "Running Rnammer..." << std::endl;
-				result.contains16S = RnammerAdapter::mark16S(fasta, svr);
+				result._16S = RnammerAdapter::find16S(fasta, svr);
 			}
 
 			ILOG << "Clustering..." << std::endl;
