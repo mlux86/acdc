@@ -26,6 +26,7 @@ Other needed libraries are included.
 ### Optional dependencies
 
 [Kraken](https://github.com/DerrickWood/kraken) >= 0.10.5-beta can be used to improve results by using a database.
+[RNAmmer](http://www.cbs.dtu.dk/services/RNAmmer/) >= 1.2 is used to highlight and extract 16S regions.
 
 ## Installation
 
@@ -75,6 +76,12 @@ By default, Kraken is not included in the computation. It is necessary, to speci
 ```
 
 Make sure that the `kraken` and `kraken-translate` executables can be found in the $PATH environment variable.
+
+### Highlighting and extraction of 16S regions
+
+Make sure that the `rnammer` executable can be found in the $PATH environment variable and RNAmmer is working properly.
+
+In the visualization, 16S genes are highlighted by a large star shape. A click on it will download the corresponding 16S sequence.
 
 ## Viewing results
 
