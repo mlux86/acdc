@@ -2,7 +2,7 @@
 #include "fastclusterAcdc.h"
 #include "MLUtil.h"
 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 
 void HierarchicalClustering::clusterNum(const Eigen::MatrixXd & linkage, std::vector<unsigned> & labels, unsigned idx, unsigned clsnum)
 {

@@ -18,7 +18,7 @@
 #include <future>
 #include <map>
 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 #include "MatrixUtil.h"
 
 int main(int argc, char *argv[])

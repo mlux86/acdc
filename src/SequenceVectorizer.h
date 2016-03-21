@@ -1,7 +1,7 @@
 #pragma once
 
 #include <seqan/sequence.h> 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 #include <set>
 #include <map>
 #include <string>
