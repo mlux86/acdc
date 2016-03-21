@@ -6,6 +6,7 @@
 
 struct KrakenResult
 {
+	double bacterialBackground = 0.0;
 	std::map<std::string, std::string> classification;
 };
 

@@ -111,8 +111,24 @@ KrakenResult KrakenAdapter::runKraken(const std::string & fasta)
             species = "unknown";
         }
 
+        std::string domain;
+        if (parts.size() >= 3)
+        {
+            domain = parts[2];
+        } else
+        {
+            domain = "unknown";
+        }
+
+        if (domain == "Bacteria")
+        {
+            res.bacterialBackground++;
+        }
+
         res.classification[contig] = species;
     }
+
+    res.bacterialBackground /= krakenOut.size();
 
     return res;
 }

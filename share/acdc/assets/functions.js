@@ -214,7 +214,7 @@ function buildConfidenceTable(results)
 			'<td class="selectable dataConf">' + i + '</td>' +
 			'<td class="selectable ccConf">conf = ' + contProbCC.toFixed(2) + '</td>' +
 			'<td class="selectable dipConf">conf = ' + contProbDip.toFixed(2) + '</td>' +
-			(krakenEnabled ? '<td class="selectable kraken"><span class="number">' + kraken + '</span><br/>species</td>' : '') +
+			(krakenEnabled ? '<td class="selectable kraken"><span class="number">' + kraken + '</span> species</td>' : '') +
 			'</tr>');
 
 	}	
@@ -315,6 +315,7 @@ function showVisualization()
 	var greyedOut = new Array();
 	var sixteenS = new Array();
 	var outliers = new Array();
+	var additionalInfo = '';
 	
 	if (highlight16S && "contains16S" in x && x.contains16S.length > 0)
 	{
@@ -363,6 +364,7 @@ function showVisualization()
 				greyedOut.push(false);
 			}
 		}
+		additionalInfo = 'Bacterial background: ' + (x.krakenBacterialBackground*100).toFixed(2) + '%';
 	}	
 
 	var tooltips = results[selectedFasta].fastaLabels;
@@ -400,6 +402,8 @@ function showVisualization()
 
 	showData(x.id, dataMat, labels, tooltips, greyedOut, sixteenS, width, height, padding);
 	updateExport(labels, greyedOut);
+
+	$('#additionalInfo').html(additionalInfo);
 }
 
 function updateBootStrapsSelect()

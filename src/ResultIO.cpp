@@ -133,6 +133,7 @@ void ResultIO::writeResultContainerToJSON(ResultContainer result, const std::str
             }
             root["krakenLabels"].append(krakenLbl);
         }
+        root["krakenBacterialBackground"] = result.kraken.bacterialBackground;
     }
 
     root["contains16S"] = Json::Value(Json::arrayValue);
