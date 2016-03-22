@@ -1,18 +1,11 @@
-#include "Logger.h"
 #include "Clustering.h"
 #include "DipStatistic.h"
 #include "MLUtil.h"
-#include "MatrixUtil.h"
-#include "Kmeans.h"
 #include "HierarchicalClustering.h"
 #include "TarjansAlgorithm.h"
 #include "Opts.h"
 
-#include <math.h>
-#include <numeric>
 #include <algorithm>
-#include <chrono>
-#include <random>
 #include <limits>
 #include <vector>
 
@@ -63,6 +56,7 @@ bool Clustering::isMultiModal(double alpha, double splitThreshold)
         }
     }
 
+    // Data is multi-modal if there are enough split viewers
     return splitPerc >= splitThreshold;
 }
 
@@ -164,12 +158,15 @@ std::pair<unsigned, std::vector<ClusteringResult>> Clustering::estimateK(unsigne
 {
     std::vector<ClusteringResult> results(maxK);
 
+    // label trivial clustering for k == 1
     results[0].numClusters = 1;
     results[0].labels.resize(data.rows());
     std::fill(results[0].labels.begin(),results[0].labels.end(), 1);
 
+    // compute linkage only once
     Eigen::MatrixXd z = HierarchicalClustering::linkage(data);
 
+    // find minimum Davies Bouldin index
     double minDb = std::numeric_limits<double>::max();
     unsigned optK = 0;
 
@@ -200,7 +197,7 @@ void Clustering::postprocess(ClusteringResult & cr)
         throw std::runtime_error("Number of labels must match number of contigs.");
     }
 
-    // first, assign points in contigs which occur in distinct clusters, the cluster with the most points
+    // first, assign points in contigs which occur in distinct clusters, assign the cluster with the most points
 
     auto uniqueContigs = contigs;
     std::sort(uniqueContigs.begin(), uniqueContigs.end());
@@ -224,7 +221,7 @@ void Clustering::postprocess(ClusteringResult & cr)
             labelSizes[lbl]++;
         }
 
-        if (labelSizes.size() > 1) // multiple clusters for one contig
+        if (labelSizes.size() > 1) // multiple clusters for one contig, re-assign label
         {
             unsigned newLbl = 0;
             unsigned maxClustSize = 0;
@@ -247,7 +244,7 @@ void Clustering::postprocess(ClusteringResult & cr)
 
     }
 
-    // count clusters
+    // count clusters because they might have changed
     auto uniqueLabels = cr.labels;
     std::sort(uniqueLabels.begin(), uniqueLabels.end());
     auto it2 = std::unique(uniqueLabels.begin(), uniqueLabels.end());
@@ -261,7 +258,6 @@ void Clustering::postprocess(ClusteringResult & cr)
     if (Opts::aggressiveThreshold() > 0)
     {
         // for each label, add up sizes of contained contigs and see if they are below threshold
-
         std::map<unsigned, unsigned> clusterSizes; // cluster label => num nucleotides in there
 
         for (auto contig : uniqueContigs)
@@ -276,6 +272,7 @@ void Clustering::postprocess(ClusteringResult & cr)
             }
         }
 
+        // mark outlier clusters if the cluster size is below threshold
         for (auto & it : clusterSizes)
         {
             unsigned lbl = it.first;

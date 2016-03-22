@@ -9,7 +9,6 @@ add_library(mainprog
 	Clustering.cpp
 	HierarchicalClustering.cpp
 	TarjansAlgorithm.cpp
-	Kmeans.cpp
 	ClusterAnalysis.cpp
 	Logger.cpp
 	KrakenAdapter.cpp

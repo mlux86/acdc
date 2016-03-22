@@ -2,6 +2,7 @@
 #include "BarnesHutSNEAdapter.h"
 #include "MLUtil.h"
 #include "Opts.h"
+#include "tsne.h"
 
 BarnesHutSNEAdapter::BarnesHutSNEAdapter()
 {
@@ -52,7 +53,6 @@ Eigen::MatrixXd BarnesHutSNEAdapter::saveData(double* data, int N, int D)
 	return eigendata;	
 }
 
-// copied and modified from the original BH-SNE implementation
 Eigen::MatrixXd BarnesHutSNEAdapter::runBarnesHutSNE(const Eigen::MatrixXd & eigendata)
 {
     Eigen::MatrixXd tsneData;

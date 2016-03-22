@@ -2,10 +2,9 @@
 #include "ThreadPool.h"
 #include "ClusterAnalysis.h"
 #include "BarnesHutSNEAdapter.h"
-#include "TarjansAlgorithm.h"
-#include "MatrixUtil.h"
 #include "MLUtil.h"
 #include "Opts.h"
+#include "SequenceVectorizer.h"
 
 ClusterAnalysis::ClusterAnalysis()
 {
@@ -46,6 +45,8 @@ std::vector< std::vector<unsigned> > ClusterAnalysis::stratifiedSubsamplingIndic
 
 ClusterAnalysisResult ClusterAnalysis::bootstrapTask(const SequenceVectorizationResult & svr, const std::vector<unsigned> indices)
 {
+	// generate new data matrices from bootstrap indices and cluster them
+
 	Eigen::MatrixXd data = Eigen::MatrixXd::Zero(indices.size(), svr.data.cols());
 	std::vector<std::string> contigs(indices.size());
 
@@ -105,7 +106,7 @@ std::vector<ClusterAnalysisResult> ClusterAnalysis::analyzeBootstraps(const Sequ
 
 	std::vector< std::future<ClusterAnalysisResult> > futures;
 
-	// add oneshot task
+	// add oneshot task (always first element in returned vector)
 	futures.push_back(
 		pool.enqueue(&ClusterAnalysis::analyze, svr.data, svr.contigs, svr.contigSizes)
 	);

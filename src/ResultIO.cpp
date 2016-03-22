@@ -2,12 +2,13 @@
 #include <map>
 #include <unordered_map>
 #include <set>
-#include <boost/filesystem.hpp>
+#include <memory>
 
 #include "MatrixUtil.h"
 #include "MLUtil.h"
 #include "ResultIO.h"
 #include "SequenceUtil.h"
+#include "Clustering.h"
 
 ResultIO::ResultIO(const std::string & dir, bool krakenEnabled_) : outputDir(dir), krakenEnabled(krakenEnabled_)
 {
@@ -269,27 +270,22 @@ void ResultIO::processResult(const ResultContainer & result)
 	exportClusteringFastas(result);
     export16S(result);
 	writeResultContainerToJSON(result, fname);
-	jsonFiles.push_back(fname);
 
-    ss.str("");
-    ss << outputDir << "/export/" << result.id<< ".oneshot.orig";
-    MatrixUtil::saveMatrix(result.oneshot.dataOrig, ss.str(), '\t');
-    ss.str("");
-    ss << outputDir << "/export/" << result.id<< ".oneshot.sne";
-    MatrixUtil::saveMatrix(result.oneshot.dataSne, ss.str(), '\t');
-    ss.str("");
-    ss << outputDir << "/export/" << result.id <<  ".oneshot.pca";
-    MatrixUtil::saveMatrix(result.oneshot.dataPca, ss.str(), '\t');
-    ss.str("");
-    ss << outputDir << "/export/" << result.id << ".oneshot.contigs";
-    std::ofstream ofs(ss.str(), std::ofstream::out);
-    for (auto & lbl : result.fastaLabels) 
-    {
-        ofs << lbl << std::endl;
-    }
-    ofs.close();     
-}
-
-void ResultIO::finish()
-{
+    // ss.str("");
+    // ss << outputDir << "/export/" << result.id<< ".oneshot.orig";
+    // MatrixUtil::saveMatrix(result.oneshot.dataOrig, ss.str(), '\t');
+    // ss.str("");
+    // ss << outputDir << "/export/" << result.id<< ".oneshot.sne";
+    // MatrixUtil::saveMatrix(result.oneshot.dataSne, ss.str(), '\t');
+    // ss.str("");
+    // ss << outputDir << "/export/" << result.id <<  ".oneshot.pca";
+    // MatrixUtil::saveMatrix(result.oneshot.dataPca, ss.str(), '\t');
+    // ss.str("");
+    // ss << outputDir << "/export/" << result.id << ".oneshot.contigs";
+    // std::ofstream ofs(ss.str(), std::ofstream::out);
+    // for (auto & lbl : result.fastaLabels) 
+    // {
+    //     ofs << lbl << std::endl;
+    // }
+    // ofs.close();
 }

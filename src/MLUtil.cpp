@@ -6,6 +6,7 @@
 
 Eigen::MatrixXd MLUtil::knnAffinityMatrix(const Eigen::MatrixXd & data, const unsigned k_, bool mutual)
 {
+    // Kd-tree data types
     using RowMajorMatrixXd = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
     using EigenKdTree = nanoflann::KDTreeEigenMatrixAdaptor<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>;
 
@@ -16,6 +17,7 @@ Eigen::MatrixXd MLUtil::knnAffinityMatrix(const Eigen::MatrixXd & data, const un
     unsigned n = r.rows();
     unsigned dim = r.cols();
 
+    // Sanity check
     if (k > n)
     {
         std::stringstream ss;
@@ -23,14 +25,15 @@ Eigen::MatrixXd MLUtil::knnAffinityMatrix(const Eigen::MatrixXd & data, const un
         throw std::runtime_error(ss.str());
     }
 
+    // build and initialize kd-Tree
     EigenKdTree tree(dim, r);
     tree.index->buildIndex();
-
     std::vector<size_t> indexes(k);
     std::vector<double> dists(k);
     nanoflann::KNNResultSet<double> resultSet(k);
     resultSet.init(&indexes[0], &dists[0]);
 
+    // build affinity matrix by kd-tree lookups
     Eigen::MatrixXd affinities = Eigen::MatrixXd::Zero(n, n);
 
     for (unsigned i = 0; i < n; i++)
@@ -129,10 +132,13 @@ std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::VectorXd, Eigen::MatrixXd, E
     Eigen::MatrixXd y = y_;
 
     // subtract means
+    
     Eigen::VectorXd meanX = x.colwise().sum() / n;
     x.rowwise() -= meanX.transpose();
     Eigen::VectorXd meanY = y.colwise().sum() / n;
     y.rowwise() -= meanY.transpose();
+
+    // compute CCA result matrices 
 
     Eigen::ColPivHouseholderQR<Eigen::MatrixXd> qrX(x);
     Eigen::ColPivHouseholderQR<Eigen::MatrixXd> qrY(y);

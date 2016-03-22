@@ -43,10 +43,14 @@ void Opts::initializeOnce(int argc, char *argv[])
 	unsigned count = readlink( "/proc/self/exe", result, 4096);
 	std::string selfExe(result, (count > 0) ? count : 0);
 
+	// find execution and asset paths
+
     boost::filesystem::path path(selfExe);
     boost::filesystem::path fullPath = boost::filesystem::canonical(boost::filesystem::system_complete(path));
     opts._execPath = fullPath.parent_path().string();
     opts._sharePath = opts._execPath + "/../share/acdc";
+
+    // build boost program arguments 
 
 	description.add_options()
 	    ("help,h", "Display this help message")
@@ -75,6 +79,8 @@ void Opts::initializeOnce(int argc, char *argv[])
 	boost::program_options::parsed_options parsed = boost::program_options::command_line_parser(argc, argv).options(description).allow_unregistered().run(); 
 	boost::program_options::store(parsed, vm);
 	boost::program_options::notify(vm);
+
+	// initialize members from variables map
 
 	std::stringstream ss;
 	ss << description;

@@ -3,6 +3,8 @@
 #include <vector>
 #include <string>
 
+// Program arguments data class
+// See implementation method initializeOnce() for description of arguments
 class Opts
 {
 private:
@@ -37,6 +39,7 @@ private:
 
 	unsigned _aggressiveThreshold = 0;
 
+	// Singleton object, keep constructors and copy operations private
 	Opts();
 	~Opts();
 	Opts(Opts const &) = delete;
@@ -44,6 +47,7 @@ private:
 	static Opts & getInstance();
 
 public:
+	// Call this method with program arguments once to initialize the singleton object
 	static void initializeOnce(int argc, char *argv[]);
 
 	static std::string execPath();

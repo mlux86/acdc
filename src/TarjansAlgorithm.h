@@ -2,9 +2,14 @@
 
 #include <stack>
 #include <vector>
+#include <Eigen/Dense>
 
-#include "Clustering.h"
+// forward declaration
+struct ClusteringResult; 
 
+// Finding strongly connected components of a graph
+// Algorithm resembles Wikipedia Pseudo code:
+// https://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm
 class TarjansAlgorithm
 {
 private:

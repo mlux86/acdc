@@ -23,6 +23,8 @@ bool KrakenAdapter::krakenExists()
         return false;
     }
 
+    // Try to call kraken and kraken-translate executables and check their return values
+
     std::string krakenCommand = "kraken -h > /dev/null 2>&1";
     FILE * f1 = popen(krakenCommand.c_str(), "r");
     if (!f1)
@@ -34,6 +36,7 @@ bool KrakenAdapter::krakenExists()
     {
         return false;
     }
+
 
     std::string krakenTranslateCommand = "kraken-translate -h > /dev/null 2>&1";
     FILE * f2 = popen(krakenTranslateCommand.c_str(), "r");
@@ -47,15 +50,18 @@ bool KrakenAdapter::krakenExists()
         return false;
     }    
 
+    // No error, Kraken seems to work
     return true;
 }
 
 KrakenResult KrakenAdapter::runKraken(const std::string & fasta)
 {
+    // use temporary files for Kraken results
     boost::filesystem::path temp = boost::filesystem::unique_path();
     const std::string fname = temp.native(); 
     const std::string fnameT = fname + ".t";
 
+    // generate shell commands
 	std::string krakenCommand = "kraken --db '" + Opts::krakenDb() + "' --output '" + fname + "' '" + fasta + "'";
     if (!(Logger::getInstance().getLevel() == Verbose || Logger::getInstance().getLevel() == Debug))
     {
@@ -63,6 +69,7 @@ KrakenResult KrakenAdapter::runKraken(const std::string & fasta)
     }
     std::string krakenTranslateCommand = "kraken-translate --db '" + Opts::krakenDb() + "' '" + fname + "' > '" + fnameT + "'";
 
+    // execute kraken
     DLOG << "Executing: " << krakenCommand << "\n";
  	FILE * f1 = popen(krakenCommand.c_str(), "r");
  	if (!f1)
@@ -75,6 +82,7 @@ KrakenResult KrakenAdapter::runKraken(const std::string & fasta)
         throw std::runtime_error("Kraken finished abnormally. Use -vv or -vvv switch to show more information.");    
     }
 
+    // execute kraken-translate
     DLOG << "Executing: " << krakenTranslateCommand << "\n";
     FILE * f2 = popen(krakenTranslateCommand.c_str(), "r");
     if (!f2)
@@ -87,13 +95,14 @@ KrakenResult KrakenAdapter::runKraken(const std::string & fasta)
         throw std::runtime_error("Kraken-translate finished abnormally. Use -vv or -vvv switch to show more information.");    
     }
 
+    // parse kraken-translate output
     auto krakenOut = IOUtil::fileLinesToVec(fnameT);
     std::remove(fname.c_str());
     std::remove(fnameT.c_str());
 
     KrakenResult res;
 
-    for (const auto & line : krakenOut)
+    for (const auto & line : krakenOut) // each line is one classification of a contig
     {
         std::vector<std::string> parts;
         boost::split(parts, line, boost::is_any_of("\t"));
@@ -102,6 +111,7 @@ KrakenResult KrakenAdapter::runKraken(const std::string & fasta)
 
         boost::split(parts, parts[1], boost::is_any_of(";"));
 
+        // split phylogenentic classification to find species
         std::string species;
         if (parts.size() >= 9)
         {
@@ -110,7 +120,9 @@ KrakenResult KrakenAdapter::runKraken(const std::string & fasta)
         {
             species = "unknown";
         }
+        res.classification[contig] = species;
 
+        // split phylogenentic classification to find domain (for bacterial background)
         std::string domain;
         if (parts.size() >= 3)
         {
@@ -119,13 +131,11 @@ KrakenResult KrakenAdapter::runKraken(const std::string & fasta)
         {
             domain = "unknown";
         }
-
         if (domain == "Bacteria")
         {
             res.bacterialBackground++;
         }
 
-        res.classification[contig] = species;
     }
 
     res.bacterialBackground /= krakenOut.size();

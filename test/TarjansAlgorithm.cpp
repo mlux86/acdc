@@ -3,6 +3,7 @@
 #include "MatrixUtil.h"
 #include "MLUtil.h"
 #include "TarjansAlgorithm.h"
+#include "Clustering.h"
 
 #include <algorithm>
 #include <iostream>

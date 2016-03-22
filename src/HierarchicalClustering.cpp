@@ -11,20 +11,20 @@ void HierarchicalClustering::clusterNum(const Eigen::MatrixXd & linkage, std::ve
     unsigned c1 = linkage(idx, 0);
     unsigned c2 = linkage(idx, 1);
 
-    if (c1 < n)
+    if (c1 < n) // left leaf, mark label
     {
-        labels[c1] = clsnum;
+        labels[c1] = clsnum; 
     } else
     {
-        HierarchicalClustering::clusterNum(linkage, labels, c1-n, clsnum);
+        HierarchicalClustering::clusterNum(linkage, labels, c1-n, clsnum); // recurse left tree
     }
 
-    if (c2 < n)
+    if (c2 < n) // right leaf, mark label
     {
         labels[c2] = clsnum;
     } else
     {
-        HierarchicalClustering::clusterNum(linkage, labels, c2-n, clsnum);
+        HierarchicalClustering::clusterNum(linkage, labels, c2-n, clsnum); // recurse right tree
     }
 }
 
@@ -39,25 +39,25 @@ std::vector<unsigned> HierarchicalClustering::cluster(const Eigen::MatrixXd & li
     { 
         // left tree 
         i = linkage(k, 0);
-        if (i < n) 
+        if (i < n) // is leaf, mark label
         { 
             labels[i] = clsnum; 
             clsnum++; 
         } else if (i < 2*n-maxK) 
         { 
-            HierarchicalClustering::clusterNum(linkage, labels, i-n, clsnum); 
+            HierarchicalClustering::clusterNum(linkage, labels, i-n, clsnum); // recurse left tree
             clsnum++; 
         } 
 
         // right tree 
         i = linkage(k, 1);
-        if (i < n) 
+        if (i < n) // is leaf, mark label
         { 
             labels[i] = clsnum; 
             clsnum++; 
         } else if (i < 2*n-maxK) 
         { 
-            HierarchicalClustering::clusterNum(linkage, labels, i-n, clsnum); 
+            HierarchicalClustering::clusterNum(linkage, labels, i-n, clsnum); // recurse right tree
             clsnum++; 
         } 
     } 
@@ -67,12 +67,15 @@ std::vector<unsigned> HierarchicalClustering::cluster(const Eigen::MatrixXd & li
 
 Eigen::MatrixXd HierarchicalClustering::linkage(const Eigen::MatrixXd & data)
 {
-
+    // compute pairwise distances
     unsigned n = data.rows();
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dist = MLUtil::condensedPdist(data);
+    
+    // call fastcluster linkage routine
     double * const z = new double[(n-1) * 4];
     fc_linkage(dist.data(), z, n, ClusterMethods::FC_METHOD_METR_WARD);
 
+    // assemble Eigen object from returned linkage
     Eigen::MatrixXd res(n-1, 4);
     for (unsigned i = 0; i < n-1; i++)
     {

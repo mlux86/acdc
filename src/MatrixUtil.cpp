@@ -34,18 +34,17 @@ Eigen::MatrixXd MatrixUtil::loadMatrix(std::string filename, char delimiter)
         throw std::runtime_error("Cannot read file '" + filename + "'!");
     }
 
+    // Read number of columns from first line
     std::string delim(1, delimiter);
-
     std::string line;
     std::getline(ifs, line);
-
     std::vector<std::string> strs;
     boost::split(strs, line, boost::is_any_of(delim));
-
     auto cols = boost::lexical_cast<unsigned>(strs.back());
 
     Eigen::MatrixXd mat = Eigen::MatrixXd::Zero(0, cols);
 
+    // Read matrix entries from rest of file
     unsigned i = 0;
     while (std::getline(ifs, line))
     {
@@ -79,8 +78,10 @@ void MatrixUtil::saveMatrix(const Eigen::MatrixXd & mat, std::string filename, c
     unsigned rows = mat.rows();
     unsigned cols = mat.cols();
 
+    // Write first line with number of dimensions
     ofs << cols << '\n';
 
+    // Write rest of matrix to file
     for (unsigned i = 0; i < rows; i++)
     {
         for (unsigned j = 0; j < cols; j++)

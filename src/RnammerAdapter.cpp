@@ -8,6 +8,7 @@
 
 #include "RnammerAdapter.h"
 #include "SequenceUtil.h"
+#include "SequenceVectorizer.h"
 #include "Logger.h"
 #include "IOUtil.h"
 
@@ -37,11 +38,13 @@ bool RnammerAdapter::rnammerExists()
 
 std::vector<std::string> RnammerAdapter::find16S(const std::string & fasta, const SequenceVectorizationResult & svr)
 {
+    // Temporary files
     boost::filesystem::path temp = boost::filesystem::unique_path();
     const std::string fname = temp.native();
 
-	std::string rnammerCommand = "rnammer -s bac,arch -m lsu,ssu,tsu -gff '" + fname + "' '" + fasta + "' > /dev/null 2>&1";
+    // Run RNAmmer
 
+	std::string rnammerCommand = "rnammer -s bac,arch -m lsu,ssu,tsu -gff '" + fname + "' '" + fasta + "' > /dev/null 2>&1";
     DLOG << "Executing: " << rnammerCommand << "\n";
  	FILE * f = popen(rnammerCommand.c_str(), "r");
  	if (!f)
@@ -53,6 +56,8 @@ std::vector<std::string> RnammerAdapter::find16S(const std::string & fasta, cons
     {
         throw std::runtime_error("Rnammer finished abnormally. Use -vv or -vvv switch to show more information.");    
     }
+
+    // Parse output
 
     auto rnammerOut = IOUtil::fileLinesToVec(fname);
     std::remove(fname.c_str());
@@ -74,7 +79,7 @@ std::vector<std::string> RnammerAdapter::find16S(const std::string & fasta, cons
         unsigned endPos = boost::lexical_cast<unsigned>(parts[4]); 
         std::string attr = parts[8];
 
-        if (attr == "16s_rRNA")
+        if (attr == "16s_rRNA") 
         {
             VLOG << "[rnammer] Found 16S sequence in contig " << contig << std::endl;
             RnammerResult res;
@@ -88,6 +93,8 @@ std::vector<std::string> RnammerAdapter::find16S(const std::string & fasta, cons
     unsigned n = svr.contigs.size();
     std::vector<std::string> _16s(n);
     std::stringstream ss;
+
+    // Process hits and assemble result vector with 16S sequences
 
     std::set<unsigned> processedResults;
 

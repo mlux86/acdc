@@ -1,7 +1,6 @@
 #include "Logger.h"
 
 #include <thread>
-#include <sstream>
 
 Logger::Logger()
 {

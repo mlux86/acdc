@@ -2,12 +2,6 @@
 
 #include "IOUtil.h"
 
-unsigned long long IOUtil::getFileSizeBytes(const std::string & filename)
-{
-    std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
-    return in.tellg(); 
-}
-
 void IOUtil::copyDir(boost::filesystem::path const & source, boost::filesystem::path const & destination, bool overwriteExisting)
 {
     namespace fs = boost::filesystem;

@@ -10,10 +10,8 @@
 #include <functional>
 #include <stdexcept>
 
-/**
- * From: https://github.com/progschj/ThreadPool
- * Modified and formatted code. 
- */
+// From: https://github.com/progschj/ThreadPool
+// Modified and formatted code. 
 class ThreadPool 
 {
 

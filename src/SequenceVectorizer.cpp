@@ -1,7 +1,6 @@
 #include "Logger.h"
 #include "SequenceVectorizer.h"
 #include "SequenceUtil.h"
-#include "IOUtil.h"
 #include "Opts.h"
 
 #include <string>
@@ -53,6 +52,8 @@ void SequenceVectorizer::loadFasta()
 	ids.clear();
 	sequences.clear();
 
+	// Use only contigs which are larger than the minimum length
+
 	for (unsigned i = 0; i < n; i++)
 	{
 		std::string id;
@@ -79,6 +80,8 @@ void SequenceVectorizer::estimateWindowParams()
 		{
 			numNucleotides += seqan::length(seq);
 		}
+
+		// Window step is estimated using the number of nucleotides of all usable contigs
 
         windowStep = (unsigned) ceil((double)numNucleotides / (double)targetNumPoints);
         windowWidth = 2 * windowStep;
@@ -124,6 +127,8 @@ std::pair<Eigen::MatrixXd, std::vector<WindowRange>> SequenceVectorizer::vectori
 		n++;
 	}
 
+	// Perform actual vectorization
+
 	Eigen::MatrixXd mat = Eigen::MatrixXd::Zero(n, getDim());
 	std::vector<WindowRange> windows(n);
 
@@ -149,6 +154,8 @@ std::pair<Eigen::MatrixXd, std::vector<WindowRange>> SequenceVectorizer::vectori
 		}
 	}
 
+	// Normalize if needed
+
 	if (normalize)
 	{
 		Eigen::MatrixXd m = mat.rowwise().sum().asDiagonal();
@@ -173,6 +180,8 @@ SequenceVectorizationResult SequenceVectorizer::vectorize() const
 
 	Eigen::MatrixXd data(0, getDim());
 
+	// Vectorize each contig individually and build up full data matrix
+
 	for (unsigned i = 0; i < n; i++)
 	{
 		std::string id = ids.at(i);
@@ -184,7 +193,6 @@ SequenceVectorizationResult SequenceVectorizer::vectorize() const
 			Eigen::MatrixXd & mat = r.first;
 			unsigned rows = mat.rows();
 
-			// concatenate matrices TODO that's quite expensive
 			auto tmp = data;
 			data = Eigen::MatrixXd(tmp.rows() + mat.rows(), getDim());
 			data << tmp, mat;
