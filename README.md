@@ -94,6 +94,7 @@ It contains the file `index.html` that can be viewed in any modern browser, supp
 * [SeqAn](http://www.seqan.de/), an open source C++ library of efficient algorithms and data structures for the analysis of sequences with the focus on biological data.
 * [t-SNE](https://lvdmaaten.github.io/tsne/), t-Distributed Stochastic Neighbor Embedding (t-SNE) is a technique for dimensionality reduction that is particularly well suited for the visualization of high-dimensional datasets.
 * [diptest: Hartigan's Dip Test Statistic for Unimodality](https://cran.r-project.org/web/packages/diptest/), by Martin Maechler (originally from Fortran and S-plus by Dario Ringach, NYU.edu), modified for use in a C++ application.
+* [fastcluster](http://danifold.net/fastcluster.html) fastcluster: Fast hierarchical clustering routines for R and Python, extracted relevant code and added pure C++ interface
 * [JsonCpp](https://github.com/open-source-parsers/jsoncpp), a C++ library for interacting with JSON.
 * [nanoflann](https://github.com/jlblancoc/nanoflann), a C++ header-only library for Nearest Neighbor (NN) search wih KD-trees.
 * [Catch](https://github.com/philsquared/Catch), a modern, C++-native, header-only, framework for unit-tests, TDD and BDD.
