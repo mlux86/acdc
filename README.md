@@ -19,7 +19,6 @@ Acdc is a tool to test next-generation-sequencing (NGS) data from single-cell se
 * C++11 compatible compiler
 * [CMake](https://cmake.org/) >= 3.0
 * [Boost C++ Libraries](http://www.boost.org) >= 1.58.0 (program_options, system, filesystem)
-* [Eigen](http://eigen.tuxfamily.org/) >= 3.3
 
 Other needed libraries are included.
 
