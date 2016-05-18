@@ -55,4 +55,5 @@ add_subdirectory(test)
 # installation 
 message(STATUS "CMAKE_INSTALL_PREFIX: " ${CMAKE_INSTALL_PREFIX})
 install(PROGRAMS ${CMAKE_BINARY_DIR}/acdc DESTINATION bin)
-install(DIRECTORY share/ DESTINATION share)
+install(DIRECTORY DESTINATION share/acdc)
+install(DIRECTORY share/acdc/ DESTINATION share/acdc)
