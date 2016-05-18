@@ -12,10 +12,6 @@ set(Boost_USE_STATIC_RUNTIME OFF)
 find_package(Boost 1.58.0 COMPONENTS program_options system filesystem REQUIRED)
 include_directories(${Boost_INCLUDE_DIR})
 
-# Eigen
-find_package(Eigen3 REQUIRED)
-include_directories(${EIGEN3_INCLUDE_DIRS})
-
 # t-SNE
 include_directories(SYSTEM "libtsne")
 
@@ -36,6 +32,9 @@ include_directories(SYSTEM "libcatch")
 
 # Fastcluster
 include_directories(SYSTEM "libfastcluster")
+
+# Eigen 3
+include_directories(SYSTEM "libeigen3")
 
 # OpenMP
 find_package(OpenMP)
