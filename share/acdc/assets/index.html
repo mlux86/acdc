@@ -1,11 +1,11 @@
 <!DOCTYPE HTML>
 <html>
 
-<head>  
-	<meta charset="utf-8" /> 
+<head>
+	<meta charset="utf-8" />
 	<link rel="stylesheet" type="text/css" href="style.css">
 	<script type="text/javascript" src="jquery.min.js"></script>
-	<script type="text/javascript">		
+	<script type="text/javascript">
 		var results = new Array();
 	</script>
 	<script type="text/javascript" src="data.js"></script>
@@ -20,13 +20,13 @@
       ,'/                                                                                                        <a href="http://wiki.techfak.uni-bielefeld.de/didy">Computational Methods for the Analysis of the Diversity and Dynamics of Genomes (DiDy)</a>
     ,' /        █████╗  ██████╗██████╗  ██████╗  (a)utomated                                                     Alpha-version, no warranties :)
   ,'  /_____,  ██╔══██╗██╔════╝██╔══██╗██╔════╝  (c)ontamination
-.'____    ,'   ███████║██║     ██║  ██║██║       (d)etection and 
-     /  ,'     ██╔══██║██║     ██║  ██║██║       (c)onfidence estimation for NGS data 
+.'____    ,'   ███████║██║     ██║  ██║██║       (d)etection and
+     /  ,'     ██╔══██║██║     ██║  ██║██║       (c)onfidence estimation for single-cell genome data
     / ,'       ██║  ██║╚██████╗██████╔╝╚██████╗
    /,'         ╚═╝  ╚═╝ ╚═════╝╚═════╝  ╚═════╝
-  /'      
+  /'
 
-  	Use arrow keys ←→↑↓ to navigate.                                    		
+  	Use arrow keys ←→↑↓ to navigate.
 	</pre>
 	<table id="confidences">
 	</table>
@@ -37,7 +37,7 @@
 				<table>
 					<tr>
 					<td>
-						Dimension reduction: 
+						Dimension reduction:
 					</td>
 					<td>
 						<input type="radio" class="radioReduction" name="radioReduction" value="dataSne" id="dataSne" checked> <label for="dataSne">BH-SNE</label>
@@ -63,16 +63,16 @@
 							<input type="radio" class="numClusters" name="numClusters" value="2" id="numClusters2"> <label for="numClusters2">2</label>
 							<input type="radio" class="numClusters" name="numClusters" value="3" id="numClusters3"> <label for="numClusters3">3</label>
 							<input type="radio" class="numClusters" name="numClusters" value="4" id="numClusters4"> <label for="numClusters4">4</label>
-							<input type="radio" class="numClusters" name="numClusters" value="5" id="numClusters5"> <label for="numClusters5">5</label>							
+							<input type="radio" class="numClusters" name="numClusters" value="5" id="numClusters5"> <label for="numClusters5">5</label>
 						</td>
-					</tr>	
+					</tr>
 					<tr>
 						<td colspan="2">
 							<input type="checkbox" id="showOutliers" checked> <label for="showOutliers">Show outlier contigs</label>
 							&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 							<input type="checkbox" id="highlight16S" checked> <label for="highlight16S">Highlight 16S (click star to download)</label>
-						</td>						
-					</tr>				
+						</td>
+					</tr>
 				</table>
 		</fieldset>
 		<div id="scatter"></div>

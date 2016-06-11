@@ -4,7 +4,7 @@
     ,' /        █████╗  ██████╗██████╗  ██████╗  (a)utomated
   ,'  /_____,  ██╔══██╗██╔════╝██╔══██╗██╔════╝  (c)ontamination
 .'____    ,'   ███████║██║     ██║  ██║██║       (d)etection and
-     /  ,'     ██╔══██║██║     ██║  ██║██║       (c)onfidence estimation for NGS data
+     /  ,'     ██╔══██║██║     ██║  ██║██║       (c)onfidence estimation for single-cell genome data
     / ,'       ██║  ██║╚██████╗██████╔╝╚██████╗
    /,'         ╚═╝  ╚═╝ ╚═════╝╚═════╝  ╚═════╝
   /'
@@ -12,13 +12,16 @@
 
 ## Synopsis
 
-Acdc is a tool to test next-generation-sequencing (NGS) data from single-cell sequencing for contamination. By using sophisticated dimensionality reduction and clustering methods, it uses tetramer profiles to differentiate between different species in a given sample. It automatically detects the number of clusters/species and provides confidence information. 
+Acdc is a tool to test single-cell genome data contamination. By using sophisticated dimensionality
+reduction and clustering methods, it uses tetramer profiles to differentiate between different
+species in a given sample. It automatically detects the number of clusters/species and provides
+confidence information.
 
 ## Requirements
 
 * C++11 compatible compiler
 * [CMake](https://cmake.org/) >= 3.0
-* [Boost C++ Libraries](http://www.boost.org) >= 1.58.0 (program_options, system, filesystem)
+* [Boost C++ Libraries](http://www.boost.org) >= 1.55.0 (program_options, system, filesystem)
 
 Other needed libraries are included.
 
@@ -97,7 +100,7 @@ It contains the file `index.html` that can be viewed in any modern browser, supp
 * [JsonCpp](https://github.com/open-source-parsers/jsoncpp), a C++ library for interacting with JSON.
 * [nanoflann](https://github.com/jlblancoc/nanoflann), a C++ header-only library for Nearest Neighbor (NN) search wih KD-trees.
 * [Catch](https://github.com/philsquared/Catch), a modern, C++-native, header-only, framework for unit-tests, TDD and BDD.
-* [jQuery](https://jquery.com/), a fast, small, and feature-rich JavaScript library. 
+* [jQuery](https://jquery.com/), a fast, small, and feature-rich JavaScript library.
 * [D3.js - Data-Driven Documents](https://d3js.org/), a JavaScript library for visualizing data with HTML, SVG, and CSS.
 
 ## License
