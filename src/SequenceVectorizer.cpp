@@ -8,8 +8,8 @@
 #include <unordered_set>
 #include <math.h>
 
-#include <seqan/alignment_free.h> 
-#include <seqan/sequence.h> 
+#include <seqan/alignment_free.h>
+#include <seqan/sequence.h>
 #include <seqan/seq_io.h>
 
 SequenceVectorizer::SequenceVectorizer(const unsigned kmerLength_, const unsigned windowWidth_, const unsigned windowStep_) : kmerLength(kmerLength_), windowWidth(windowWidth_), windowStep(windowStep_)
@@ -68,7 +68,7 @@ void SequenceVectorizer::loadFasta()
 
 		ids.push_back(id);
 		sequences.push_back(seq);
-	}	
+	}
 }
 
 void SequenceVectorizer::estimateWindowParams()
@@ -80,6 +80,12 @@ void SequenceVectorizer::estimateWindowParams()
 		{
 			numNucleotides += seqan::length(seq);
 		}
+        DLOG << "numNucleotides = " << numNucleotides << std::endl;
+
+        if (numNucleotides <= targetNumPoints)
+        {
+            throw std::runtime_error("Input data is too small for requested number of data points.");
+        }
 
 		// Window step is estimated using the number of nucleotides of all usable contigs
 
@@ -89,11 +95,11 @@ void SequenceVectorizer::estimateWindowParams()
                 << "windowWidth=" << windowWidth << "   "
                 << "windowStep=" << windowStep << "\n";
 	}
-	
+
 	if(windowStep == 0)
 	{
 		windowStep = windowWidth / 2;
-	}	
+	}
 }
 
 void SequenceVectorizer::buildFeatureKmers()
@@ -113,14 +119,14 @@ void SequenceVectorizer::buildFeatureKmers()
 		}
 
 		uniqueKmers.insert(final);
-	}	
+	}
 }
 
 std::pair<Eigen::MatrixXd, std::vector<WindowRange>> SequenceVectorizer::vectorize(seqan::Dna5String & sequence) const
 {
 
 	unsigned len = seqan::length(sequence);
-	unsigned n = (unsigned) (((int)len - (int)windowWidth) / (int)windowStep) + 1;	
+	unsigned n = (unsigned) (((int)len - (int)windowWidth) / (int)windowStep) + 1;
 
 	if (n == 0) // include contigs smaller than window width
 	{
@@ -163,11 +169,11 @@ std::pair<Eigen::MatrixXd, std::vector<WindowRange>> SequenceVectorizer::vectori
 		{
 			if (abs(m(i, i)) < 1e-10)
 			{
-				m(i, i) = 1;	
+				m(i, i) = 1;
 			}
 		}
-		mat = m.inverse() * mat; 
-	}	
+		mat = m.inverse() * mat;
+	}
 
 	return std::make_pair(mat, windows);
 }
@@ -187,7 +193,7 @@ SequenceVectorizationResult SequenceVectorizer::vectorize() const
 		std::string id = ids.at(i);
 		seqan::Dna5String seq = sequences.at(i);
 
-		try 
+		try
 		{
 			std::pair<Eigen::MatrixXd, std::vector<WindowRange>> r = vectorize(seq);
 			Eigen::MatrixXd & mat = r.first;
@@ -196,15 +202,15 @@ SequenceVectorizationResult SequenceVectorizer::vectorize() const
 			auto tmp = data;
 			data = Eigen::MatrixXd(tmp.rows() + mat.rows(), getDim());
 			data << tmp, mat;
-			
+
 			for (unsigned j = 0; j < rows; j++)
 			{
-				svr.contigs.push_back(id);				
+				svr.contigs.push_back(id);
 			}
 
 			svr.windows.insert(svr.windows.end(), r.second.begin(), r.second.end());
 		}
-		catch(const std::exception& e) 
+		catch(const std::exception& e)
 		{
 			DLOG << e.what() << '\n';
 		}
@@ -212,7 +218,7 @@ SequenceVectorizationResult SequenceVectorizer::vectorize() const
 		svr.contigSizes[id] = seqan::length(seq);
 
 	}
-		
+
 	svr.data = data;
 
 	return svr;
