@@ -1,3 +1,4 @@
+#include <random>
 #include "Logger.h"
 #include "ThreadPool.h"
 #include "ClusterAnalysis.h"
@@ -37,7 +38,7 @@ std::vector< std::vector<unsigned> > ClusterAnalysis::stratifiedSubsamplingIndic
         }
 
         std::vector<unsigned> e(indices.begin()+from, indices.begin()+to);
-        result.push_back(e); 
+        result.push_back(e);
     }
 
     return result;
@@ -85,7 +86,7 @@ ClusterAnalysisResult ClusterAnalysis::analyze(const Eigen::MatrixXd & data, con
 	VLOG << "Clustering PCA...\n";
 	auto resPca = cPca.estimateK(5);
 	res.numClustPca = !res.isMultiModal ? 1 : resPca.first;
-	res.clustsPca = resPca.second;	
+	res.clustsPca = resPca.second;
 
 	VLOG << "Clustering t-SNE...\n";
 	auto resSne = cSne.estimateK(5);

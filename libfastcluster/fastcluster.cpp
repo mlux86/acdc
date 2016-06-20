@@ -40,6 +40,7 @@
 #include <algorithm> // for std::fill_n
 #include <stdexcept> // for std::runtime_error
 #include <string> // for std::string
+#include <math.h>
 
 // Microsoft Visual Studio does not have fenv.h
 #ifdef _MSC_VER

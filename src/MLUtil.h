@@ -1,6 +1,7 @@
-#pragma once 
+#pragma once
 
 #include <Eigen/Dense>
+#include <vector>
 
 // Machine Learning Utilities
 class MLUtil
@@ -19,12 +20,12 @@ public:
 
 	// Computes the pairwise distances of data
 	// Returns a quadratic matrix with the distances
-	static Eigen::MatrixXd pdist(const Eigen::MatrixXd & data);	
+	static Eigen::MatrixXd pdist(const Eigen::MatrixXd & data);
 
 	// Computes the pairwise distances of data
 	// Returns a condensed vector which contains only the upper triangular part of a pairwise quadratic distance matrix
 	static Eigen::VectorXd condensedPdist(const Eigen::MatrixXd & data);
-	
+
 	// Performs canonical correlation analysis
 	// Returns the same objects as the corresponding MATLAB implementation
 	static std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::VectorXd, Eigen::MatrixXd, Eigen::MatrixXd> canonicalCorrelation(const Eigen::MatrixXd & x, const Eigen::MatrixXd & y);
