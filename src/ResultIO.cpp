@@ -15,7 +15,7 @@ ResultIO::ResultIO(const std::string & dir, bool krakenEnabled_) : outputDir(dir
 
 }
 
-ResultIO::~ResultIO() 
+ResultIO::~ResultIO()
 {
 
 }
@@ -34,15 +34,15 @@ std::vector<unsigned> ResultIO::numericLabels(const std::vector<std::string> & l
             lblMap[lbl] = cnt++;
         }
         v[i++] = lblMap[lbl];
-    }   
-    return v;	
+    }
+    return v;
 }
 
 Json::Value ResultIO::clusteringResultToJSON(const ClusteringResult & cr)
 {
 	auto root = Json::Value();
 
-	root["numClusters"] = cr.numClusters;    
+	root["numClusters"] = cr.numClusters;
 
 	root["labels"] = Json::Value(Json::arrayValue);
 	for (const auto & lbl : cr.labels)
@@ -115,12 +115,12 @@ void ResultIO::writeResultContainerToJSON(ResultContainer result, const std::str
 	}
 
 	root["oneshot"] = clusterAnalysisResultToJSON(result, result.oneshot, false);
-	
+
 	root["bootstraps"] = Json::Value(Json::arrayValue);
 	for (auto & bs : result.bootstraps)
 	{
 		root["bootstraps"].append(clusterAnalysisResultToJSON(result, bs, true));
-	}	
+	}
 
     if (krakenEnabled)
     {
@@ -141,6 +141,20 @@ void ResultIO::writeResultContainerToJSON(ResultContainer result, const std::str
     for (const std::string & s : result._16S)
     {
         root["contains16S"].append(!s.empty());
+    }
+
+    root["stats"] = Json::Value();
+    root["stats"]["numBasepairs"] = (unsigned)result.stats.numBasepairs;
+    root["stats"]["gcContent"] = result.stats.gcContent;
+    root["stats"]["contigGcContent"] = Json::Value();
+    for (const auto & entry : result.stats.contigGcContent)
+    {
+        root["stats"]["contigGcContent"][entry.first] = entry.second;
+    }
+    root["stats"]["contigLength"] = Json::Value();
+    for (const auto & entry : result.stats.contigLength)
+    {
+        root["stats"]["contigLength"][entry.first] = (unsigned)entry.second;
     }
 
 	Json::StreamWriterBuilder builder;
@@ -164,8 +178,8 @@ void ResultIO::export16S(const ResultContainer & result)
             std::ofstream ofs(ss.str(), std::ofstream::out);
             ofs << s << std::endl;
             ofs.close();
-        }    
-    }    
+        }
+    }
 }
 
 void ResultIO::exportClusteringFastas(const ResultContainer & result)
@@ -195,7 +209,7 @@ void ResultIO::exportClusteringFastas(const ResultContainer & result)
     }
 
     // CC
-    for (auto & kv : contigIdsCC) 
+    for (auto & kv : contigIdsCC)
     {
         unsigned lbl = kv.first;
         auto & contigs = kv.second;
@@ -207,7 +221,7 @@ void ResultIO::exportClusteringFastas(const ResultContainer & result)
     // kraken
     if (krakenEnabled)
     {
-        for (auto & kv : contigIdsKraken) 
+        for (auto & kv : contigIdsKraken)
         {
             unsigned lbl = kv.first;
             auto & contigs = kv.second;
@@ -219,11 +233,11 @@ void ResultIO::exportClusteringFastas(const ResultContainer & result)
         std::stringstream ss;
         ss << outputDir << "/export/" << result.id << ".oneshot.kraken";
         std::ofstream ofs(ss.str(), std::ofstream::out);
-        for (auto & lbl : krakenLabels) 
+        for (auto & lbl : krakenLabels)
         {
             ofs << lbl << std::endl;
         }
-        ofs.close(); 
+        ofs.close();
     }
 
     // dip sne & dip pca
@@ -235,12 +249,12 @@ void ResultIO::exportClusteringFastas(const ResultContainer & result)
         std::map<unsigned, std::set<std::string>> contigIdsPca; // export a set of contigs per label
 
         for (unsigned i = 0; i < result.fastaLabels.size(); ++i)
-        {        
+        {
             contigIdsSne[result.oneshot.clustsSne.at(k).labels.at(i)].insert(result.fastaLabels.at(i));
             contigIdsPca[result.oneshot.clustsPca.at(k).labels.at(i)].insert(result.fastaLabels.at(i));
-        }	
+        }
 
-        for (auto & kv : contigIdsSne) 
+        for (auto & kv : contigIdsSne)
         {
         	unsigned lbl = kv.first;
         	auto & contigs = kv.second;
@@ -249,14 +263,14 @@ void ResultIO::exportClusteringFastas(const ResultContainer & result)
         	SequenceUtil::exportFilteredFasta(result.fasta, contigs, ss.str());
         }
 
-        for (auto & kv : contigIdsPca) 
+        for (auto & kv : contigIdsPca)
         {
             unsigned lbl = kv.first;
             auto & contigs = kv.second;
             std::stringstream ss;
             ss << outputDir << "/export/" << result.id << "-dip-dataPca-" << (k+1) << "-" << lbl << ".fasta";
             SequenceUtil::exportFilteredFasta(result.fasta, contigs, ss.str());
-        }        
+        }
     }
 
 
@@ -283,7 +297,7 @@ void ResultIO::processResult(const ResultContainer & result)
     // ss.str("");
     // ss << outputDir << "/export/" << result.id << ".oneshot.contigs";
     // std::ofstream ofs(ss.str(), std::ofstream::out);
-    // for (auto & lbl : result.fastaLabels) 
+    // for (auto & lbl : result.fastaLabels)
     // {
     //     ofs << lbl << std::endl;
     // }

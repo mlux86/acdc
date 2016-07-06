@@ -6,11 +6,12 @@
 
 #include "ClusterAnalysis.h"
 #include "KrakenAdapter.h"
+#include "SequenceUtil.h"
 
 // forward declaration
 struct ClusteringResult;
 
-// Contains the full result of one sample analysis 
+// Contains the full result of one sample analysis
 struct ResultContainer
 {
 	// Unique ID of the sample
@@ -34,7 +35,10 @@ struct ResultContainer
 	// 16S genes
 	// _16S[i].empty() => no 16S gene found in oneshot data point i
 	// otherwise       => 16S sequence _16s[i] found in oneshot data point i
-	std::vector<std::string> _16S; 
+	std::vector<std::string> _16S;
+
+    // Statistics
+    SequenceStats stats;
 };
 
 // Processing of result files (i.e. I/O, writing assets, JSON export, etc.)
@@ -43,7 +47,7 @@ class ResultIO
 
 private:
 	// Converts a vector of strings to a vector unsigned where each unique string corresponds to a unique unsigned value
-	std::vector<unsigned> numericLabels(const std::vector<std::string> & labels);	
+	std::vector<unsigned> numericLabels(const std::vector<std::string> & labels);
 
 	// Serialize a ClusteringResult to JSON
     Json::Value clusteringResultToJSON(const ClusteringResult & cr);
@@ -69,7 +73,7 @@ private:
 public:
 	ResultIO(const std::string & outputDir, bool krakenEnabled);
 	~ResultIO();
-	
+
 	// Processes a ResultContainer object to serialize it and write other information
 	void processResult(const ResultContainer & result);
 };

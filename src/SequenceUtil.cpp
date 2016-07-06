@@ -1,9 +1,10 @@
 #include <algorithm>
 
 #include "SequenceUtil.h"
+#include "Logger.h"
 
-#include <seqan/alignment_free.h> 
-#include <seqan/sequence.h> 
+#include <seqan/alignment_free.h>
+#include <seqan/sequence.h>
 #include <seqan/seq_io.h>
 
 void SequenceUtil::allPermsRepetition(std::vector<std::string> & perms, const std::vector<char> & alphabet, std::string elem, const unsigned length)
@@ -20,7 +21,7 @@ void SequenceUtil::allPermsRepetition(std::vector<std::string> & perms, const st
     }
 }
 
-std::vector<std::string> SequenceUtil::allKmers(const unsigned kmerLength) 
+std::vector<std::string> SequenceUtil::allKmers(const unsigned kmerLength)
 {
     std::vector<char> alphabet = {'A', 'C', 'G', 'T'};
     std::vector<std::string> perms;
@@ -28,10 +29,10 @@ std::vector<std::string> SequenceUtil::allKmers(const unsigned kmerLength)
     return perms;
 }
 
-std::string SequenceUtil::reverseComplement(const std::string & seq) 
+std::string SequenceUtil::reverseComplement(const std::string & seq)
 {
     std::string revCompl(seq);
-    std::reverse(revCompl.begin(), revCompl.end());    
+    std::reverse(revCompl.begin(), revCompl.end());
 
     for (auto & c : revCompl)
     {
@@ -48,7 +49,7 @@ std::string SequenceUtil::reverseComplement(const std::string & seq)
                 break;
             case 'T':
                 c = 'A';
-                break;                                                
+                break;
         }
     }
 
@@ -59,7 +60,7 @@ std::vector<std::string> SequenceUtil::filterFasta(const std::string & fasta, co
 {
 
     std::stringstream ss;
-    
+
     seqan::SeqFileIn seqFileIn(fasta.c_str());
     seqan::StringSet<seqan::CharString> ids;
     seqan::StringSet<seqan::String<seqan::Iupac> > seqs;
@@ -89,7 +90,7 @@ void SequenceUtil::exportFilteredFasta(const std::string & fasta, const std::set
 {
 
     std::stringstream ss;
-    
+
     seqan::SeqFileIn seqFileIn(fasta.c_str());
     seqan::StringSet<seqan::CharString> ids;
     seqan::StringSet<seqan::String<seqan::Iupac> > seqs;
@@ -113,4 +114,48 @@ void SequenceUtil::exportFilteredFasta(const std::string & fasta, const std::set
     std::ofstream ofs(exportFilename, std::ofstream::out);
     ofs << ss.str();
     ofs.close();
+}
+
+SequenceStats SequenceUtil::calculateStats(const std::string & fasta)
+{
+    SequenceStats stats;
+    stats.numBasepairs = 0;
+    unsigned long gc = 0;
+
+    seqan::SeqFileIn seqFileIn(fasta.c_str());
+    seqan::StringSet<seqan::CharString> ids;
+    seqan::StringSet<seqan::String<seqan::Iupac> > seqs;
+
+    seqan::readRecords(ids, seqs, seqFileIn);
+
+    unsigned n = seqan::length(ids);
+
+    for (unsigned i = 0; i < n; i++)
+    {
+        std::string id;
+        move(id, ids[i]);
+        std::string seq;
+        move(seq, seqs[i]);
+
+        stats.numBasepairs += seq.size();
+        stats.contigLength[id] = seq.size();
+
+        unsigned long contigGc = 0;
+
+        for (unsigned long j = 0; j < seq.size(); j++)
+        {
+            if (seq[j] == 'C' || seq[j] == 'G')
+            {
+                contigGc++;
+            }
+        }
+
+        stats.contigGcContent[id] = ((double)contigGc) / ((double)seq.size());
+
+        gc += contigGc;
+    }
+
+    stats.gcContent = ((double)gc) / ((double)stats.numBasepairs);
+
+    return stats;
 }

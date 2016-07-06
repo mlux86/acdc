@@ -35,7 +35,7 @@ void Opts::initializeOnce(int argc, char *argv[])
 	{
 		std::cerr << "Could not detect number of cores. Defaulting to one thread." << std::endl;
 		threads = 1;
-	} 
+	}
 
 	// find path of binary
 
@@ -50,7 +50,7 @@ void Opts::initializeOnce(int argc, char *argv[])
     opts._execPath = fullPath.parent_path().string();
     opts._sharePath = opts._execPath + "/../share/acdc";
 
-    // build boost program arguments 
+    // build boost program arguments
 
 	description.add_options()
 	    ("help,h", "Display this help message")
@@ -66,17 +66,16 @@ void Opts::initializeOnce(int argc, char *argv[])
 	    ("window-kmer-length,k", boost::program_options::value<unsigned>()->default_value(4), "Length of the k-mers in the sequence vectorizer window")
 	    ("window-width,w", boost::program_options::value<unsigned>(), "Width of the sliding sequence vectorizer window (overrides automatic estimation using number of target points)")
 	    ("window-step,s", boost::program_options::value<unsigned>(), "Step of the sliding sequence vectorizer window (overrides automatic estimation using number of target points)")
-	    ("target-num-points,n", boost::program_options::value<unsigned>()->default_value(1000), "Approximate number of target points for estimating window parameters")
-	    ("num-bootstraps,b", boost::program_options::value<unsigned>()->default_value(10), "Number of bootstraps")
+	    ("target-num-points,n", boost::program_options::value<unsigned>()->default_value(1000), "Approximate number of target points for estimating window parameters") ("num-bootstraps,b", boost::program_options::value<unsigned>()->default_value(10), "Number of bootstraps")
 	    ("bootstrap-ratio,r", boost::program_options::value<double>()->default_value(0.75), "Bootstrap subsampling ratio")
 	    ("num-threads,T", boost::program_options::value<unsigned>()->default_value(threads), "Number of threads for bootstrap analysis  (default: detect number of cores)")
 	    ("output-dir,o", boost::program_options::value<std::string>()->default_value("./results"), "Result output directory")
 	    ("kraken-db,K", boost::program_options::value<std::string>()->default_value(""), "Database to use for Kraken classification")
 	    ("aggressive-threshold,a", boost::program_options::value<unsigned>()->default_value(5000), "Aggressive threshold: Treat clusters having a bp size below this threshold as outliers. (Default = 0 = aggressive mode disabled)")
 	    ;
-	
+
 	boost::program_options::variables_map vm;
-	boost::program_options::parsed_options parsed = boost::program_options::command_line_parser(argc, argv).options(description).allow_unregistered().run(); 
+	boost::program_options::parsed_options parsed = boost::program_options::command_line_parser(argc, argv).options(description).allow_unregistered().run();
 	boost::program_options::store(parsed, vm);
 	boost::program_options::notify(vm);
 
@@ -86,7 +85,7 @@ void Opts::initializeOnce(int argc, char *argv[])
 	ss << description;
 	opts._helpDesc = ss.str();
 
-	if(vm.count("quiet")) 
+	if(vm.count("quiet"))
 	{
 		opts._logLevel = -1;
 	} else
@@ -98,7 +97,7 @@ void Opts::initializeOnce(int argc, char *argv[])
 	if (vm.count("input-list"))
 	{
 		std::string fastaListFile = vm["input-list"].as<std::string>();
-		boost::algorithm::trim(fastaListFile);	
+		boost::algorithm::trim(fastaListFile);
 		opts._inputFASTAs = IOUtil::fileLinesToVec(fastaListFile);
 	} else if (vm.count("input-fasta"))
 	{
@@ -123,7 +122,7 @@ void Opts::initializeOnce(int argc, char *argv[])
 	if (vm.count("window-step"))
 	{
 		opts._windowStep = vm["window-step"].as<unsigned>();
-	}	
+	}
 	opts._targetNumPoints = vm["target-num-points"].as<unsigned>();
 	opts._numThreads = vm["num-threads"].as<unsigned>();
 	opts._numThreads = std::max(1u, opts._numThreads);

@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
 		ELOG << "Kraken not found! It will be disabled.\n- Please make sure that the folders containing the 'kraken' and 'kraken-translate' executables is in your $PATH.\n- Please make sure to supply a database using the --kraken-db switch." << std::endl;
 	}
 
-	// setup Rnammer 
+	// setup Rnammer
 	bool rmrExists = RnammerAdapter::rnammerExists();
 	if (!rmrExists)
 	{
@@ -142,6 +142,8 @@ int main(int argc, char *argv[])
 				ILOG << "Running Kraken..." << std::endl;
 				result.kraken = krk.runKraken(fasta);
 			}
+
+            result.stats = SequenceUtil::calculateStats(fasta);
 
 			ILOG << "Vectorizing contigs..." << std::endl;
 			SequenceVectorizer sv(fasta);

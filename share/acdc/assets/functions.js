@@ -1,4 +1,4 @@
-function stickyScatter() 
+function stickyScatter()
 {
     $('#scatterContainer').addClass('stick');
 	var top = Math.max($(window).scrollTop() + 10, $('#confidences').offset().top);
@@ -6,9 +6,9 @@ function stickyScatter()
 	$('#scatterContainer').offset({ left: left, top: top });
 }
 
-function arrayUnique(arr) 
+function arrayUnique(arr)
 {
-    return arr.reduce(function(p, c) 
+    return arr.reduce(function(p, c)
     {
         if (p.indexOf(c) < 0) p.push(c);
         return p;
@@ -21,20 +21,20 @@ function setActiveExclusively(elem)
 	elem.addClass('active');
 }
 
-function shadeColor(color, percent) 
-{   
+function shadeColor(color, percent)
+{
     var f=parseInt(color.slice(1),16),t=percent<0?0:255,p=percent<0?percent*-1:percent,R=f>>16,G=f>>8&0x00FF,B=f&0x0000FF;
     return "#"+(0x1000000+(Math.round((t-R)*p)+R)*0x10000+(Math.round((t-G)*p)+G)*0x100+(Math.round((t-B)*p)+B)).toString(16).slice(1);
 }
 
-function blendColors(c0, c1, p) 
+function blendColors(c0, c1, p)
 {
     var f=parseInt(c0.slice(1),16),t=parseInt(c1.slice(1),16),R1=f>>16,G1=f>>8&0x00FF,B1=f&0x0000FF,R2=t>>16,G2=t>>8&0x00FF,B2=t&0x0000FF;
     return "#"+(0x1000000+(Math.round((R2-R1)*p)+R1)*0x10000+(Math.round((G2-G1)*p)+G1)*0x100+(Math.round((B2-B1)*p)+B1)).toString(16).slice(1);
 }
 
-function onlyUnique(value, index, self) 
-{ 
+function onlyUnique(value, index, self)
+{
     return self.indexOf(value) === index;
 }
 
@@ -62,7 +62,7 @@ function calculateStar(centerX, centerY, arms, outerRadius, innerRadius)
    {
       // Use outer or inner radius depending on what iteration we are in.
       var r = (i & 1) == 0 ? outerRadius : innerRadius;
-      
+
       var currX = centerX + Math.cos(i * angle) * r;
       var currY = centerY + Math.sin(i * angle) * r;
 
@@ -98,7 +98,7 @@ function buildConfidenceTable(results)
 		if (krakenEnabled)
 		{
 			var krakenNumUnknown = 0;
-			$.each(results[i].krakenLabels, function (idx, val) 
+			$.each(results[i].krakenLabels, function (idx, val)
 			{
 				if (val === "unknown")
 				{
@@ -108,7 +108,7 @@ function buildConfidenceTable(results)
 			var krakenUnique = results[i].krakenLabels.filter(onlyUnique);
 			var numSpecies = krakenUnique.length;
 			kraken = krakenNumUnknown > 0 ? '&ge; ' + numSpecies : '' + numSpecies;
-		}		
+		}
 
 		var contProbCC = 0;
 		var contProbDip = 0;
@@ -127,23 +127,23 @@ function buildConfidenceTable(results)
 		} else if (contProbCC > 0.75 || contProbDip > 0.75)
 		{
 			status = 'contaminated';
-		}	
+		}
 
 		$('#confidences').append('<tr>' +
 			'<td>' + results[i].id + '</td>' +
-			'<td class="' + status + '">&nbsp;</td>' + 
+			'<td class="' + status + '">&nbsp;</td>' +
 			'<td class="selectable dataConf">' + i + '</td>' +
 			'<td class="selectable ccConf">conf = ' + contProbCC.toFixed(2) + '</td>' +
 			'<td class="selectable dipConf">conf = ' + contProbDip.toFixed(2) + '</td>' +
 			(krakenEnabled ? '<td class="selectable kraken"><span class="number">' + kraken + '</span> species</td>' : '') +
 			'</tr>');
 
-	}	
+	}
 }
 
 function dimMax(data, dim)
 {
-	return data.reduce(function(max, arr) 
+	return data.reduce(function(max, arr)
 	{
 	    return max >= arr[dim] ? max : arr[dim];
 	}, -Infinity);
@@ -151,14 +151,14 @@ function dimMax(data, dim)
 
 function dimMin(data, dim)
 {
-	return data.reduce(function(min, arr) 
+	return data.reduce(function(min, arr)
 	{
 	    return min < arr[dim] ? min : arr[dim];
 	}, Infinity);
 }
 
 function showData(id, dataMat, labels, tooltips, greyedOut, sixteenS, width, height, padding)
-{	
+{
 	var svg = d3.select("#scatter").html("").append("svg").attr("width", width).attr("height", height);
 
 	var doGrey = typeof greyedOut != 'undefined' && greyedOut.length == labels.length;
@@ -171,7 +171,7 @@ function showData(id, dataMat, labels, tooltips, greyedOut, sixteenS, width, hei
 	   .attr("height", height)
 	   .style("fill", "none")
   	   .style("stroke", "lightgrey")
-       .style("stroke-width", "1");	   
+       .style("stroke-width", "1");
 
 	minX = dimMin(dataMat, 0);
 	maxX = dimMax(dataMat, 0);
@@ -214,7 +214,7 @@ function showData(id, dataMat, labels, tooltips, greyedOut, sixteenS, width, hei
 			  .on('click', function(d, i) { window.location.href = 'export/' + id + '-' + i + '.16s'; });
 	}
 
-	
+
 }
 
 function showVisualization()
@@ -237,7 +237,7 @@ function showVisualization()
 	var sixteenS = new Array();
 	var outliers = new Array();
 	var additionalInfo = '';
-	
+
 	if (highlight16S && "contains16S" in x && x.contains16S.length > 0)
 	{
 		sixteenS = x.contains16S;
@@ -247,10 +247,11 @@ function showVisualization()
 	{
 		// labels = numericLabels(x.fastaLabels);
 		labels = Array.apply(null, Array(x.fastaLabels.length)).map(Number.prototype.valueOf, -1); // no labels / black color
+		additionalInfo = 'Size: ' + (x.stats.numBasepairs/1000000).toFixed(2) + ' Mbp, GC-content: ' + (x.stats.gcContent*100).toFixed(2) + ' %';
 	} else if(selectedLabels === 'cc')
 	{
-		labels = clustAnaResult.clustCC.labels;	
-		outliers = clustAnaResult.clustCC.outlierClusters;	
+		labels = clustAnaResult.clustCC.labels;
+		outliers = clustAnaResult.clustCC.outlierClusters;
 	} else if(selectedLabels === 'dip')
 	{
 		if (selectedReduction === 'dataPca')
@@ -261,16 +262,16 @@ function showVisualization()
 				$('#numClusters' + selectedNumClusters).prop('checked', true);
 			}
 			labels = clustAnaResult.clustsPca[selectedNumClusters-1].labels;
-			outliers = clustAnaResult.clustsPca[selectedNumClusters-1].outlierClusters;	
+			outliers = clustAnaResult.clustsPca[selectedNumClusters-1].outlierClusters;
 		} else if (selectedReduction === 'dataSne')
 		{
 			if (!selectedNumClusters)
 			{
 				selectedNumClusters = clustAnaResult.numClustSne;
 				$('#numClusters' + selectedNumClusters).prop('checked', true);
-			}			
+			}
 			labels = clustAnaResult.clustsSne[selectedNumClusters-1].labels;
-			outliers = clustAnaResult.clustsSne[selectedNumClusters-1].outlierClusters;	
+			outliers = clustAnaResult.clustsSne[selectedNumClusters-1].outlierClusters;
 		}
 	} else if(selectedLabels === 'kraken')
 	{
@@ -286,10 +287,19 @@ function showVisualization()
 			}
 		}
 		additionalInfo = 'Bacterial background: ' + (x.krakenBacterialBackground*100).toFixed(2) + '%';
-	}	
+	}
 
-	var tooltips = results[selectedFasta].fastaLabels;
-	if(selectedLabels === 'kraken')
+    var tooltips;
+	if(selectedLabels === 'fasta')
+	{
+        tooltips = results[selectedFasta].fastaLabels;
+        for (var i = 0; i < tooltips.length; i++)
+        {
+            var len = x.stats.contigLength[tooltips[i]];
+            var gc = x.stats.contigGcContent[tooltips[i]];
+            tooltips[i] = tooltips[i] + '<br>Size: ' + (len/1000).toFixed(2) + ' kbp<br>GC-content: ' + (gc*100).toFixed(2) + ' %';
+        }
+	} else if(selectedLabels === 'kraken')
 	{
 		tooltips = x.krakenLabels;
 	} else
@@ -302,7 +312,7 @@ function showVisualization()
 
 
 	if (!showOutliers && typeof outliers != 'undefined' && outliers.length > 0)
-	{		
+	{
 		var n = dataMat.length;
 		var rmIdx = new Array();
 
@@ -311,7 +321,7 @@ function showVisualization()
 			if ($.inArray(labels[i], outliers) >= 0)
 			{
 				rmIdx.push(i);
-			}			
+			}
 		}
 		rmIdx = arrayUnique(rmIdx);
 
@@ -344,12 +354,12 @@ function updateBootStrapsSelect()
 
 	$('#bootstraps').html('');
 	$('#bootstraps').append('<option value="oneshot">One shot</option>');
-	for (var i = 0; i < n; i++) 
+	for (var i = 0; i < n; i++)
 	{
 		$('#bootstraps').append($('<option>', {
 		    value: i,
 		    text: 'Bootstrap ' + (i+1)
-		}));		
+		}));
 	}
 
 }
@@ -397,7 +407,7 @@ function numericLabels(labels)
 {
 	var mp = new Array();
 	k = 0;
-	for (var i in labels) 
+	for (var i in labels)
 	{
 		var key = labels[i];
 		if (!(key in mp))
@@ -408,7 +418,7 @@ function numericLabels(labels)
 	}
 
 	var result = Array(labels.length);
-	for (var i in labels) 
+	for (var i in labels)
 	{
 		result[i] = mp[labels[i]];
 	}
@@ -421,6 +431,6 @@ function bootstrapLabels(labelsOneshot, bootstrapIndexes)
 	for (var i in bootstrapIndexes)
 	{
 		result[i] = labelsOneshot[bootstrapIndexes[i]];
-	}	
+	}
 	return result;
 }
