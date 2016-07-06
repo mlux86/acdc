@@ -289,17 +289,14 @@ function showVisualization()
 		additionalInfo = 'Bacterial background: ' + (x.krakenBacterialBackground*100).toFixed(2) + '%';
 	}
 
-    var tooltips;
-	if(selectedLabels === 'fasta')
-	{
-        tooltips = results[selectedFasta].fastaLabels;
-        for (var i = 0; i < tooltips.length; i++)
-        {
-            var len = x.stats.contigLength[tooltips[i]];
-            var gc = x.stats.contigGcContent[tooltips[i]];
-            tooltips[i] = tooltips[i] + '<br>Size: ' + (len/1000).toFixed(2) + ' kbp<br>GC-content: ' + (gc*100).toFixed(2) + ' %';
-        }
-	} else if(selectedLabels === 'kraken')
+    var tooltips = results[selectedFasta].fastaLabels.slice();
+    for (var i = 0; i < tooltips.length; i++)
+    {
+        var len = x.stats.contigLength[tooltips[i]];
+        var gc = x.stats.contigGcContent[tooltips[i]];
+        tooltips[i] = tooltips[i] + '<br>Size: ' + (len/1000).toFixed(2) + ' kbp<br>GC-content: ' + (gc*100).toFixed(2) + ' %';
+    }
+	if(selectedLabels === 'kraken')
 	{
 		tooltips = x.krakenLabels;
 	} else
