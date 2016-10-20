@@ -29,11 +29,11 @@ TEST_CASE("Dip statistic", "[dip]")
 	DipStatistic ds;
 
 	DipResult resUni = ds.calculate(pdfUni, 100);
-	REQUIRE(abs(resUni.dip - 0.0203084) < 1e-7);
+	REQUIRE(fabs(resUni.dip - 0.0203084) < 1e-7);
 	REQUIRE(resUni.p > 0.01);
 
 	DipResult resBi = ds.calculate(pdfBi, 100);
-	REQUIRE(abs(resBi.dip - 0.0395693) < 1e-7);
+	REQUIRE(fabs(resBi.dip - 0.0395693) < 1e-7);
 	REQUIRE(resUni.p > 0.01);
 
 }

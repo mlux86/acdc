@@ -28,7 +28,7 @@ Other needed libraries are included.
 ### Optional dependencies
 
 [Kraken](https://github.com/DerrickWood/kraken) >= 0.10.5-beta can be used to improve results by using a database.
-[RNAmmer](http://www.cbs.dtu.dk/services/RNAmmer/) >= 1.2 is used to highlight and extract 16S regions.
+[RNAmmer](http://www.cbs.dtu.dk/services/RNAmmer/) = 1.2 is used to highlight and extract 16S regions.
 
 ## Installation
 
@@ -89,6 +89,27 @@ In the visualization, 16S genes are highlighted by a large star shape. A click o
 
 While acdc is running, it generates results in an output directory defaulting to `./results/` (can be overridden using the `-o` parameter).
 It contains the file `index.html` that can be viewed in any modern browser, supporting HTML5 and CSS3.
+
+## Docker Container
+
+In the `docker` folder, acdc provides a Dockerfile script to build a docker container. Building depends on the rnammer sources which can be obtained via the [RNAmmer homepage](http://www.cbs.dtu.dk/services/RNAmmer/). Just put the obtained `rnammer-1.2.src.tar.Z` file into the `docker` folder and from inside the directory, run 
+
+```
+# docker build -t acdc .
+```
+
+The built acdc docker image shares result files using the `/acdc` and `/usr/share/nginx/html` volumes. The latter can be used by the official [nginx](https://nginx.org/) web server [docker container](https://hub.docker.com/_/nginx/). For example as follows:
+
+```
+# docker run --name acdc \
+             -v /path/to/assemblies:/assemblies \
+             -v /path/to/kraken_db:/krakendb \
+             acdc -i test.fasta
+
+# docker run --volumes-from acdc -p 80:80 --rm nginx
+```
+
+where `/path/to/assemblies` contains the file `test.fasta` and `/path/to/kraken_db` contains the Kraken database. The second command runs an nginx container which serves the newly created acdc result files on port 80.
 
 ## Used Libraries
 
