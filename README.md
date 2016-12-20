@@ -17,6 +17,8 @@ reduction and clustering methods, it uses tetramer profiles to differentiate bet
 species in a given sample. It automatically detects the number of clusters/species and provides
 confidence information.
 
+Please read the [publication at BMC Bioinformatics](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-016-1397-7) for details.
+
 ## Requirements
 
 * C++11 compatible compiler
@@ -92,7 +94,7 @@ It contains the file `index.html` that can be viewed in any modern browser, supp
 
 ## Docker Container
 
-In the `docker` folder, acdc provides a Dockerfile script to build a docker container. Building depends on the rnammer sources which can be obtained via the [RNAmmer homepage](http://www.cbs.dtu.dk/services/RNAmmer/). Just put the obtained `rnammer-1.2.src.tar.Z` file into the `docker` folder and from inside the directory, run 
+In the `docker` folder, acdc provides a Dockerfile script to build a docker container. Building depends on the rnammer sources which can be obtained via the [RNAmmer homepage](http://www.cbs.dtu.dk/services/RNAmmer/). Just put the obtained `rnammer-1.2.src.tar.Z` file into the `docker` folder and from inside the directory, run
 
 ```
 # docker build -t acdc .
