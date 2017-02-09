@@ -106,7 +106,7 @@ The built acdc docker image shares result files using the `/acdc` and `/usr/shar
 # docker run --name acdc \
              -v /path/to/assemblies:/assemblies \
              -v /path/to/kraken_db:/krakendb \
-             acdc -i test.fasta
+             acdc -i /assemblies/test.fasta
 
 # docker run --volumes-from acdc -p 80:80 --rm nginx
 ```
