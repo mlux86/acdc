@@ -62,7 +62,9 @@ private:
 	void export16S(const ResultContainer & result);
 
 	// Export fasta files for cluster exporting
-    void exportClusteringFastas(const ResultContainer & result);
+    void exportClusteringInfo(const ResultContainer & result, const std::string & filename);
+
+	void exportContigJS(const std::string & fastaFilename);
 
     // Output directory to write to
 	std::string outputDir;
@@ -76,4 +78,5 @@ public:
 
 	// Processes a ResultContainer object to serialize it and write other information
 	void processResult(const ResultContainer & result);
+
 };

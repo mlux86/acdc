@@ -7,10 +7,15 @@
 	<script type="text/javascript" src="jquery.min.js"></script>
 	<script type="text/javascript">
 		var results = new Array();
+		var clusterinfo = new Array();
+		var inputcontigs = new Array ();
 	</script>
+	<script type="text/javascript" src="contigs.js"></script>
+	<script type="text/javascript" src="clusterinfo.js"></script>
 	<script type="text/javascript" src="data.js"></script>
 	<script type="text/javascript" src="d3.min.js"></script>
 	<script type="text/javascript" src="d3-tip.js"></script>
+	<script type="text/javascript" src="filesaver.min.js"></script>
 	<script type="text/javascript" src="functions.js"></script>
 	<script type="text/javascript" src="script.js"></script>
 </head>
@@ -18,7 +23,7 @@
 	<pre class="figAnsi">
         ,/                                                                                                 2016, <a href="http://wiki.techfak.uni-bielefeld.de/didy/MarkusLux">Markus Lux</a>, Bielefeld University
       ,'/                                                                                                        <a href="http://wiki.techfak.uni-bielefeld.de/didy">Computational Methods for the Analysis of the Diversity and Dynamics of Genomes (DiDy)</a>
-    ,' /        █████╗  ██████╗██████╗  ██████╗  (a)utomated                                                     Alpha-version, no warranties :)
+    ,' /        █████╗  ██████╗██████╗  ██████╗  (a)utomated                                                     
   ,'  /_____,  ██╔══██╗██╔════╝██╔══██╗██╔════╝  (c)ontamination
 .'____    ,'   ███████║██║     ██║  ██║██║       (d)etection and
      /  ,'     ██╔══██║██║     ██║  ██║██║       (c)onfidence estimation for single-cell genome data

@@ -4,6 +4,10 @@
 #include <set>
 #include <memory>
 
+#include <seqan/alignment_free.h>
+#include <seqan/sequence.h>
+#include <seqan/seq_io.h>
+
 #include "MatrixUtil.h"
 #include "MLUtil.h"
 #include "ResultIO.h"
@@ -182,7 +186,7 @@ void ResultIO::export16S(const ResultContainer & result)
     }
 }
 
-void ResultIO::exportClusteringFastas(const ResultContainer & result)
+void ResultIO::exportClusteringInfo(const ResultContainer & result, const std::string & filename)
 {
 
 	// first, we need the kraken result as actual labels
@@ -202,49 +206,57 @@ void ResultIO::exportClusteringFastas(const ResultContainer & result)
 	std::map<unsigned, std::set<std::string>> contigIdsCC; // export a set of contigs per label
 	std::map<unsigned, std::set<std::string>> contigIdsKraken; // export a set of contigs per label
 
+
     for (unsigned i = 0; i < result.fastaLabels.size(); ++i)
     {
         contigIdsCC[result.oneshot.clustCC.labels.at(i)].insert(result.fastaLabels.at(i));
         contigIdsKraken[numericLabels(krakenLabels).at(i)].insert(result.fastaLabels.at(i));
     }
 
+    auto root = Json::Value();    
+
     // CC
+    root["cc"] = Json::Value();
     for (auto & kv : contigIdsCC)
     {
         unsigned lbl = kv.first;
+        std::string lblStr = std::to_string(lbl);
         auto & contigs = kv.second;
-        std::stringstream ss;
-        ss << outputDir << "/export/" << result.id << "-cc-" << lbl << ".fasta";
-        SequenceUtil::exportFilteredFasta(result.fasta, contigs, ss.str());
+        root["cc"][lblStr] = Json::Value(Json::arrayValue);
+        for (const auto & c : contigs)
+        {
+            root["cc"][lblStr].append(c);
+        }
     }
 
     // kraken
+    root["kraken"] = Json::Value();
     if (krakenEnabled)
     {
         for (auto & kv : contigIdsKraken)
         {
             unsigned lbl = kv.first;
+            std::string lblStr = std::to_string(lbl);
             auto & contigs = kv.second;
-            std::stringstream ss;
-            ss << outputDir << "/export/" << result.id << "-kraken-" << lbl << ".fasta";
-            SequenceUtil::exportFilteredFasta(result.fasta, contigs, ss.str());
+            root["kraken"][lblStr] = Json::Value(Json::arrayValue);
+            for (const auto & c : contigs)
+            {
+                root["kraken"][lblStr].append(c);
+            }
         }
-
-        std::stringstream ss;
-        ss << outputDir << "/export/" << result.id << ".oneshot.kraken";
-        std::ofstream ofs(ss.str(), std::ofstream::out);
-        for (auto & lbl : krakenLabels)
-        {
-            ofs << lbl << std::endl;
-        }
-        ofs.close();
     }
 
     // dip sne & dip pca
 
+    root["dip"] = Json::Value();
+    root["dip"]["dataSne"] = Json::Value();
+    root["dip"]["dataPca"] = Json::Value();
+
     unsigned maxK = 5;
     for (unsigned k = 0; k < maxK; k++)
     {
+        std::string kStr = std::to_string(k+1);
+
         std::map<unsigned, std::set<std::string>> contigIdsSne; // export a set of contigs per label
         std::map<unsigned, std::set<std::string>> contigIdsPca; // export a set of contigs per label
 
@@ -254,52 +266,81 @@ void ResultIO::exportClusteringFastas(const ResultContainer & result)
             contigIdsPca[result.oneshot.clustsPca.at(k).labels.at(i)].insert(result.fastaLabels.at(i));
         }
 
+        root["dip"]["dataSne"][kStr] = Json::Value();
         for (auto & kv : contigIdsSne)
         {
-        	unsigned lbl = kv.first;
-        	auto & contigs = kv.second;
-        	std::stringstream ss;
-        	ss << outputDir << "/export/" << result.id << "-dip-dataSne-" << (k+1) << "-" << lbl << ".fasta";
-        	SequenceUtil::exportFilteredFasta(result.fasta, contigs, ss.str());
+            unsigned lbl = kv.first;
+            std::string lblStr = std::to_string(lbl);
+            auto & contigs = kv.second;
+            root["dip"]["dataSne"][kStr][lblStr] = Json::Value(Json::arrayValue);
+            for (const auto & c : contigs)
+            {
+                root["dip"]["dataSne"][kStr][lblStr].append(c);
+            }
         }
 
+        root["dip"]["dataPca"][kStr] = Json::Value();
         for (auto & kv : contigIdsPca)
         {
             unsigned lbl = kv.first;
+            std::string lblStr = std::to_string(lbl);
             auto & contigs = kv.second;
-            std::stringstream ss;
-            ss << outputDir << "/export/" << result.id << "-dip-dataPca-" << (k+1) << "-" << lbl << ".fasta";
-            SequenceUtil::exportFilteredFasta(result.fasta, contigs, ss.str());
+            root["dip"]["dataPca"][kStr][lblStr] = Json::Value(Json::arrayValue);
+            for (const auto & c : contigs)
+            {
+                root["dip"]["dataPca"][kStr][lblStr].append(c);
+            }
         }
     }
 
+    Json::StreamWriterBuilder builder;
+    std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
+    std::ofstream ofs(filename, std::ofstream::out | std::ofstream::app);
+    ofs << "clusterinfo['" << result.fasta << "'] = ";
+    writer->write(root, &ofs);
+    ofs << ";" << std::endl;
+    ofs.close();
 
+}
+
+void ResultIO::exportContigJS(const std::string & fastaFilename)
+{
+    seqan::SeqFileIn seqFileIn(fastaFilename.c_str());
+    seqan::StringSet<seqan::CharString> ids;
+    seqan::StringSet<seqan::String<seqan::Iupac> > seqs;
+    seqan::readRecords(ids, seqs, seqFileIn);
+    unsigned n = seqan::length(ids);
+
+    std::stringstream ss;
+    ss << outputDir << "/contigs.js";
+    std::ofstream ofs(ss.str(), std::ofstream::out | std::ofstream::app);
+
+    for (unsigned i = 0; i < n; i++)
+    {
+        std::string id;
+        move(id, ids[i]);
+        std::string seq;
+        move(seq, seqs[i]);
+        ofs << "inputcontigs['" << id << "'] = '" << seq << "'" << std::endl;
+    }
+
+    ofs.close();    
 }
 
 void ResultIO::processResult(const ResultContainer & result)
 {
-	std::stringstream ss;
-	ss << outputDir << "/" << "data.js";
-	std::string fname = ss.str();
-	exportClusteringFastas(result);
     export16S(result);
-	writeResultContainerToJSON(result, fname);
 
-    // ss.str("");
-    // ss << outputDir << "/export/" << result.id<< ".oneshot.orig";
-    // MatrixUtil::saveMatrix(result.oneshot.dataOrig, ss.str(), '\t');
-    // ss.str("");
-    // ss << outputDir << "/export/" << result.id<< ".oneshot.sne";
-    // MatrixUtil::saveMatrix(result.oneshot.dataSne, ss.str(), '\t');
-    // ss.str("");
-    // ss << outputDir << "/export/" << result.id <<  ".oneshot.pca";
-    // MatrixUtil::saveMatrix(result.oneshot.dataPca, ss.str(), '\t');
-    // ss.str("");
-    // ss << outputDir << "/export/" << result.id << ".oneshot.contigs";
-    // std::ofstream ofs(ss.str(), std::ofstream::out);
-    // for (auto & lbl : result.fastaLabels)
-    // {
-    //     ofs << lbl << std::endl;
-    // }
-    // ofs.close();
+    exportContigJS(result.fasta);
+
+    std::stringstream ss;
+    ss << outputDir << "/" << "clusterinfo.js";
+    std::string fname = ss.str();    
+    exportClusteringInfo(result, fname);
+
+	std::stringstream ss2;
+	ss2 << outputDir << "/" << "data.js";
+	std::string fname2 = ss2.str();
+	writeResultContainerToJSON(result, fname2);
+
 }

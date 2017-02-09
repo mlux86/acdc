@@ -1,3 +1,15 @@
+var isFileSaverSupported = false;
+try 
+{
+    var isFileSaverSupported = !!new Blob;
+} catch (e) 
+{
+}
+if(!isFileSaverSupported)
+{
+	alert('HTML5 Blobs are not supported and fasta export will not work. Please upgrade your browser.');
+}
+
 function stickyScatter()
 {
     $('#scatterContainer').addClass('stick');
@@ -361,6 +373,28 @@ function updateBootStrapsSelect()
 
 }
 
+function exportClusterFasta(clusterLabel, fasta, selectedLabels, selectedReduction, selectedNumClusters)
+{
+	var contigNames = {};
+	if(selectedLabels !== 'dip')
+	{
+		contigNames = clusterinfo[fasta][selectedLabels][clusterLabel];
+	} else
+	{
+		contigNames = clusterinfo[fasta][selectedLabels][selectedReduction][selectedNumClusters][clusterLabel];
+	}
+
+	var str = "";
+	for (var c in contigNames)
+	{
+		str += ">" + contigNames[c] + "\n";
+		str += inputcontigs[contigNames[c]] + "\n";
+	}
+
+	var blob = new Blob([str], {type: "text/plain;charset=utf-8"});
+	saveAs(blob, "export.fasta");	
+}
+
 function updateExport(labels, greyedOut)
 {
 	if (selectedLabels === 'fasta' || selectedData !== 'oneshot')
@@ -387,14 +421,15 @@ function updateExport(labels, greyedOut)
 	{
 		var lbl = uniqueLabels[i];
 		var color = (lbl == unknownLbl) ? greyColor : colors[lbl % colors.length];
-		if (selectedLabels !== 'dip')
+		var dataParams = "{ 'clusterLabel': '" + lbl + "', 'fasta': '" + results[selectedFasta].fasta + "', 'selectedLabels': '" + selectedLabels + "', 'selectedReduction': '" + selectedReduction + "', 'selectedNumClusters': '" + selectedNumClusters + "' }";
+		var exportLink = $('<a data-params="' + dataParams + '" style="color: ' + color + ';" href="#">&#x25CF;</a>').click(function() 
 		{
-			var href = 'export/' + results[selectedFasta].id + "-" + selectedLabels + "-" + lbl + ".fasta";
-		} else
-		{
-			var href = 'export/' + results[selectedFasta].id + "-dip-" + selectedReduction + "-" + selectedNumClusters + "-" + lbl + ".fasta";
-		}
-		$('#exportColors').append('<span><a style="color: ' + color + ';" href="' + href + '">&#x25CF;</a></span>&nbsp;');
+			var me = $(this), data = me.data('params');
+			data = data.replace(/\'/g, '"');
+			var obj = jQuery.parseJSON(data);
+    		exportClusterFasta(obj.clusterLabel, obj.fasta, obj.selectedLabels, obj.selectedReduction, obj.selectedNumClusters);
+		});
+		$('#exportColors').append('<span></span>').append(exportLink);		
 	}
 
 	$('#export').show();
