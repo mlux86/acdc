@@ -27,6 +27,25 @@ function arrayUnique(arr)
     }, []);
 }
 
+function arraySortGetIndices(toSort) 
+{
+	for (var i = 0; i < toSort.length; i++) 
+	{
+		toSort[i] = [toSort[i], i];
+	}
+	toSort.sort(function(left, right) 
+	{
+		return left[0] < right[0] ? -1 : 1;
+	});
+	toSort.sortIndices = [];
+	for (var j = 0; j < toSort.length; j++) 
+	{
+		toSort.sortIndices.push(toSort[j][1]);
+		toSort[j] = toSort[j][0];
+	}
+	return toSort;
+}
+
 function setActiveExclusively(elem)
 {
 	$('.active').removeClass('active');
@@ -384,11 +403,27 @@ function exportClusterFasta(clusterLabel, fasta, selectedLabels, selectedReducti
 		contigNames = clusterinfo[fasta][selectedLabels][selectedReduction][selectedNumClusters][clusterLabel];
 	}
 
-	var str = "";
+	// sort by length
+	lengths = new Array();
 	for (var c in contigNames)
 	{
-		str += ">" + contigNames[c] + "\n";
-		str += inputcontigs[contigNames[c]] + "\n";
+		len = results[fasta].stats.contigLength[contigNames[c]];
+		lengths.push(len);	
+	}
+	sortedLengths = arraySortGetIndices(lengths);
+	sortIdx = sortedLengths.sortIndices;
+	sortIdx.reverse();
+	var sortedContigNames = new Array();
+	for (var i in sortIdx)
+	{
+		sortedContigNames.push(contigNames[sortIdx[i]]);	
+	}
+
+	var str = "";
+	for (var c in sortedContigNames)
+	{
+		str += ">" + sortedContigNames[c] + "\n";
+		str += inputcontigs[sortedContigNames[c]] + "\n";
 	}
 
 	var blob = new Blob([str], {type: "text/plain;charset=utf-8"});
