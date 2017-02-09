@@ -116,7 +116,7 @@ void SequenceUtil::exportFilteredFasta(const std::string & fasta, const std::set
     ofs.close();
 }
 
-SequenceStats SequenceUtil::calculateStats(const std::string & fasta)
+SequenceStats SequenceUtil::calculateStats(const std::string & fasta, unsigned minContigLength)
 {
     SequenceStats stats;
     stats.numBasepairs = 0;
@@ -136,6 +136,12 @@ SequenceStats SequenceUtil::calculateStats(const std::string & fasta)
         move(id, ids[i]);
         std::string seq;
         move(seq, seqs[i]);
+
+        unsigned len = seqan::length(seq);
+        if (len < minContigLength)
+        {
+            continue;
+        }
 
         stats.numBasepairs += seq.size();
         stats.contigLength[id] = seq.size();

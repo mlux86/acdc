@@ -44,5 +44,5 @@ public:
 	static void exportFilteredFasta(const std::string & fasta, const std::set<std::string> contigs, const std::string & exportFilename);
 
     // Calculate statistics on fasta
-    static SequenceStats calculateStats(const std::string & fasta);
+    static SequenceStats calculateStats(const std::string & fasta, unsigned minContigLength);
 };

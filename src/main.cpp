@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
 				result.kraken = krk.runKraken(fasta);
 			}
 
-            result.stats = SequenceUtil::calculateStats(fasta);
+            result.stats = SequenceUtil::calculateStats(fasta, Opts::minContigLength());
 
 			ILOG << "Vectorizing contigs..." << std::endl;
 			SequenceVectorizer sv(fasta);
