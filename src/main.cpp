@@ -140,7 +140,16 @@ int main(int argc, char *argv[])
 			if (krakenExists)
 			{
 				ILOG << "Running Kraken..." << std::endl;
-				result.kraken = krk.runKraken(fasta);
+				try
+				{
+
+				} catch(const std::exception & e)
+				{
+					result.kraken = krk.runKraken(fasta);
+					ELOG << e.what() << std::endl;
+					ELOG << "Kraken will be disabled." << std::endl;
+					krakenExists = false;
+				}
 			}
 
             result.stats = SequenceUtil::calculateStats(fasta, Opts::minContigLength());
@@ -153,7 +162,16 @@ int main(int argc, char *argv[])
 			if (rmrExists)
 			{
 				ILOG << "Running Rnammer..." << std::endl;
-				result._16S = RnammerAdapter::find16S(fasta, svr);
+				
+				try	
+				{
+					result._16S = RnammerAdapter::find16S(fasta, svr);					
+				} catch(const std::exception & e)
+				{
+					ELOG << e.what() << std::endl;
+					ELOG << "16S highlighting will be disabled." << std::endl;
+					rmrExists = false;
+				}
 			}
 
 			ILOG << "Clustering..." << std::endl;
