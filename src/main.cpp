@@ -142,10 +142,9 @@ int main(int argc, char *argv[])
 				ILOG << "Running Kraken..." << std::endl;
 				try
 				{
-
+					result.kraken = krk.runKraken(fasta);
 				} catch(const std::exception & e)
 				{
-					result.kraken = krk.runKraken(fasta);
 					ELOG << e.what() << std::endl;
 					ELOG << "Kraken will be disabled." << std::endl;
 					krakenExists = false;
