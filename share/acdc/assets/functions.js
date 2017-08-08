@@ -141,8 +141,6 @@ function buildConfidenceTable(results)
 			kraken = krakenNumUnknown > 0 ? '&ge; ' + numSpecies : '' + numSpecies;
 		}
 
-		console.log(results[i]);
-
 		var contProbCC = results[i].oneshot.confidenceCC;
 		var contProbDip = results[i].oneshot.confidenceDip;
 		var status = results[i].oneshot.contaminationStatus;
