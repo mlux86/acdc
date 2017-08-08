@@ -9,7 +9,6 @@ var padding = 25;
 var selectedFasta = '';
 var selectedLabels = 'fasta';
 var selectedReduction = 'dataSne';
-var selectedData = 'oneshot';
 var selectedNumClusters = NaN;
 var showOutliers = true;
 var highlight16S = true;
@@ -56,7 +55,6 @@ $(document).ready(function()
 		$('.numClusters').prop("disabled", true);
 		selectedFasta = $(this).text();
 		selectedLabels = 'fasta';
-		updateBootStrapsSelect();
 		showVisualization();
 		setActiveExclusively($(this));
 	});
@@ -65,7 +63,6 @@ $(document).ready(function()
 		$('.numClusters').prop("disabled", true);
 		selectedFasta = $(this).parent().find('td.dataConf').text();
 		selectedLabels = 'cc';
-		updateBootStrapsSelect();
 		showVisualization();
 		setActiveExclusively($(this));
 	});
@@ -75,7 +72,6 @@ $(document).ready(function()
 		selectedNumClusters = NaN;
 		selectedFasta = $(this).parent().find('td.dataConf').text();
 		selectedLabels = 'dip';
-		updateBootStrapsSelect();
 		showVisualization();
 		setActiveExclusively($(this));
 	});
@@ -84,7 +80,6 @@ $(document).ready(function()
 		$('.numClusters').prop("disabled", true);
 		selectedFasta = $(this).parent().find('td.dataConf').text();
 		selectedLabels = 'kraken';
-		updateBootStrapsSelect();
 		showVisualization();
 		setActiveExclusively($(this));
 	});
@@ -96,12 +91,6 @@ $(document).ready(function()
 
 	$('.numClusters').click(function() {
 		selectedNumClusters = $(this).val();
-		showVisualization();
-	});
-
-	$('#bootstraps').change(function() {
-		selectedNumClusters = NaN;
-		selectedData = $(this).val();
 		showVisualization();
 	});
 
@@ -126,7 +115,6 @@ $(document).ready(function()
 	}
 
 	$('.numClusters').prop("disabled", true);
-	updateBootStrapsSelect();	
 	showVisualization();
 
     $(window).scroll(stickyScatter);

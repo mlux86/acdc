@@ -39,16 +39,10 @@ public:
 	// Runs connected component clustering on a mutual nearest neighbor graph with knnK neighbors
 	ClusteringResult connComponents(unsigned knnK);
 
-	// Returns true if the given data is multi-modal using Hartigans dip statistic
-	bool isMultiModal(double alpha, double splitThreshold);
-
 	// Estimates the optimal number of clusters and returns a ClusteringResult for each of the tested numbers [1, maxK]
 	// The optimal number of clusters is found by looking at the minimum Davies Bouldin index
 	std::pair<unsigned, std::vector<ClusteringResult>> estimateK(unsigned maxK);
 
 	// Post-processes a ClusteringResult by resolcing inter-cluster contig connections and re-labeling outlier points
 	void postprocess(ClusteringResult & cr);
-
-	// Computes the Davies Bouldin index on the given labels
-	double daviesBouldin(const std::vector<unsigned> & labels);
 };
