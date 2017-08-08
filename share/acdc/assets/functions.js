@@ -269,7 +269,7 @@ function showVisualization()
 		{
 			if (!selectedNumClusters)
 			{
-				selectedNumClusters = clustAnaResult.numClustPca;
+				selectedNumClusters = clustAnaResult.contaminationStatus === 'contaminated' ? clustAnaResult.numClustPca : 1;
 				$('#numClusters' + selectedNumClusters).prop('checked', true);
 			}
 			labels = clustAnaResult.clustsPca[selectedNumClusters-1].labels;
@@ -278,7 +278,7 @@ function showVisualization()
 		{
 			if (!selectedNumClusters)
 			{
-				selectedNumClusters = clustAnaResult.numClustSne;
+				selectedNumClusters = clustAnaResult.contaminationStatus === 'contaminated' ? clustAnaResult.numClustSne : 1;
 				$('#numClusters' + selectedNumClusters).prop('checked', true);
 			}
 			labels = clustAnaResult.clustsSne[selectedNumClusters-1].labels;
