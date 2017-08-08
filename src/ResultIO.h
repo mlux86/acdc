@@ -4,12 +4,14 @@
 #include <string>
 #include <json/json.h>
 
-#include "ClusterAnalysis.h"
+#include "ContaminationDetection.h"
+#include "Decontamination.h"
 #include "KrakenAdapter.h"
 #include "SequenceUtil.h"
 
-// forward declaration
+// forward declarations
 struct ClusteringResult;
+struct ContaminationDetectionSummary;
 
 // Contains the full result of one sample analysis
 struct ResultContainer
@@ -23,11 +25,13 @@ struct ResultContainer
 	// Contig names
 	std::vector<std::string> fastaLabels;
 
-	// One-shot cluster analysis
-	ClusterAnalysisResult oneshot;
+	Eigen::MatrixXd dataSne;
+	
+	Eigen::MatrixXd dataPca;
 
-	// Bootstrap cluster analysis'
-	std::vector<ClusterAnalysisResult> bootstraps;
+	ContaminationDetectionSummary contaminationAnalysis;
+
+	DecontaminationResult clusterings;
 
 	// Kraken results
 	KrakenResult kraken;
@@ -53,7 +57,7 @@ private:
     Json::Value clusteringResultToJSON(const ClusteringResult & cr);
 
     // Serialize a ClusterAnalysisResult to JSON
-    Json::Value clusterAnalysisResultToJSON(const ResultContainer & result, const ClusterAnalysisResult & car, bool alignToOneshot);
+    Json::Value contaminationDetectionResultToJSON(const ResultContainer & result);
 
     // Serialize a full ResultContainer as JSON to filename
 	void writeResultContainerToJSON(ResultContainer result, const std::string & filename);

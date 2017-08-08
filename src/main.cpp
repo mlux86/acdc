@@ -1,6 +1,6 @@
 #include "SequenceVectorizer.h"
 #include "Opts.h"
-#include "ClusterAnalysis.h"
+#include "ContaminationDetection.h"
 #include "Logger.h"
 #include "TarjansAlgorithm.h"
 #include "BarnesHutSNEAdapter.h"
@@ -173,12 +173,20 @@ int main(int argc, char *argv[])
 				}
 			}
 
-			ILOG << "Clustering..." << std::endl;
-			result.bootstraps = ClusterAnalysis::analyzeBootstraps(svr);
-			result.oneshot = result.bootstraps.at(0);
-			result.bootstraps.erase(result.bootstraps.begin());
+			ILOG << "Detecting contamination..." << std::endl;
+			std::vector<ContaminationDetectionResult> bootstraps = ContaminationDetection::analyzeBootstraps(svr);
+			ContaminationDetectionResult oneshot = bootstraps.at(0);
+			bootstraps.erase(bootstraps.begin());
+
+			result.contaminationAnalysis = ContaminationDetection::summarizeBootstraps(bootstraps);
+
+			result.dataSne = oneshot.dataSne;
+			result.dataPca = oneshot.dataPca;
+
+			result.clusterings = Decontamination::findLikelyClusterings(result.dataSne, result.dataPca, svr);
 
 			rio.processResult(result);
+
 		} catch(const std::exception & e)
 		{
 			ELOG << "An error occurred processing this file: " << e.what() << std::endl;

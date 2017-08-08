@@ -63,44 +63,33 @@ Json::Value ResultIO::clusteringResultToJSON(const ClusteringResult & cr)
 	return root;
 }
 
-Json::Value ResultIO::clusterAnalysisResultToJSON(const ResultContainer & result, const ClusterAnalysisResult & car, bool alignToOneshot)
+Json::Value ResultIO::contaminationDetectionResultToJSON(const ResultContainer & result)
 {
 	auto root = Json::Value();
 
-    if (alignToOneshot)
-    {
-       root["dataSne"] = MatrixUtil::matrixToJSON(MLUtil::alignBootstrap(result.oneshot.dataSne, car.dataSne, car.bootstrapIndexes));
-    } else
-    {
-	   root["dataSne"] = MatrixUtil::matrixToJSON(car.dataSne);
-    }
-	root["dataPca"] = MatrixUtil::matrixToJSON(car.dataPca);
+    root["dataSne"] = MatrixUtil::matrixToJSON(result.dataSne);
+	root["dataPca"] = MatrixUtil::matrixToJSON(result.dataPca);
 
-	root["bootstrapIndexes"] = Json::Value(Json::arrayValue);
-	for (const auto & idx : car.bootstrapIndexes)
-	{
-		root["bootstrapIndexes"].append(idx);
-	}
+    root["confidenceCC"] = result.contaminationAnalysis.confidenceCC;
+    root["confidenceDip"] = result.contaminationAnalysis.confidenceDip;
+    root["contaminationStatus"] = result.contaminationAnalysis.status;
 
-    root["isMultiModal"] = car.isMultiModal;
-
-    root["numClustPca"] = car.numClustPca;
+    root["numClustPca"] = result.clusterings.numClustPca;
 	root["clustsPca"] = Json::Value(Json::arrayValue);
-    for (auto & c : car.clustsPca)
+    for (auto & c : result.clusterings.clustsPca)
     {
         root["clustsPca"].append(clusteringResultToJSON(c));
     }
 
-    root["numClustSne"] = car.numClustSne;
+    root["numClustSne"] = result.clusterings.numClustSne;
     root["clustsSne"] = Json::Value(Json::arrayValue);
-    for (auto & c : car.clustsSne)
+    for (auto & c : result.clusterings.clustsSne)
     {
         root["clustsSne"].append(clusteringResultToJSON(c));
     }
 
-    root["hasSeparatedComponents"] = car.hasSeparatedComponents;
-    root["numClustCC"] = car.numClustCC;
-    root["clustCC"] = clusteringResultToJSON(car.clustCC);
+    root["numClustCC"] = result.clusterings.numClustCC;
+    root["clustCC"] = clusteringResultToJSON(result.clusterings.clustCC);
 
 	return root;
 }
@@ -118,13 +107,7 @@ void ResultIO::writeResultContainerToJSON(ResultContainer result, const std::str
 		root["fastaLabels"].append(lbl);
 	}
 
-	root["oneshot"] = clusterAnalysisResultToJSON(result, result.oneshot, false);
-
-	root["bootstraps"] = Json::Value(Json::arrayValue);
-	for (auto & bs : result.bootstraps)
-	{
-		root["bootstraps"].append(clusterAnalysisResultToJSON(result, bs, true));
-	}
+	root["oneshot"] = contaminationDetectionResultToJSON(result);
 
     if (krakenEnabled)
     {
@@ -209,7 +192,7 @@ void ResultIO::exportClusteringInfo(const ResultContainer & result, const std::s
 
     for (unsigned i = 0; i < result.fastaLabels.size(); ++i)
     {
-        contigIdsCC[result.oneshot.clustCC.labels.at(i)].insert(result.fastaLabels.at(i));
+        contigIdsCC[result.clusterings.clustCC.labels.at(i)].insert(result.fastaLabels.at(i));
         contigIdsKraken[numericLabels(krakenLabels).at(i)].insert(result.fastaLabels.at(i));
     }
 
@@ -262,8 +245,8 @@ void ResultIO::exportClusteringInfo(const ResultContainer & result, const std::s
 
         for (unsigned i = 0; i < result.fastaLabels.size(); ++i)
         {
-            contigIdsSne[result.oneshot.clustsSne.at(k).labels.at(i)].insert(result.fastaLabels.at(i));
-            contigIdsPca[result.oneshot.clustsPca.at(k).labels.at(i)].insert(result.fastaLabels.at(i));
+            contigIdsSne[result.clusterings.clustsSne.at(k).labels.at(i)].insert(result.fastaLabels.at(i));
+            contigIdsPca[result.clusterings.clustsPca.at(k).labels.at(i)].insert(result.fastaLabels.at(i));
         }
 
         root["dip"]["dataSne"][kStr] = Json::Value();

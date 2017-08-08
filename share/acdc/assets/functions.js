@@ -141,24 +141,11 @@ function buildConfidenceTable(results)
 			kraken = krakenNumUnknown > 0 ? '&ge; ' + numSpecies : '' + numSpecies;
 		}
 
-		var contProbCC = 0;
-		var contProbDip = 0;
-		for (var j = 0; j < results[i].bootstraps.length; j++)
-		{
-			contProbCC += results[i].bootstraps[j].hasSeparatedComponents ? 1 : 0;
-			contProbDip += results[i].bootstraps[j].isMultiModal ? 1 : 0;
-		}
-		contProbCC /= results[i].bootstraps.length;
-		contProbDip /= results[i].bootstraps.length;
+		console.log(results[i]);
 
-		var status = 'warning';
-		if (contProbCC < 0.25 && contProbDip < 0.25)
-		{
-			status = 'clean';
-		} else if (contProbCC > 0.75 || contProbDip > 0.75)
-		{
-			status = 'contaminated';
-		}
+		var contProbCC = results[i].oneshot.confidenceCC;
+		var contProbDip = results[i].oneshot.confidenceDip;
+		var status = results[i].oneshot.contaminationStatus;
 
 		$('#confidences').append('<tr>' +
 			'<td>' + results[i].id + '</td>' +
@@ -252,14 +239,7 @@ function showVisualization()
 {
 	var x = results[selectedFasta];
 
-	var clustAnaResult;
-	if (selectedData === 'oneshot')
-	{
-		clustAnaResult = x.oneshot;
-	} else
-	{
-		clustAnaResult = x.bootstraps[parseInt(selectedData)];
-	}
+	var clustAnaResult = x.oneshot;
 
 	var dataMat = clustAnaResult[selectedReduction];
 
@@ -330,12 +310,6 @@ function showVisualization()
 	if(selectedLabels === 'kraken')
 	{
 		tooltips = x.krakenLabels;
-	} else
-	{
-		if (selectedData !== 'oneshot') // align bootstrap tooltips
-		{
-			tooltips = bootstrapLabels(tooltips, clustAnaResult.bootstrapIndexes);
-		}
 	}
 
 
@@ -363,33 +337,6 @@ function showVisualization()
 	updateExport(labels, greyedOut);
 
 	$('#additionalInfo').html(additionalInfo);
-}
-
-function updateBootStrapsSelect()
-{
-	$('#bootstraps').val('oneshot');
-	selectedData = 'oneshot';
-
-	if (selectedLabels === 'kraken')
-	{
-		$('#bootstraps').prop("disabled", true);
-		return;
-	}
-
-	$('#bootstraps').prop("disabled", false);
-
-	var n = results[selectedFasta].bootstraps.length;
-
-	$('#bootstraps').html('');
-	$('#bootstraps').append('<option value="oneshot">One shot</option>');
-	for (var i = 0; i < n; i++)
-	{
-		$('#bootstraps').append($('<option>', {
-		    value: i,
-		    text: 'Bootstrap ' + (i+1)
-		}));
-	}
-
 }
 
 function exportClusterFasta(clusterLabel, fasta, selectedLabels, selectedReduction, selectedNumClusters)
@@ -432,7 +379,7 @@ function exportClusterFasta(clusterLabel, fasta, selectedLabels, selectedReducti
 
 function updateExport(labels, greyedOut)
 {
-	if (selectedLabels === 'fasta' || selectedData !== 'oneshot')
+	if (selectedLabels === 'fasta')
 	{
 		$('#export').hide();
 		return;
@@ -488,16 +435,6 @@ function numericLabels(labels)
 	for (var i in labels)
 	{
 		result[i] = mp[labels[i]];
-	}
-	return result;
-}
-
-function bootstrapLabels(labelsOneshot, bootstrapIndexes)
-{
-	result = Array(bootstrapIndexes.length);
-	for (var i in bootstrapIndexes)
-	{
-		result[i] = labelsOneshot[bootstrapIndexes[i]];
 	}
 	return result;
 }

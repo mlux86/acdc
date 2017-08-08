@@ -8,8 +8,10 @@ add_library(mainprog
 	SequenceVectorizer.cpp
 	Clustering.cpp
 	HierarchicalClustering.cpp
+	ClusteringUtil.cpp
 	TarjansAlgorithm.cpp
-	ClusterAnalysis.cpp
+	ContaminationDetection.cpp
+	Decontamination.cpp
 	Logger.cpp
 	KrakenAdapter.cpp
 	ResultIO.cpp
