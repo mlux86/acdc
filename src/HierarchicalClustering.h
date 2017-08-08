@@ -3,23 +3,29 @@
 #include <vector>
 #include <Eigen/Dense>
 
+#include "Clustering.h"
+
 // Performs hierarchical clustering
-class HierarchicalClustering
+class HierarchicalClustering : public ClusteringAlgorithm
 {
 
 private:
-	HierarchicalClustering();
-	~HierarchicalClustering();
-
 	// Helper function for recursively assigning the cluster number to leaf nodes in a linkage tree
 	static void clusterNum(const Eigen::MatrixXd & linkage, std::vector<unsigned> & labels, unsigned idx, unsigned clsnum);
 
 public:
+	Eigen::MatrixXd linkageMat;
+
+	HierarchicalClustering();
+	~HierarchicalClustering();
+
 	// Computes a (n-1)-by-dim linkage matrix
 	// Same format as SciPys implementation of a linkage matrix
     static Eigen::MatrixXd linkage(const Eigen::MatrixXd & data);
 
-    // Clusters data by cutting the linkage tree (calculated by linkage()) at level maxK 
-	static std::vector<unsigned> cluster(const Eigen::MatrixXd & linkage, unsigned maxK);
+    void initialize(const Eigen::MatrixXd & data);
+
+    // Clusters data by cutting the linkage tree (calculated by linkage()) at level k 
+	std::vector<unsigned> cluster(unsigned k);
 
 };

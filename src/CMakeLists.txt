@@ -6,8 +6,12 @@ add_library(mainprog
 	MLUtil.cpp
 	BarnesHutSNEAdapter.cpp
 	SequenceVectorizer.cpp
-	Clustering.cpp
+	ClusteringAlgorithm.cpp
 	HierarchicalClustering.cpp
+	ClusterEstimator.cpp
+	ConnectedComponentsEstimator.cpp
+	ExternalValidityEstimator.cpp
+	ClusterPostProcessing.cpp
 	ClusteringUtil.cpp
 	TarjansAlgorithm.cpp
 	ContaminationDetection.cpp
