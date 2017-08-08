@@ -4,6 +4,16 @@
 
 #include <Eigen/Dense>
 
+HierarchicalClustering::HierarchicalClustering()
+{
+
+}
+
+HierarchicalClustering::~HierarchicalClustering()
+{
+
+}
+
 void HierarchicalClustering::clusterNum(const Eigen::MatrixXd & linkage, std::vector<unsigned> & labels, unsigned idx, unsigned clsnum)
 {
     unsigned n = labels.size();
@@ -28,9 +38,14 @@ void HierarchicalClustering::clusterNum(const Eigen::MatrixXd & linkage, std::ve
     }
 }
 
-std::vector<unsigned> HierarchicalClustering::cluster(const Eigen::MatrixXd & linkage, unsigned maxK)
+void HierarchicalClustering::initialize(const Eigen::MatrixXd & data)
 {
-    unsigned n = linkage.rows()+1;
+    linkageMat = HierarchicalClustering::linkage(data);
+}
+
+std::vector<unsigned> HierarchicalClustering::cluster(unsigned maxK)
+{
+    unsigned n = linkageMat.rows()+1;
     std::vector<unsigned> labels(n);
 
     unsigned i; 
@@ -38,26 +53,26 @@ std::vector<unsigned> HierarchicalClustering::cluster(const Eigen::MatrixXd & li
     for (unsigned k = n-maxK; k < n-1; k++) 
     { 
         // left tree 
-        i = linkage(k, 0);
+        i = linkageMat(k, 0);
         if (i < n) // is leaf, mark label
         { 
             labels[i] = clsnum; 
             clsnum++; 
         } else if (i < 2*n-maxK) 
         { 
-            HierarchicalClustering::clusterNum(linkage, labels, i-n, clsnum); // recurse left tree
+            HierarchicalClustering::clusterNum(linkageMat, labels, i-n, clsnum); // recurse left tree
             clsnum++; 
         } 
 
         // right tree 
-        i = linkage(k, 1);
+        i = linkageMat(k, 1);
         if (i < n) // is leaf, mark label
         { 
             labels[i] = clsnum; 
             clsnum++; 
         } else if (i < 2*n-maxK) 
         { 
-            HierarchicalClustering::clusterNum(linkage, labels, i-n, clsnum); // recurse right tree
+            HierarchicalClustering::clusterNum(linkageMat, labels, i-n, clsnum); // recurse right tree
             clsnum++; 
         } 
     } 

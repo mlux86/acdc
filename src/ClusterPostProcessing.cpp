@@ -1,67 +1,15 @@
-#include "Clustering.h"
-#include "DipStatistic.h"
-#include "MLUtil.h"
-#include "ClusteringUtil.h"
-#include "HierarchicalClustering.h"
-#include "TarjansAlgorithm.h"
 #include "Opts.h"
+#include "Clustering.h"
 
-#include <algorithm>
-#include <limits>
-#include <vector>
-
-Clustering::Clustering(const Eigen::MatrixXd & data_, const std::vector<std::string> & contigs_, const std::map<std::string, unsigned> & contigSizes_) : data(data_), contigs(contigs_), contigSizes(contigSizes_)
+ClusterPostProcessing::ClusterPostProcessing(const std::vector<std::string> & contigs_, const std::map<std::string, unsigned> & contigSizes_) : contigs(contigs_), contigSizes(contigSizes_)
 {
 }
 
-Clustering::~Clustering()
+ClusterPostProcessing::~ClusterPostProcessing()
 {
 }
 
-ClusteringResult Clustering::connComponents(unsigned knnK)
-{
-    Eigen::MatrixXd aff = MLUtil::knnAffinityMatrix(data, knnK, true);
-    TarjansAlgorithm ta;
-    auto res = ta.run(aff);
-    postprocess(res); 
-    return res;
-}
-
-std::pair<unsigned, std::vector<ClusteringResult>> Clustering::estimateK(unsigned maxK)
-{
-    std::vector<ClusteringResult> results(maxK);
-
-    // label trivial clustering for k == 1
-    results[0].numClusters = 1;
-    results[0].labels.resize(data.rows());
-    std::fill(results[0].labels.begin(),results[0].labels.end(), 1);
-
-    // compute linkage only once
-    Eigen::MatrixXd z = HierarchicalClustering::linkage(data);
-
-    // find minimum Davies Bouldin index
-    double minDb = std::numeric_limits<double>::max();
-    unsigned optK = 0;
-
-    for (unsigned k = 2; k <= maxK; k++)
-    {
-        results[k-1].numClusters = k;
-        results[k-1].labels = HierarchicalClustering::cluster(z, k);        
-        postprocess(results[k-1]);
-
-        double db = ClusteringUtil::daviesBouldin(data, results[k-1].labels);
-
-        if (db < minDb)
-        {
-            minDb = db;
-            optK = results[k-1].numClusters;
-        }
-    }
-
-    return std::make_pair(optK, results);
-}
-
-void Clustering::postprocess(ClusteringResult & cr)
+void ClusterPostProcessing::run(ClusteringResult & cr)
 {
     unsigned n = cr.labels.size();
 

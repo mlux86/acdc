@@ -17,14 +17,26 @@ struct ClusteringResult
 	std::vector<unsigned> outlierClusters;
 };
 
-// Main class to perform clustering 
-class Clustering
+
+
+class ClusteringAlgorithm
+{
+
+public:
+	ClusteringAlgorithm();
+	virtual ~ClusteringAlgorithm();
+
+	virtual void initialize(const Eigen::MatrixXd & data) = 0;
+	virtual std::vector<unsigned> cluster(unsigned k) = 0;
+
+};
+
+
+
+class ClusterPostProcessing
 {
 
 private:
-	// Data to cluster on
-	const Eigen::MatrixXd & data;
-
 	// Contigs to use for resolving inter-cluster contig connections
 	const std::vector<std::string> & contigs;
 
@@ -33,16 +45,57 @@ private:
 
 public:
 	// Initializes members
-	Clustering(const Eigen::MatrixXd & data_, const std::vector<std::string> & contigs_, const std::map<std::string, unsigned> & contigSizes_);
-	~Clustering();
-
-	// Runs connected component clustering on a mutual nearest neighbor graph with knnK neighbors
-	ClusteringResult connComponents(unsigned knnK);
-
-	// Estimates the optimal number of clusters and returns a ClusteringResult for each of the tested numbers [1, maxK]
-	// The optimal number of clusters is found by looking at the minimum Davies Bouldin index
-	std::pair<unsigned, std::vector<ClusteringResult>> estimateK(unsigned maxK);
+	ClusterPostProcessing(const std::vector<std::string> & contigs_, const std::map<std::string, unsigned> & contigSizes_);
+	~ClusterPostProcessing();
 
 	// Post-processes a ClusteringResult by resolcing inter-cluster contig connections and re-labeling outlier points
-	void postprocess(ClusteringResult & cr);
+	void run(ClusteringResult & cr);
+};
+
+
+
+class ClusterEstimator
+{
+
+protected:
+	ClusterPostProcessing cpp;
+
+public:
+	ClusterEstimator(ClusterPostProcessing cpp_);
+	~ClusterEstimator();
+
+	virtual std::pair<unsigned, std::vector<ClusteringResult>> estimateK(const Eigen::MatrixXd & data) = 0;
+
+};
+
+
+
+class ConnectedComponentsEstimator : public ClusterEstimator
+{
+
+private:
+	unsigned knnK;
+
+public:
+	ConnectedComponentsEstimator(ClusterPostProcessing cpp_, unsigned knnK_);
+	~ConnectedComponentsEstimator();
+
+	std::pair<unsigned, std::vector<ClusteringResult>> estimateK(const Eigen::MatrixXd & data);
+
+};
+
+
+class ExternalValidityEstimator : public ClusterEstimator
+{
+
+private:
+	ClusteringAlgorithm & clustAlgo;
+	unsigned maxK = 9;
+
+public:
+	ExternalValidityEstimator(ClusterPostProcessing cpp_, ClusteringAlgorithm & clustAlgo_, unsigned maxK_);
+	~ExternalValidityEstimator();
+	
+	std::pair<unsigned, std::vector<ClusteringResult>> estimateK(const Eigen::MatrixXd & data);
+
 };
