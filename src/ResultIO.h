@@ -70,6 +70,8 @@ private:
 
 	void exportContigJS(const std::string & fastaFilename);
 
+	void writeYAML(const ResultContainer & result, const std::string & filename);
+
     // Output directory to write to
 	std::string outputDir;
 

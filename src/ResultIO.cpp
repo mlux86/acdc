@@ -13,6 +13,9 @@
 #include "ResultIO.h"
 #include "SequenceUtil.h"
 #include "Clustering.h"
+#include "Opts.h"
+
+#include <yaml-cpp/yaml.h>
 
 ResultIO::ResultIO(const std::string & dir, bool krakenEnabled_) : outputDir(dir), krakenEnabled(krakenEnabled_)
 {
@@ -310,6 +313,39 @@ void ResultIO::exportContigJS(const std::string & fastaFilename)
     ofs.close();    
 }
 
+void ResultIO::writeYAML(const ResultContainer & result, const std::string & filename)
+{
+    std::vector<double> sneCol0(result.dataSne.col(0).data(), result.dataSne.col(0).data() + result.dataSne.rows());
+    std::vector<double> sneCol1(result.dataSne.col(1).data(), result.dataSne.col(1).data() + result.dataSne.rows());
+    std::vector<double> pcaCol0(result.dataPca.col(0).data(), result.dataPca.col(0).data() + result.dataPca.rows());
+    std::vector<double> pcaCol1(result.dataPca.col(1).data(), result.dataPca.col(1).data() + result.dataPca.rows());
+
+    YAML::Emitter out;
+    out << YAML::BeginMap;
+    out << YAML::Key << "cli_call" << YAML::Value << Opts::cliCall();
+    out << YAML::Key << "acdc_parameters" << YAML::Value << Opts::parameters();
+    out << YAML::Key << "contigs" << YAML::Value << YAML::Flow << result.fastaLabels;
+    out << YAML::Key << "visualizations" << YAML::Value 
+        << YAML::BeginMap 
+            << YAML::Key << "sne" << YAML::Value 
+                << YAML::BeginMap 
+                    << YAML::Key << "x1" << YAML::Value << YAML::Flow << sneCol0 
+                    << YAML::Key << "x2" << YAML::Value << YAML::Flow << sneCol1
+                << YAML::EndMap
+            << YAML::Key << "pca" << YAML::Value 
+                << YAML::BeginMap 
+                    << YAML::Key << "x1" << YAML::Value << YAML::Flow << pcaCol0 
+                    << YAML::Key << "x2" << YAML::Value << YAML::Flow << pcaCol1
+                << YAML::EndMap
+        << YAML::EndMap;
+        
+    out << YAML::EndMap;
+
+    std::ofstream ofs(filename, std::ofstream::out);
+    ofs << out.c_str();
+    ofs.close();
+}
+
 void ResultIO::processResult(const ResultContainer & result)
 {
     export16S(result);
@@ -325,5 +361,10 @@ void ResultIO::processResult(const ResultContainer & result)
 	ss2 << outputDir << "/" << "data.js";
 	std::string fname2 = ss2.str();
 	writeResultContainerToJSON(result, fname2);
+
+    std::stringstream ss3;
+    ss3 << outputDir << "/" << "result.yaml";
+    std::string fname3 = ss3.str();
+    writeYAML(result, fname3);
 
 }
