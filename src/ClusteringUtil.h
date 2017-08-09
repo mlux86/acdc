@@ -2,7 +2,6 @@
 
 #include <Eigen/Dense>
 
-// Matrix handling utilities
 class ClusteringUtil
 {
 private:

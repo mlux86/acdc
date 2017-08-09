@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <string>
+#include <map>
 
 // Program arguments data class
 // See implementation method initializeOnce() for description of arguments
@@ -10,6 +11,8 @@ class Opts
 private:
 	std::string _execPath = "";
 	std::string _sharePath = "";
+
+	std::string _cliCall = "";
 
 	bool _needsHelp = false;
 	std::string _helpDesc = "";
@@ -49,9 +52,11 @@ private:
 public:
 	// Call this method with program arguments once to initialize the singleton object
 	static void initializeOnce(int argc, char *argv[]);
+	static std::map <std::string, std::string> parameters();
 
 	static std::string execPath();
 	static std::string sharePath();
+	static std::string cliCall();
 	static bool needsHelp();
 	static unsigned logLevel();
 	static std::string helpDesc();

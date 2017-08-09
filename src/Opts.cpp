@@ -7,6 +7,7 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/program_options.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/algorithm/string/join.hpp>
 #include <sstream>
 #include <thread>
 
@@ -49,6 +50,9 @@ void Opts::initializeOnce(int argc, char *argv[])
     boost::filesystem::path fullPath = boost::filesystem::canonical(boost::filesystem::system_complete(path));
     opts._execPath = fullPath.parent_path().string();
     opts._sharePath = opts._execPath + "/../share/acdc";
+
+    std::vector<std::string> params(argv+1, argv+argc);
+    opts._cliCall = fullPath.string() + " " + boost::algorithm::join(params, " ");
 
     // build boost program arguments
 
@@ -134,6 +138,32 @@ void Opts::initializeOnce(int argc, char *argv[])
 	opts._aggressiveThreshold = vm["aggressive-threshold"].as<unsigned>();
 }
 
+std::map <std::string, std::string> Opts::parameters()
+{
+	std::map <std::string, std::string> params;
+	params["execPath"] = Opts::getInstance()._execPath;
+	params["sharePath"] = Opts::getInstance()._sharePath;
+	params["cliCall"] = Opts::getInstance()._cliCall;
+	params["needsHelp"] = std::to_string(Opts::getInstance()._needsHelp);
+	params["logLevel"] = std::to_string(Opts::getInstance()._logLevel);
+	params["tsneDim"] = std::to_string(Opts::getInstance()._tsneDim);
+	params["tsnePcaDim"] = std::to_string(Opts::getInstance()._tsnePcaDim);
+	params["tsnePerplexity"] = std::to_string(Opts::getInstance()._tsnePerplexity);
+	params["tsneTheta"] = std::to_string(Opts::getInstance()._tsneTheta);
+	params["minContigLength"] = std::to_string(Opts::getInstance()._minContigLength);
+	params["windowKmerLength"] = std::to_string(Opts::getInstance()._windowKmerLength);
+	params["windowWidth"] = std::to_string(Opts::getInstance()._windowWidth);
+	params["windowStep"] = std::to_string(Opts::getInstance()._windowStep);
+	params["targetNumPoints"] = std::to_string(Opts::getInstance()._targetNumPoints);
+	params["numThreads"] = std::to_string(Opts::getInstance()._numThreads);
+	params["numBootstraps"] = std::to_string(Opts::getInstance()._numBootstraps);
+	params["bootstrapRatio"] = std::to_string(Opts::getInstance()._bootstrapRatio);
+	params["outputDir"] = Opts::getInstance()._outputDir;
+	params["krakenDb"] = Opts::getInstance()._krakenDb;
+	params["aggressiveThreshold"] = std::to_string(Opts::getInstance()._aggressiveThreshold);
+	return params;
+}
+
 std::string Opts::execPath()
 {
 	return Opts::getInstance()._execPath;
@@ -142,6 +172,11 @@ std::string Opts::execPath()
 std::string Opts::sharePath()
 {
 	return Opts::getInstance()._sharePath;
+}
+
+std::string Opts::cliCall()
+{
+	return Opts::getInstance()._cliCall;
 }
 
 bool Opts::needsHelp()
