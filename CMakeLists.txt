@@ -12,6 +12,10 @@ set(Boost_USE_STATIC_RUNTIME OFF)
 find_package(Boost 1.55.0 COMPONENTS program_options system filesystem REQUIRED)
 include_directories(${Boost_INCLUDE_DIR})
 
+# yaml-cpp
+add_subdirectory(libyamlcpp)
+include_directories(SYSTEM "libyamlcpp/include")
+
 # t-SNE
 include_directories(SYSTEM "libtsne")
 
