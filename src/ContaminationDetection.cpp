@@ -145,13 +145,13 @@ ContaminationDetectionSummary ContaminationDetection::summarizeBootstraps(const 
 
 	if (cds.confidenceDip < 0.25 && cds.confidenceCC < 0.25)
 	{
-		cds.status = "clean";
+		cds.state = "clean";
 	} else if (cds.confidenceDip > 0.75 || cds.confidenceCC > 0.75)
 	{
-		cds.status = "contaminated";
+		cds.state = "contaminated";
 	} else
 	{
-		cds.status = "warning";
+		cds.state = "warning";
 	}
 
 	return(cds);

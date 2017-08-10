@@ -7,6 +7,8 @@
 
 struct SequenceStats
 {
+	std::vector<std::string> contigs;
+	
     // Size in bp
     unsigned long numBasepairs;
 

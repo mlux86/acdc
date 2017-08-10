@@ -156,7 +156,7 @@ int main(int argc, char *argv[])
 			ILOG << "Vectorizing contigs..." << std::endl;
 			SequenceVectorizer sv(fasta);
 			auto svr = sv.vectorize();
-			result.fastaLabels = svr.contigs;
+			result.seqVectorization = svr;
 
 			if (rmrExists)
 			{

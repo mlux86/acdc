@@ -2,6 +2,12 @@
 
 #include "IOUtil.h"
 
+YAML::Emitter & operator << (YAML::Emitter & out, const Fixed & f) 
+{
+    out << f.toString();
+    return out;
+}
+
 void IOUtil::copyDir(boost::filesystem::path const & source, boost::filesystem::path const & destination, bool overwriteExisting)
 {
     namespace fs = boost::filesystem;
@@ -43,4 +49,15 @@ std::vector<std::string> IOUtil::fileLinesToVec(const std::string & filename)
     }     
     ifs.close();
     return result;
+}
+
+std::vector<Fixed> IOUtil::columnToFixed(const Eigen::MatrixXd & m, unsigned colIdx)
+{
+    std::vector<double> col(m.col(colIdx).data(), m.col(colIdx).data() + m.rows());
+    std::vector<Fixed> colFixed(col.size());
+    std::transform(col.begin(), col.end(), colFixed.begin(), [](const double val)
+    {
+        return Fixed(val);
+    });
+    return colFixed;
 }
