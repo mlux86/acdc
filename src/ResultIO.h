@@ -22,8 +22,7 @@ struct ResultContainer
 	// Fasta file analyzed
 	std::string fasta;
 
-	// Contig names
-	std::vector<std::string> fastaLabels;
+	SequenceVectorizationResult seqVectorization;
 
 	Eigen::MatrixXd dataSne;
 	
@@ -69,6 +68,8 @@ private:
     void exportClusteringInfo(const ResultContainer & result, const std::string & filename);
 
 	void exportContigJS(const std::string & fastaFilename);
+
+	std::vector<unsigned> contigsIndicesWith16S(const ResultContainer & result);
 
 	void writeYAML(const ResultContainer & result, const std::string & filename);
 

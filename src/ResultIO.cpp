@@ -14,6 +14,7 @@
 #include "SequenceUtil.h"
 #include "Clustering.h"
 #include "Opts.h"
+#include "IOUtil.h"
 
 #include <yaml-cpp/yaml.h>
 
@@ -75,7 +76,7 @@ Json::Value ResultIO::contaminationDetectionResultToJSON(const ResultContainer &
 
     root["confidenceCC"] = result.contaminationAnalysis.confidenceCC;
     root["confidenceDip"] = result.contaminationAnalysis.confidenceDip;
-    root["contaminationStatus"] = result.contaminationAnalysis.status;
+    root["contaminationStatus"] = result.contaminationAnalysis.state;
 
     root["numClustPca"] = result.clusterings.numClustPca;
 	root["clustsPca"] = Json::Value(Json::arrayValue);
@@ -105,7 +106,7 @@ void ResultIO::writeResultContainerToJSON(ResultContainer result, const std::str
 	root["id"] = result.id;
 
 	root["fastaLabels"] = Json::Value(Json::arrayValue);
-	for (auto & lbl : result.fastaLabels)
+	for (auto & lbl : result.seqVectorization.contigs)
 	{
 		root["fastaLabels"].append(lbl);
 	}
@@ -115,7 +116,7 @@ void ResultIO::writeResultContainerToJSON(ResultContainer result, const std::str
     if (krakenEnabled)
     {
     	root["krakenLabels"] = Json::Value(Json::arrayValue);
-        for (auto & lbl : result.fastaLabels)
+        for (auto & lbl : result.seqVectorization.contigs)
         {
             std::string krakenLbl = "unknown";
             if (result.kraken.classification.find(lbl) != result.kraken.classification.end())
@@ -177,7 +178,7 @@ void ResultIO::exportClusteringInfo(const ResultContainer & result, const std::s
 
 	// first, we need the kraken result as actual labels
 	std::vector<std::string> krakenLabels;
-    for (auto & lbl : result.fastaLabels)
+    for (auto & lbl : result.seqVectorization.contigs)
     {
         std::string krakenLbl = "unknown";
         if (result.kraken.classification.find(lbl) != result.kraken.classification.end())
@@ -193,10 +194,10 @@ void ResultIO::exportClusteringInfo(const ResultContainer & result, const std::s
 	std::map<unsigned, std::set<std::string>> contigIdsKraken; // export a set of contigs per label
 
 
-    for (unsigned i = 0; i < result.fastaLabels.size(); ++i)
+    for (unsigned i = 0; i < result.seqVectorization.contigs.size(); ++i)
     {
-        contigIdsCC[result.clusterings.clustCC.labels.at(i)].insert(result.fastaLabels.at(i));
-        contigIdsKraken[numericLabels(krakenLabels).at(i)].insert(result.fastaLabels.at(i));
+        contigIdsCC[result.clusterings.clustCC.labels.at(i)].insert(result.seqVectorization.contigs.at(i));
+        contigIdsKraken[numericLabels(krakenLabels).at(i)].insert(result.seqVectorization.contigs.at(i));
     }
 
     auto root = Json::Value();    
@@ -246,10 +247,10 @@ void ResultIO::exportClusteringInfo(const ResultContainer & result, const std::s
         std::map<unsigned, std::set<std::string>> contigIdsSne; // export a set of contigs per label
         std::map<unsigned, std::set<std::string>> contigIdsPca; // export a set of contigs per label
 
-        for (unsigned i = 0; i < result.fastaLabels.size(); ++i)
+        for (unsigned i = 0; i < result.seqVectorization.contigs.size(); ++i)
         {
-            contigIdsSne[result.clusterings.clustsSne.at(k).labels.at(i)].insert(result.fastaLabels.at(i));
-            contigIdsPca[result.clusterings.clustsPca.at(k).labels.at(i)].insert(result.fastaLabels.at(i));
+            contigIdsSne[result.clusterings.clustsSne.at(k).labels.at(i)].insert(result.seqVectorization.contigs.at(i));
+            contigIdsPca[result.clusterings.clustsPca.at(k).labels.at(i)].insert(result.seqVectorization.contigs.at(i));
         }
 
         root["dip"]["dataSne"][kStr] = Json::Value();
@@ -313,18 +314,42 @@ void ResultIO::exportContigJS(const std::string & fastaFilename)
     ofs.close();    
 }
 
+std::vector<unsigned> ResultIO::contigsIndicesWith16S(const ResultContainer & result)
+{
+    std::vector<std::string> contigs16s;
+    for (unsigned i = 0; i < result._16S.size(); i++)
+    {
+        if(result._16S.at(i).size() > 0)
+        {
+            contigs16s.push_back(result.seqVectorization.contigs.at(i));
+        }
+    }
+
+    std::vector<unsigned> contigIndices;
+
+    for (unsigned i = 0; i < result.stats.contigs.size(); i++)
+    {
+        if(std::find(contigs16s.begin(), contigs16s.end(), result.stats.contigs.at(i)) != contigs16s.end())
+        {
+            contigIndices.push_back(i);
+        }
+    }
+
+    return contigIndices;
+}
+
 void ResultIO::writeYAML(const ResultContainer & result, const std::string & filename)
 {
-    std::vector<double> sneCol0(result.dataSne.col(0).data(), result.dataSne.col(0).data() + result.dataSne.rows());
-    std::vector<double> sneCol1(result.dataSne.col(1).data(), result.dataSne.col(1).data() + result.dataSne.rows());
-    std::vector<double> pcaCol0(result.dataPca.col(0).data(), result.dataPca.col(0).data() + result.dataPca.rows());
-    std::vector<double> pcaCol1(result.dataPca.col(1).data(), result.dataPca.col(1).data() + result.dataPca.rows());
+    std::vector<Fixed> sneCol0 = IOUtil::columnToFixed(result.dataSne, 0);
+    std::vector<Fixed> sneCol1 = IOUtil::columnToFixed(result.dataSne, 1);
+    std::vector<Fixed> pcaCol0 = IOUtil::columnToFixed(result.dataPca, 0);
+    std::vector<Fixed> pcaCol1 = IOUtil::columnToFixed(result.dataPca, 1);
 
     YAML::Emitter out;
     out << YAML::BeginMap;
     out << YAML::Key << "cli_call" << YAML::Value << Opts::cliCall();
     out << YAML::Key << "acdc_parameters" << YAML::Value << Opts::parameters();
-    out << YAML::Key << "contigs" << YAML::Value << YAML::Flow << result.fastaLabels;
+    out << YAML::Key << "contigs" << YAML::Value << YAML::Flow << result.stats.contigs;
     out << YAML::Key << "visualizations" << YAML::Value 
         << YAML::BeginMap 
             << YAML::Key << "sne" << YAML::Value 
@@ -338,7 +363,10 @@ void ResultIO::writeYAML(const ResultContainer & result, const std::string & fil
                     << YAML::Key << "x2" << YAML::Value << YAML::Flow << pcaCol1
                 << YAML::EndMap
         << YAML::EndMap;
-        
+    out << YAML::Key << "contigs_16s" << YAML::Value << YAML::Flow << contigsIndicesWith16S(result);
+    out << YAML::Key << "confidence_cc" << YAML::Value << result.contaminationAnalysis.confidenceCC;
+    out << YAML::Key << "confidence_dip" << YAML::Value << result.contaminationAnalysis.confidenceDip;
+    out << YAML::Key << "contamination_state" << YAML::Value << result.contaminationAnalysis.state;
     out << YAML::EndMap;
 
     std::ofstream ofs(filename, std::ofstream::out);

@@ -137,6 +137,8 @@ SequenceStats SequenceUtil::calculateStats(const std::string & fasta, unsigned m
         std::string seq;
         move(seq, seqs[i]);
 
+        stats.contigs.push_back(id);
+
         unsigned len = seqan::length(seq);
         if (len < minContigLength)
         {

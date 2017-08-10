@@ -35,7 +35,7 @@ struct ContaminationDetectionSummary
 {
 	double confidenceCC = 0;
 	double confidenceDip = 0;
-	std::string status;
+	std::string state;
 };
 
 // Main class to perform cluster analysis on a given sample

@@ -9,6 +9,6 @@ add_executable(acdc-test
 	TarjansAlgorithm.cpp
 )
 
-target_link_libraries(acdc-test mainprog tsne dip jsoncpp pthread m ${Boost_LIBRARIES} ${JSONCPP_LIBRARY})
+target_link_libraries(acdc-test mainprog yaml-cpp tsne dip jsoncpp pthread m ${Boost_LIBRARIES} ${JSONCPP_LIBRARY})
 
 add_test(all acdc-test)
