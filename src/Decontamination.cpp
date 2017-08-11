@@ -1,3 +1,5 @@
+#include <memory>
+
 #include "HierarchicalClustering.h"
 #include "Decontamination.h"
 
@@ -15,22 +17,24 @@ DecontaminationResult Decontamination::findLikelyClusterings(const Eigen::Matrix
 {
 	DecontaminationResult res;
 
-	ClusterPostProcessing cpp(svr.contigs, svr.contigSizes);
-	HierarchicalClustering hc;
-	ExternalValidityEstimator eve(cpp, hc, 5);
+	std::unique_ptr<ClusterPostProcessing> cpp1(new ClusterPostProcessing(svr.contigs, svr.contigSizes));
+	std::unique_ptr<ClusteringAlgorithm> hc(new HierarchicalClustering());
+	res.estimatorClusterValidity = std::unique_ptr<ClusterEstimator>(new ExternalValidityEstimator(cpp1, hc, 5));
 
-	auto resPca = eve.estimateK(dataPca);
+	std::unique_ptr<ClusterPostProcessing> cpp2(new ClusterPostProcessing(svr.contigs, svr.contigSizes));
+	res.estimatorCC = std::unique_ptr<ClusterEstimator>(new ConnectedComponentsEstimator(cpp2, 9));
+
+	auto resPca = res.estimatorClusterValidity->estimateK(dataPca);
 	res.numClustPca = resPca.first;
 	res.clustsPca = resPca.second;
 
-	auto resSne = eve.estimateK(dataSne);
+	auto resSne = res.estimatorClusterValidity->estimateK(dataSne);
 	res.numClustSne = resSne.first;
 	res.clustsSne = resSne.second;
 
-	ConnectedComponentsEstimator cce(cpp, 9);
-	auto resCC = cce.estimateK(dataSne);
+	auto resCC = res.estimatorCC->estimateK(dataSne);
 	res.numClustCC = resCC.first;
-	res.clustCC = resCC.second.at(0);
+	res.clustsCC = resCC.second;
 
 	return(res);
 }

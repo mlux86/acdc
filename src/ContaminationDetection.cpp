@@ -82,7 +82,7 @@ ContaminationDetectionResult ContaminationDetection::analyze(const Eigen::Matrix
 		               ClusteringUtil::isMultiModal(res.dataPca, 0, 0.001);
 
 	VLOG << "Clustering connected components" << std::endl;
-	ClusterPostProcessing cpp(contigs, contigSizes);
+	std::unique_ptr<ClusterPostProcessing> cpp(new ClusterPostProcessing(contigs, contigSizes));
 	ConnectedComponentsEstimator cce(cpp, 9);
 	auto clustCC = cce.estimateK(res.dataSne);
 	res.hasSeparatedComponents = clustCC.first > 1;

@@ -8,8 +8,11 @@
 
 struct DecontaminationResult
 {
+	std::unique_ptr<ClusterEstimator> estimatorCC = nullptr;
+	std::unique_ptr<ClusterEstimator> estimatorClusterValidity = nullptr;
+
 	unsigned numClustCC; 
-	ClusteringResult clustCC;
+	std::vector<ClusteringResult> clustsCC;
 
 	unsigned numClustSne; 
 	std::vector<ClusteringResult> clustsSne;

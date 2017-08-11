@@ -3,6 +3,8 @@
 #include <Eigen/Dense>
 #include <vector>
 #include <map>
+#include <string>
+#include <memory>
 
 // Contains result of the clustering on some (unconnected) data matrix
 struct ClusteringResult
@@ -29,6 +31,9 @@ public:
 	virtual void initialize(const Eigen::MatrixXd & data) = 0;
 	virtual std::vector<unsigned> cluster(unsigned k) = 0;
 
+	virtual std::string name() = 0;
+	virtual std::map<std::string, std::string> parameters() = 0;
+
 };
 
 
@@ -38,14 +43,14 @@ class ClusterPostProcessing
 
 private:
 	// Contigs to use for resolving inter-cluster contig connections
-	const std::vector<std::string> & contigs;
+	const std::vector<std::string> contigs;
 
 	// Contigs sizes to use for re-assigning data points with inter-cluster contig connections
-	const std::map<std::string, unsigned> & contigSizes;
+	const std::map<std::string, unsigned> contigSizes;
 
 public:
 	// Initializes members
-	ClusterPostProcessing(const std::vector<std::string> & contigs_, const std::map<std::string, unsigned> & contigSizes_);
+	ClusterPostProcessing(const std::vector<std::string> contigs_, const std::map<std::string, unsigned> contigSizes_);
 	~ClusterPostProcessing();
 
 	// Post-processes a ClusteringResult by resolcing inter-cluster contig connections and re-labeling outlier points
@@ -58,14 +63,16 @@ class ClusterEstimator
 {
 
 protected:
-	ClusterPostProcessing cpp;
+	std::unique_ptr<ClusterPostProcessing> cpp;
 
 public:
-	ClusterEstimator(ClusterPostProcessing cpp_);
+	ClusterEstimator(std::unique_ptr<ClusterPostProcessing> & cpp_);
 	~ClusterEstimator();
 
 	virtual std::pair<unsigned, std::vector<ClusteringResult>> estimateK(const Eigen::MatrixXd & data) = 0;
 
+	virtual std::string name() = 0;
+	virtual std::map<std::string, std::string> parameters() = 0;	
 };
 
 
@@ -73,29 +80,33 @@ public:
 class ConnectedComponentsEstimator : public ClusterEstimator
 {
 
-private:
+protected:
 	unsigned knnK;
 
 public:
-	ConnectedComponentsEstimator(ClusterPostProcessing cpp_, unsigned knnK_);
+	ConnectedComponentsEstimator(std::unique_ptr<ClusterPostProcessing> & cpp_, unsigned knnK_);
 	~ConnectedComponentsEstimator();
 
 	std::pair<unsigned, std::vector<ClusteringResult>> estimateK(const Eigen::MatrixXd & data);
 
+	std::string name();
+	std::map<std::string, std::string> parameters();	
 };
 
 
 class ExternalValidityEstimator : public ClusterEstimator
 {
 
-private:
-	ClusteringAlgorithm & clustAlgo;
-	unsigned maxK = 9;
+protected:
+	std::unique_ptr<ClusteringAlgorithm> clustAlgo;
+	unsigned maxK = 5;
 
-public:
-	ExternalValidityEstimator(ClusterPostProcessing cpp_, ClusteringAlgorithm & clustAlgo_, unsigned maxK_);
+public:	
+	ExternalValidityEstimator(std::unique_ptr<ClusterPostProcessing> & cpp_, std::unique_ptr<ClusteringAlgorithm> & clustAlgo_, unsigned maxK_);
 	~ExternalValidityEstimator();
-	
+
 	std::pair<unsigned, std::vector<ClusteringResult>> estimateK(const Eigen::MatrixXd & data);
 
+	std::string name();
+	std::map<std::string, std::string> parameters();	
 };
