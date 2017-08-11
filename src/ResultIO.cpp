@@ -408,8 +408,8 @@ void ResultIO::writeYAML(const ResultContainer & result, const std::string & fil
 
     YAML::Emitter out;
     out << YAML::BeginMap;
-    out << YAML::Key << "cli_call" << YAML::Value << Opts::cliCall();
     out << YAML::Key << "acdc_parameters" << YAML::Value << Opts::parameters();
+    out << YAML::Key << "input_fasta" << YAML::Value << IOUtil::absoluteFilepath(result.fasta);
     out << YAML::Key << "contigs" << YAML::Value << YAML::Flow << result.stats.contigs;
     out << YAML::Key << "visualizations" << YAML::Value 
         << YAML::BeginMap 
@@ -480,7 +480,7 @@ void ResultIO::processResult(const ResultContainer & result)
 	writeResultContainerToJSON(result, fname2);
 
     std::stringstream ss3;
-    ss3 << outputDir << "/" << "result.yaml";
+    ss3 << outputDir << "/" << (result.fasta + ".yaml");
     std::string fname3 = ss3.str();
     writeYAML(result, fname3);
 

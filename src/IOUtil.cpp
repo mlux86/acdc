@@ -61,3 +61,10 @@ std::vector<Fixed> IOUtil::columnToFixed(const Eigen::MatrixXd & m, unsigned col
     });
     return colFixed;
 }
+
+std::string IOUtil::absoluteFilepath(const std::string & fp)
+{
+        boost::filesystem::path path(fp);
+        boost::filesystem::path fullPath = boost::filesystem::canonical(boost::filesystem::system_complete(path));
+        return fullPath.string();
+}

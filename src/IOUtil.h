@@ -45,4 +45,6 @@ public:
 	static std::vector<std::string> fileLinesToVec(const std::string & filename);
 
 	static std::vector<Fixed> columnToFixed(const Eigen::MatrixXd & m, unsigned colIdx);
+
+	static std::string absoluteFilepath(const std::string & fp);
 };
