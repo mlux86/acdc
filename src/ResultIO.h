@@ -3,11 +3,13 @@
 #include <vector>
 #include <string>
 #include <json/json.h>
+#include <yaml-cpp/yaml.h>
 
 #include "ContaminationDetection.h"
 #include "Decontamination.h"
 #include "KrakenAdapter.h"
 #include "SequenceUtil.h"
+#include "Clustering.h"
 
 // forward declarations
 struct ClusteringResult;
@@ -59,7 +61,7 @@ private:
     Json::Value contaminationDetectionResultToJSON(const ResultContainer & result);
 
     // Serialize a full ResultContainer as JSON to filename
-	void writeResultContainerToJSON(ResultContainer result, const std::string & filename);
+	void writeResultContainerToJSON(const ResultContainer & result, const std::string & filename);
 
 	// Write 16S sequences
 	void export16S(const ResultContainer & result);
@@ -69,7 +71,13 @@ private:
 
 	void exportContigJS(const std::string & fastaFilename);
 
+	std::vector<unsigned> contigIndicesOfDR(const ResultContainer & result);
+
+	std::vector<unsigned> labelsPerContig(const ResultContainer & result, const ClusteringResult & clust);
+
 	std::vector<unsigned> contigsIndicesWith16S(const ResultContainer & result);
+
+	void clusteringToYAML(YAML::Emitter & out, const ResultContainer & result, const std::vector<ClusteringResult> & clusts);
 
 	void writeYAML(const ResultContainer & result, const std::string & filename);
 

@@ -16,8 +16,6 @@
 #include "Opts.h"
 #include "IOUtil.h"
 
-#include <yaml-cpp/yaml.h>
-
 ResultIO::ResultIO(const std::string & dir, bool krakenEnabled_) : outputDir(dir), krakenEnabled(krakenEnabled_)
 {
 
@@ -93,12 +91,12 @@ Json::Value ResultIO::contaminationDetectionResultToJSON(const ResultContainer &
     }
 
     root["numClustCC"] = result.clusterings.numClustCC;
-    root["clustCC"] = clusteringResultToJSON(result.clusterings.clustCC);
+    root["clustCC"] = clusteringResultToJSON(result.clusterings.clustsCC.at(0));
 
 	return root;
 }
 
-void ResultIO::writeResultContainerToJSON(ResultContainer result, const std::string & filename)
+void ResultIO::writeResultContainerToJSON(const ResultContainer & result, const std::string & filename)
 {
 	auto root = Json::Value();
 
@@ -196,7 +194,7 @@ void ResultIO::exportClusteringInfo(const ResultContainer & result, const std::s
 
     for (unsigned i = 0; i < result.seqVectorization.contigs.size(); ++i)
     {
-        contigIdsCC[result.clusterings.clustCC.labels.at(i)].insert(result.seqVectorization.contigs.at(i));
+        contigIdsCC[result.clusterings.clustsCC.at(0).labels.at(i)].insert(result.seqVectorization.contigs.at(i));
         contigIdsKraken[numericLabels(krakenLabels).at(i)].insert(result.seqVectorization.contigs.at(i));
     }
 
@@ -338,6 +336,69 @@ std::vector<unsigned> ResultIO::contigsIndicesWith16S(const ResultContainer & re
     return contigIndices;
 }
 
+std::vector<unsigned> ResultIO::contigIndicesOfDR(const ResultContainer & result)
+{
+
+    std::map<std::string, unsigned> idxMap;
+    for (unsigned i = 0; i < result.stats.contigs.size(); i++)
+    {
+        idxMap[result.stats.contigs[i]] = i;
+    }
+
+    std::vector<unsigned> contigIndices;
+
+    for (auto contig : result.seqVectorization.contigs)
+    {
+        contigIndices.push_back(idxMap[contig]);
+    }
+
+    return contigIndices;
+}
+
+std::vector<unsigned> ResultIO::labelsPerContig(const ResultContainer & result, const ClusteringResult & clust)
+{
+
+    std::map<std::string, unsigned> contigLabels; // contig -> cluster label
+
+    for (unsigned i = 0; i < clust.labels.size(); i++)
+    {
+        unsigned lbl = clust.labels.at(i);
+        std::string contig = result.seqVectorization.contigs.at(i);
+        if (contigLabels.find(contig) == contigLabels.end())
+        {
+            contigLabels[contig] = lbl;
+        }
+    }
+
+    std::vector<unsigned> labelsPerContig;
+
+    for (auto contig : result.stats.contigs)
+    {
+        labelsPerContig.push_back(contigLabels[contig]);
+    }
+
+    return labelsPerContig;
+}
+
+void ResultIO::clusteringToYAML(YAML::Emitter & out, const ResultContainer & result, const std::vector<ClusteringResult> & clusts)
+{
+    out << YAML::BeginSeq;
+    for (auto & clust : clusts)
+    {
+        out << YAML::BeginMap;
+        out << YAML::Key << "assignment" << YAML::Value;
+
+        out << YAML::BeginMap 
+                << YAML::Key << "k" << YAML::Value << (clust.numClusters + clust.outlierClusters.size())
+                << YAML::Key << "labels" << YAML::Value << YAML::Flow << labelsPerContig(result, clust)
+                << YAML::Key << "outlierClusters" << YAML::Value << YAML::Flow << clust.outlierClusters
+            << YAML::EndMap;
+
+        out << YAML::EndMap;
+    }
+    out << YAML::EndSeq;
+}
+
 void ResultIO::writeYAML(const ResultContainer & result, const std::string & filename)
 {
     std::vector<Fixed> sneCol0 = IOUtil::columnToFixed(result.dataSne, 0);
@@ -362,11 +423,39 @@ void ResultIO::writeYAML(const ResultContainer & result, const std::string & fil
                     << YAML::Key << "x1" << YAML::Value << YAML::Flow << pcaCol0 
                     << YAML::Key << "x2" << YAML::Value << YAML::Flow << pcaCol1
                 << YAML::EndMap
+            << YAML::Key << "contig_labels" << YAML::Value  << YAML::Flow << contigIndicesOfDR(result)
         << YAML::EndMap;
     out << YAML::Key << "contigs_16s" << YAML::Value << YAML::Flow << contigsIndicesWith16S(result);
     out << YAML::Key << "confidence_cc" << YAML::Value << result.contaminationAnalysis.confidenceCC;
     out << YAML::Key << "confidence_dip" << YAML::Value << result.contaminationAnalysis.confidenceDip;
     out << YAML::Key << "contamination_state" << YAML::Value << result.contaminationAnalysis.state;
+    out << YAML::Key << "cluster_estimates" << YAML::Value 
+        << YAML::BeginMap 
+            << YAML::Key << "cc" << YAML::Value 
+                << YAML::BeginMap 
+                    << YAML::Key << "method" << YAML::Value << result.clusterings.estimatorCC->name()
+                    << YAML::Key << "parameters" << YAML::Value << result.clusterings.estimatorCC->parameters()
+                    << YAML::Key << "estimated_k" << YAML::Value << (result.clusterings.numClustCC)
+                    << YAML::Key << "assignments" << YAML::Value; clusteringToYAML(out, result, result.clusterings.clustsCC);
+                out << YAML::EndMap
+            << YAML::Key << "validity_sne" << YAML::Value 
+                << YAML::BeginMap 
+                    << YAML::Key << "method" << YAML::Value << result.clusterings.estimatorClusterValidity->name()
+                    << YAML::Key << "parameters" << YAML::Value << result.clusterings.estimatorClusterValidity->parameters()
+                    << YAML::Key << "dimensionality_reduction" << YAML::Value << "tsne"
+                    << YAML::Key << "estimated_k" << YAML::Value << result.clusterings.numClustSne
+                    << YAML::Key << "assignments" << YAML::Value; clusteringToYAML(out, result, result.clusterings.clustsSne);
+                out << YAML::EndMap
+            << YAML::Key << "validity_pca" << YAML::Value 
+                << YAML::BeginMap 
+                    << YAML::Key << "method" << YAML::Value << result.clusterings.estimatorClusterValidity->name()
+                    << YAML::Key << "parameters" << YAML::Value << result.clusterings.estimatorClusterValidity->parameters()
+                    << YAML::Key << "dimensionality_reduction" << YAML::Value << "pca"
+                    << YAML::Key << "estimated_k" << YAML::Value << result.clusterings.numClustPca
+                    << YAML::Key << "assignments" << YAML::Value; clusteringToYAML(out, result, result.clusterings.clustsPca);
+                out << YAML::EndMap                
+        << YAML::EndMap;
+            
     out << YAML::EndMap;
 
     std::ofstream ofs(filename, std::ofstream::out);

@@ -1,6 +1,6 @@
 #include "Clustering.h"
 
-ClusterEstimator::ClusterEstimator(ClusterPostProcessing cpp_) : cpp(cpp_)
+ClusterEstimator::ClusterEstimator(std::unique_ptr<ClusterPostProcessing> & cpp_) : cpp(std::move(cpp_))
 {
 
 }

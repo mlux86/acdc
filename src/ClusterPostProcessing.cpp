@@ -1,7 +1,7 @@
 #include "Opts.h"
 #include "Clustering.h"
 
-ClusterPostProcessing::ClusterPostProcessing(const std::vector<std::string> & contigs_, const std::map<std::string, unsigned> & contigSizes_) : contigs(contigs_), contigSizes(contigSizes_)
+ClusterPostProcessing::ClusterPostProcessing(const std::vector<std::string> contigs_, const std::map<std::string, unsigned> contigSizes_) : contigs(contigs_), contigSizes(contigSizes_)
 {
 }
 

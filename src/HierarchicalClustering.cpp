@@ -104,3 +104,14 @@ Eigen::MatrixXd HierarchicalClustering::linkage(const Eigen::MatrixXd & data)
 
     return res;
 }
+
+std::string HierarchicalClustering::name()
+{
+    return "HierarchicalClustering";
+}
+
+std::map<std::string, std::string> HierarchicalClustering::parameters()
+{
+    std::map<std::string, std::string> params = {{"distance", "euclidean"}, {"linkage", "ward"}};
+    return params;
+}

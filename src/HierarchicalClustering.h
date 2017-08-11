@@ -28,4 +28,7 @@ public:
     // Clusters data by cutting the linkage tree (calculated by linkage()) at level k 
 	std::vector<unsigned> cluster(unsigned k);
 
+	std::string name();
+	std::map<std::string, std::string> parameters();
+
 };
