@@ -226,9 +226,8 @@ function showData(id, dataMat, labels, tooltips, greyedOut, sixteenS, width, hei
 			  .style("fill-opacity", .5)
 			  .on('mouseover', tip.show)
 			  .on('mouseout', tip.hide)
-			  .on('click', function(d, i) { window.location.href = 'export/' + id + '-' + i + '.16s'; });
+			  .on('click', function(d, i) { export16S(i); });
 	}
-
 
 }
 
@@ -279,9 +278,15 @@ function showVisualization()
 	var outliers = new Array();
 	var additionalInfo = '';
 
-	if (highlight16S && "contains16S" in x && x.contains16S.length > 0)
+	if (highlight16S)
 	{
-		sixteenS = x.contains16S;
+		sixteenS = new Array(dataMat.length);
+		for (var i = 0; i < sixteenS.length; ++i) { sixteenS[i] = false; }
+
+		for (var i in x.rnammer.sixteen_s_per_point)
+		{
+			sixteenS[i] = true;	
+		}
 	}
 
 	if (selectedLabels === 'fasta')
@@ -368,6 +373,13 @@ function showVisualization()
 	updateExport(labels, greyedOut);
 
 	$('#additionalInfo').html(additionalInfo);
+}
+
+function export16S(idx)
+{
+	var str = results[selectedFasta].rnammer.sixteen_s_per_point[idx];
+	var blob = new Blob([str], {type: "text/plain;charset=utf-8"});
+	saveAs(blob, "export_16s.fasta");	
 }
 
 function exportClusterFasta(clusterLabel, fasta, selectedLabels, selectedReduction, selectedNumClusters)

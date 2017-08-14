@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <map>
 #include <string>
 #include <yaml-cpp/yaml.h>
 
@@ -42,9 +43,7 @@ struct ResultContainer
 	KrakenResult kraken;
 
 	// 16S genes
-	// _16S[i].empty() => no 16S gene found in oneshot data point i
-	// otherwise       => 16S sequence _16s[i] found in oneshot data point i
-	std::vector<std::string> _16S;
+	std::map<unsigned, std::string> _16S;
 
     // Statistics
     SequenceStats stats;
@@ -57,9 +56,6 @@ class ResultIO
 private:
 	// Converts a vector of strings to a vector unsigned where each unique string corresponds to a unique unsigned value
 	std::vector<unsigned> numericLabels(const std::vector<std::string> & labels);
-
-	// Write 16S sequences
-	void export16S(const ResultContainer & result);
 
 	// Export fasta files for cluster exporting
     void exportClusteringInfo(const ResultContainer & result, const std::string & filename);
