@@ -54,22 +54,19 @@ class ResultIO
 {
 
 private:
-	// Converts a vector of strings to a vector unsigned where each unique string corresponds to a unique unsigned value
-	std::vector<unsigned> numericLabels(const std::vector<std::string> & labels);
-
-	// Export fasta files for cluster exporting
-    void exportClusteringInfo(const ResultContainer & result, const std::string & filename);
-
+	// exports fasta contigs to a JS file to enable filtering per cluster
 	void exportContigJS(const std::string & fastaFilename);
 
-	std::vector<unsigned> contigIndicesOfDR(const ResultContainer & result);
+	// helper: creates a list of contig labels per data point for visualization labels
+	std::vector<unsigned> contigIndicesVisualization(const ResultContainer & result);
 
+	// helper: converts a labelling from a ClusteringResult (label per data point) to one label per contig
 	std::vector<unsigned> labelsPerContig(const ResultContainer & result, const ClusteringResult & clust);
 
-	std::vector<unsigned> contigsIndicesWith16S(const ResultContainer & result);
-
+	// helper: writes a ClusteringResult object to a YAML strean
 	void clusteringToYAML(YAML::Emitter & out, const ResultContainer & result, const std::vector<ClusteringResult> & clusts);
 
+	// write YAML output 
 	void writeYAML(const ResultContainer & result, std::ostream & os);
 
     // Output directory to write to
