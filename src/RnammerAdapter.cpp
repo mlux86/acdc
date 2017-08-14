@@ -36,7 +36,7 @@ bool RnammerAdapter::rnammerExists()
     return true;
 }
 
-std::vector<std::string> RnammerAdapter::find16S(const std::string & fasta, const SequenceVectorizationResult & svr)
+std::map<unsigned, std::string> RnammerAdapter::find16S(const std::string & fasta, const SequenceVectorizationResult & svr)
 {
     // Temporary files
     boost::filesystem::path temp = boost::filesystem::unique_path();
@@ -91,7 +91,7 @@ std::vector<std::string> RnammerAdapter::find16S(const std::string & fasta, cons
     }
 
     unsigned n = svr.contigs.size();
-    std::vector<std::string> _16s(n);
+    std::map<unsigned, std::string> _16s;
     std::stringstream ss;
 
     // Process hits and assemble result vector with 16S sequences
@@ -103,7 +103,6 @@ std::vector<std::string> RnammerAdapter::find16S(const std::string & fasta, cons
         const std::string & contig = svr.contigs.at(i);
         auto win = svr.windows.at(i);
 
-        _16s[i] = "";
         for (unsigned j = 0; j < result.size(); j++)            
         {
             const auto & rr = result.at(j);

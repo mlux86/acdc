@@ -163,6 +163,10 @@ void ResultIO::writeYAML(const ResultContainer & result, std::ostream & os)
         }
     } 
 
+    std::map<unsigned, std::string> my16s = result._16S;
+    my16s[42] = "ACGTACGT";
+    my16s[500] = "AAAAAAAA";
+
     YAML::Emitter out;
     out << YAML::BeginMap;
     out << YAML::Key << "acdc_parameters" << YAML::Value << Opts::parameters();
@@ -226,31 +230,17 @@ void ResultIO::writeYAML(const ResultContainer & result, std::ostream & os)
             << YAML::Key << "bacterial_background" << YAML::Value << result.kraken.bacterialBackground
             << YAML::Key << "classification" << YAML::Value << YAML::Flow << krakenContigs
         << YAML::EndMap;
+    out << YAML::Key << "rnammer" << YAML::Value
+        << YAML::BeginMap
+            << YAML::Key << "sixteen_s_per_point" << YAML::Value << my16s
+        << YAML::EndMap;        
     out << YAML::EndMap;
 
     os << out.c_str();
 }
 
-void ResultIO::export16S(const ResultContainer & result)
-{
-    for (unsigned i = 0; i < result._16S.size(); i++)
-    {
-        const std::string & s = result._16S.at(i);
-        if (!s.empty())
-        {
-            std::stringstream ss;
-            ss << outputDir << "/export/" << result.id << "-" << i << ".16s";
-            std::ofstream ofs(ss.str(), std::ofstream::out);
-            ofs << s << std::endl;
-            ofs.close();
-        }
-    }
-}
-
 void ResultIO::processResult(const ResultContainer & result)
 {
-    export16S(result);
-
     exportContigJS(result.fasta);
 
     // generate yaml string

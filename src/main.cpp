@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 
     // create output / export directory
 
-	boost::filesystem::path exportPath (Opts::outputDir() + "/export");
+	boost::filesystem::path exportPath (Opts::outputDir());
 	boost::system::error_code returnedError;
 	boost::filesystem::create_directories(exportPath, returnedError);
 	if (returnedError)
