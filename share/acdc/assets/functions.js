@@ -27,25 +27,6 @@ function arrayUnique(arr)
     }, []);
 }
 
-function arraySortGetIndices(toSort) 
-{
-	for (var i = 0; i < toSort.length; i++) 
-	{
-		toSort[i] = [toSort[i], i];
-	}
-	toSort.sort(function(left, right) 
-	{
-		return left[0] < right[0] ? -1 : 1;
-	});
-	toSort.sortIndices = [];
-	for (var j = 0; j < toSort.length; j++) 
-	{
-		toSort.sortIndices.push(toSort[j][1]);
-		toSort[j] = toSort[j][0];
-	}
-	return toSort;
-}
-
 function setActiveExclusively(elem)
 {
 	$('.active').removeClass('active');
@@ -83,6 +64,28 @@ function removeIndexes(arr, rmIdx)
 	return narr;
 }
 
+function numericLabels(labels)
+{
+	var mp = new Array();
+	k = 0;
+	for (var i in labels)
+	{
+		var key = labels[i];
+		if (!(key in mp))
+		{
+			mp[key] = k;
+			k++;
+		}
+	}
+
+	var result = Array(labels.length);
+	for (var i in labels)
+	{
+		result[i] = mp[labels[i]];
+	}
+	return result;
+}
+
 function calculateStar(centerX, centerY, arms, outerRadius, innerRadius)
 {
    var results = "";
@@ -112,16 +115,16 @@ function calculateStar(centerX, centerY, arms, outerRadius, innerRadius)
    return results;
 }
 
-function buildConfidenceTable(results)
+function buildConfidenceTable()
 {
 	if (typeof results == 'undefined' || Object.keys(results) == 0)
 	{
 		return;
 	}
 
-	var krakenEnabled = "krakenLabels" in results[Object.keys(results)[0]];
+	var krakenEnabled = results[Object.keys(results)[0]].kraken.enabled;
 
-	$('#confidences').append('<tr><th>ID</th><th>Contamination<br/>status</th><th>Sample</th><th>CC</th><th>Dip</th>' + (krakenEnabled ? '<th>Kraken</th>' : '') + '</tr>');
+	$('#confidences').append('<tr><th>ID</th><th>Contamination<br/>state</th><th>Sample</th><th>CC</th><th>Dip</th>' + (krakenEnabled ? '<th>Kraken</th>' : '') + '</tr>');
 
 	for (var i in results)
 	{
@@ -129,28 +132,24 @@ function buildConfidenceTable(results)
 		if (krakenEnabled)
 		{
 			var krakenNumUnknown = 0;
-			$.each(results[i].krakenLabels, function (idx, val)
+			$.each(results[i].kraken.classification, function (idx, val)
 			{
 				if (val === "unknown")
 				{
 					krakenNumUnknown++;
 				}
 			});
-			var krakenUnique = results[i].krakenLabels.filter(onlyUnique);
+			var krakenUnique = results[i].kraken.classification.filter(onlyUnique);
 			var numSpecies = krakenUnique.length;
 			kraken = krakenNumUnknown > 0 ? '&ge; ' + numSpecies : '' + numSpecies;
 		}
 
-		var contProbCC = results[i].oneshot.confidenceCC;
-		var contProbDip = results[i].oneshot.confidenceDip;
-		var status = results[i].oneshot.contaminationStatus;
-
 		$('#confidences').append('<tr>' +
 			'<td>' + results[i].id + '</td>' +
-			'<td class="' + status + '">&nbsp;</td>' +
+			'<td class="' + results[i].contamination_state + '">&nbsp;</td>' +
 			'<td class="selectable dataConf">' + i + '</td>' +
-			'<td class="selectable ccConf">conf = ' + contProbCC.toFixed(2) + '</td>' +
-			'<td class="selectable dipConf">conf = ' + contProbDip.toFixed(2) + '</td>' +
+			'<td class="selectable ccConf">conf = ' + results[i].confidence_cc.toFixed(2) + '</td>' +
+			'<td class="selectable dipConf">conf = ' + results[i].confidence_dip.toFixed(2) + '</td>' +
 			(krakenEnabled ? '<td class="selectable kraken"><span class="number">' + kraken + '</span> species</td>' : '') +
 			'</tr>');
 
@@ -233,13 +232,46 @@ function showData(id, dataMat, labels, tooltips, greyedOut, sixteenS, width, hei
 
 }
 
+function labelsPerPoint(x, labelsPerContig)
+{
+	var map = new Array();
+	for (var i = 0; i < x.fasta_stats.included_contigs.length; i++) 
+	{
+		c = x.fasta_stats.included_contigs[i];
+		map[c] = labelsPerContig[i];
+	}	
+
+	var res = new Array();
+	for (var i = 0; i < x.visualizations.contig_labels.length; i++) 
+	{
+		contigIdx = x.visualizations.contig_labels[i]
+		c = x.fasta_stats.included_contigs[contigIdx]
+		res[i] = map[c]
+	}
+
+	return res;
+}
+
 function showVisualization()
 {
 	var x = results[selectedFasta];
 
-	var clustAnaResult = x.oneshot;
+	var dataMat_;
+	if(selectedReduction === 'dataSne')
+	{
+		dataMat_ = x.visualizations.sne;
+	}
+	if(selectedReduction === 'dataPca')
+	{
+		dataMat_ = x.visualizations.pca;
+	}
 
-	var dataMat = clustAnaResult[selectedReduction];
+	var dataMat = Array();
+	n = dataMat_.x1.length;
+	for (var i = 0; i < n; i++) 
+	{
+		dataMat[i] = Array(dataMat_.x1[i], dataMat_.x2[i]);
+	}
 
 	var labels;
 	var greyedOut = new Array();
@@ -254,40 +286,39 @@ function showVisualization()
 
 	if (selectedLabels === 'fasta')
 	{
-		// labels = numericLabels(x.fastaLabels);
-		labels = Array.apply(null, Array(x.fastaLabels.length)).map(Number.prototype.valueOf, -1); // no labels / black color
-		additionalInfo = 'Size: ' + (x.stats.numBasepairs/1000000).toFixed(2) + ' Mbp, GC-content: ' + (x.stats.gcContent*100).toFixed(2) + ' %';
+		labels = Array.apply(null, Array(dataMat.length)).map(Number.prototype.valueOf, -1); // no labels / black color
+		additionalInfo = 'Size: ' + (x.fasta_stats.num_basepairs/1000000).toFixed(2) + ' Mbp, GC-content: ' + (x.fasta_stats.gc_content*100).toFixed(2) + ' %';
 	} else if(selectedLabels === 'cc')
 	{
-		labels = clustAnaResult.clustCC.labels;
-		outliers = clustAnaResult.clustCC.outlierClusters;
+		labels = labelsPerPoint(x, x.cluster_estimates.cc.assignments[0].assignment.labels);
+		outliers = x.cluster_estimates.cc.assignments[0].assignment.outlierClusters;
 	} else if(selectedLabels === 'dip')
 	{
 		if (selectedReduction === 'dataPca')
 		{
 			if (!selectedNumClusters)
 			{
-				selectedNumClusters = clustAnaResult.contaminationStatus === 'contaminated' ? clustAnaResult.numClustPca : 1;
+				selectedNumClusters = x.contamination_state === 'contaminated' ? x.cluster_estimates.validity_pca.estimated_k : 1;
 				$('#numClusters' + selectedNumClusters).prop('checked', true);
-			}
-			labels = clustAnaResult.clustsPca[selectedNumClusters-1].labels;
-			outliers = clustAnaResult.clustsPca[selectedNumClusters-1].outlierClusters;
+			}			
+			labels = labelsPerPoint(x, x.cluster_estimates.validity_pca.assignments[selectedNumClusters-1].assignment.labels);
+			outliers = x.cluster_estimates.validity_pca.assignments[selectedNumClusters-1].assignment.outlierClusters;
 		} else if (selectedReduction === 'dataSne')
 		{
 			if (!selectedNumClusters)
 			{
-				selectedNumClusters = clustAnaResult.contaminationStatus === 'contaminated' ? clustAnaResult.numClustSne : 1;
+				selectedNumClusters = x.contamination_state === 'contaminated' ? x.cluster_estimates.validity_sne.estimated_k : 1;
 				$('#numClusters' + selectedNumClusters).prop('checked', true);
 			}
-			labels = clustAnaResult.clustsSne[selectedNumClusters-1].labels;
-			outliers = clustAnaResult.clustsSne[selectedNumClusters-1].outlierClusters;
+			labels = labelsPerPoint(x, x.cluster_estimates.validity_sne.assignments[selectedNumClusters-1].assignment.labels);
+			outliers = x.cluster_estimates.validity_sne.assignments[selectedNumClusters-1].assignment.outlierClusters;
 		}
 	} else if(selectedLabels === 'kraken')
 	{
-		labels = numericLabels(x.krakenLabels);
-		for (var i = 0; i < x.krakenLabels.length; i++)
+		labels = labelsPerPoint(x, x.kraken.classification);
+		for (var i = 0; i < labels.length; i++)
 		{
-			if (x.krakenLabels[i] === 'unknown')
+			if (labels[i] === 'unknown')
 			{
 				greyedOut.push(true);
 			} else
@@ -295,21 +326,23 @@ function showVisualization()
 				greyedOut.push(false);
 			}
 		}
-		additionalInfo = 'Bacterial background: ' + (x.krakenBacterialBackground*100).toFixed(2) + '%';
+		labels = numericLabels(labels);
+		additionalInfo = 'Bacterial background: ' + (x.kraken.bacterial_background*100).toFixed(2) + '%';
 	}
 
-    var tooltips = results[selectedFasta].fastaLabels.slice();
+    var tooltips = x.visualizations.contig_labels.slice();
     for (var i = 0; i < tooltips.length; i++)
     {
-        var len = x.stats.contigLength[tooltips[i]];
-        var gc = x.stats.contigGcContent[tooltips[i]];
-        tooltips[i] = tooltips[i] + '<br>Size: ' + (len/1000).toFixed(2) + ' kbp<br>GC-content: ' + (gc*100).toFixed(2) + ' %';
+    	var contigIdx = tooltips[i];
+    	var contig = x.fasta_stats.included_contigs[contigIdx];    
+        var len = x.fasta_stats.contig_lengths[contigIdx];
+        var gc = x.fasta_stats.contig_gc[contigIdx];
+        tooltips[i] = contig + '<br>Size: ' + (len/1000).toFixed(2) + ' kbp<br>GC-content: ' + (gc*100).toFixed(2) + ' %';
     }
 	if(selectedLabels === 'kraken')
 	{
-		tooltips = x.krakenLabels;
+		tooltips = labelsPerPoint(x, x.kraken.classification);
 	}
-
 
 	if (!showOutliers && typeof outliers != 'undefined' && outliers.length > 0)
 	{
@@ -331,7 +364,7 @@ function showVisualization()
 		sixteenS = removeIndexes(sixteenS, rmIdx);
 	}
 
-	showData(x.id, dataMat, labels, tooltips, greyedOut, sixteenS, width, height, padding);
+	showData(0, dataMat, labels, tooltips, greyedOut, sixteenS, width, height, padding);
 	updateExport(labels, greyedOut);
 
 	$('#additionalInfo').html(additionalInfo);
@@ -339,36 +372,39 @@ function showVisualization()
 
 function exportClusterFasta(clusterLabel, fasta, selectedLabels, selectedReduction, selectedNumClusters)
 {
-	var contigNames = {};
-	if(selectedLabels !== 'dip')
+	var labelsPerCluster;	
+	if(selectedLabels === 'cc')
 	{
-		contigNames = clusterinfo[fasta][selectedLabels][clusterLabel];
-	} else
+		labelsPerCluster = results[fasta].cluster_estimates.cc.assignments[0].assignment.labels;
+	} else if (selectedLabels === 'dip')
 	{
-		contigNames = clusterinfo[fasta][selectedLabels][selectedReduction][selectedNumClusters][clusterLabel];
+		if(selectedReduction === 'dataPca')
+		{
+			labelsPerCluster = results[fasta].cluster_estimates.validity_pca.assignments[selectedNumClusters-1].assignment.labels;			
+		} else if(selectedReduction === 'dataSne')
+		{
+			labelsPerCluster = results[fasta].cluster_estimates.validity_sne.assignments[selectedNumClusters-1].assignment.labels;			
+		}
+	} else if (selectedLabels === 'kraken')
+	{
+		labelsPerCluster = numericLabels(results[fasta].kraken.classification);
 	}
 
-	// sort by length
-	lengths = new Array();
-	for (var c in contigNames)
+	var contigNames = new Array();
+	for (var i = 0; i < results[fasta].fasta_stats.included_contigs.length; i++) 
 	{
-		len = results[fasta].stats.contigLength[contigNames[c]];
-		lengths.push(len);	
-	}
-	sortedLengths = arraySortGetIndices(lengths);
-	sortIdx = sortedLengths.sortIndices;
-	sortIdx.reverse();
-	var sortedContigNames = new Array();
-	for (var i in sortIdx)
-	{
-		sortedContigNames.push(contigNames[sortIdx[i]]);	
-	}
+		if (labelsPerCluster[i] == clusterLabel)
+		{
+			c = results[fasta].fasta_stats.included_contigs[i];
+			contigNames.push(c);
+		}
+	}	
 
 	var str = "";
-	for (var c in sortedContigNames)
+	for (var c in contigNames)
 	{
-		str += ">" + sortedContigNames[c] + "\n";
-		str += inputcontigs[sortedContigNames[c]] + "\n";
+		str += ">" + contigNames[c] + "\n";
+		str += inputcontigs[contigNames[c]] + "\n";
 	}
 
 	var blob = new Blob([str], {type: "text/plain;charset=utf-8"});
@@ -401,7 +437,7 @@ function updateExport(labels, greyedOut)
 	{
 		var lbl = uniqueLabels[i];
 		var color = (lbl == unknownLbl) ? greyColor : colors[lbl % colors.length];
-		var dataParams = "{ 'clusterLabel': '" + lbl + "', 'fasta': '" + results[selectedFasta].fasta + "', 'selectedLabels': '" + selectedLabels + "', 'selectedReduction': '" + selectedReduction + "', 'selectedNumClusters': '" + selectedNumClusters + "' }";
+		var dataParams = "{ 'clusterLabel': '" + lbl + "', 'fasta': '" + selectedFasta + "', 'selectedLabels': '" + selectedLabels + "', 'selectedReduction': '" + selectedReduction + "', 'selectedNumClusters': '" + selectedNumClusters + "' }";
 		var exportLink = $('<a data-params="' + dataParams + '" style="color: ' + color + ';" href="#">&#x25CF;</a>').click(function() 
 		{
 			var me = $(this), data = me.data('params');
@@ -413,26 +449,4 @@ function updateExport(labels, greyedOut)
 	}
 
 	$('#export').show();
-}
-
-function numericLabels(labels)
-{
-	var mp = new Array();
-	k = 0;
-	for (var i in labels)
-	{
-		var key = labels[i];
-		if (!(key in mp))
-		{
-			mp[key] = k;
-			k++;
-		}
-	}
-
-	var result = Array(labels.length);
-	for (var i in labels)
-	{
-		result[i] = mp[labels[i]];
-	}
-	return result;
 }

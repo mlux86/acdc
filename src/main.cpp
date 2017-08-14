@@ -137,6 +137,8 @@ int main(int argc, char *argv[])
 
 		try
 		{
+			// run kraken
+
 			if (krakenExists)
 			{
 				ILOG << "Running Kraken..." << std::endl;
@@ -151,12 +153,20 @@ int main(int argc, char *argv[])
 				}
 			}
 
+			// gather information about input fasta
+
+			ILOG << "Gathering fasta information..." << std::endl;
+
             result.stats = SequenceUtil::calculateStats(fasta, Opts::minContigLength());
+
+            // convert sequences into vectorial data
 
 			ILOG << "Vectorizing contigs..." << std::endl;
 			SequenceVectorizer sv(fasta);
 			auto svr = sv.vectorize();
 			result.seqVectorization = svr;
+
+			// run Rnammer
 
 			if (rmrExists)
 			{
@@ -173,7 +183,10 @@ int main(int argc, char *argv[])
 				}
 			}
 
+			// contamination screening
+
 			ILOG << "Detecting contamination..." << std::endl;
+
 			std::vector<ContaminationDetectionResult> bootstraps = ContaminationDetection::analyzeBootstraps(svr);
 			ContaminationDetectionResult oneshot = bootstraps.at(0);
 			bootstraps.erase(bootstraps.begin());
@@ -183,7 +196,13 @@ int main(int argc, char *argv[])
 			result.dataSne = oneshot.dataSne;
 			result.dataPca = oneshot.dataPca;
 
+			// data clustering for decontamination
+
+			ILOG << "Clustering..." << std::endl;
+
 			result.clusterings = Decontamination::findLikelyClusterings(result.dataSne, result.dataPca, svr);
+
+			// write output files
 
 			rio.processResult(result);
 
