@@ -40,43 +40,19 @@ void ResultIO::exportContigJS(const std::string & fastaFilename)
     ss << outputDir << "/contigs.js";
     std::ofstream ofs(ss.str(), std::ofstream::out | std::ofstream::app);
 
+    ofs << "inputcontigs['" << fastaFilename << "'] = new Array();" << std::endl;
     for (unsigned i = 0; i < n; i++)
     {
         std::string id;
         move(id, ids[i]);
         std::string seq;
         move(seq, seqs[i]);
-        ofs << "inputcontigs['" << id << "'] = '" << seq << "'" << std::endl;
+        ofs << "inputcontigs['" << fastaFilename << "']['" << id << "'] = '" << seq << "'" << std::endl;
     }
-
     ofs.close();    
 }
 
-std::vector<unsigned> ResultIO::contigsIndicesWith16S(const ResultContainer & result)
-{
-    std::vector<std::string> contigs16s;
-    for (unsigned i = 0; i < result._16S.size(); i++)
-    {
-        if(result._16S.at(i).size() > 0)
-        {
-            contigs16s.push_back(result.seqVectorization.contigs.at(i));
-        }
-    }
-
-    std::vector<unsigned> contigIndices;
-
-    for (unsigned i = 0; i < result.stats.includedContigs.size(); i++)
-    {
-        if(std::find(contigs16s.begin(), contigs16s.end(), result.stats.includedContigs.at(i)) != contigs16s.end())
-        {
-            contigIndices.push_back(i);
-        }
-    }
-
-    return contigIndices;
-}
-
-std::vector<unsigned> ResultIO::contigIndicesOfDR(const ResultContainer & result)
+std::vector<unsigned> ResultIO::contigIndicesVisualization(const ResultContainer & result)
 {
 
     std::map<std::string, unsigned> idxMap;
@@ -188,9 +164,8 @@ void ResultIO::writeYAML(const ResultContainer & result, std::ostream & os)
                     << YAML::Key << "x1" << YAML::Value << YAML::Flow << pcaCol0 
                     << YAML::Key << "x2" << YAML::Value << YAML::Flow << pcaCol1
                 << YAML::EndMap
-            << YAML::Key << "contig_labels" << YAML::Value  << YAML::Flow << contigIndicesOfDR(result)
+            << YAML::Key << "contig_labels" << YAML::Value  << YAML::Flow << contigIndicesVisualization(result)
         << YAML::EndMap;
-    out << YAML::Key << "contigs_16s" << YAML::Value << YAML::Flow << contigsIndicesWith16S(result);
     out << YAML::Key << "confidence_cc" << YAML::Value << result.contaminationAnalysis.confidenceCC;
     out << YAML::Key << "confidence_dip" << YAML::Value << result.contaminationAnalysis.confidenceDip;
     out << YAML::Key << "contamination_state" << YAML::Value << result.contaminationAnalysis.state;

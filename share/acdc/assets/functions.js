@@ -416,7 +416,7 @@ function exportClusterFasta(clusterLabel, fasta, selectedLabels, selectedReducti
 	for (var c in contigNames)
 	{
 		str += ">" + contigNames[c] + "\n";
-		str += inputcontigs[contigNames[c]] + "\n";
+		str += inputcontigs[fasta][contigNames[c]] + "\n";
 	}
 
 	var blob = new Blob([str], {type: "text/plain;charset=utf-8"});
