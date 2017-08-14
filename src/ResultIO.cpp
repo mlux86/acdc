@@ -163,10 +163,6 @@ void ResultIO::writeYAML(const ResultContainer & result, std::ostream & os)
         }
     } 
 
-    std::map<unsigned, std::string> my16s = result._16S;
-    my16s[42] = "ACGTACGT";
-    my16s[500] = "AAAAAAAA";
-
     YAML::Emitter out;
     out << YAML::BeginMap;
     out << YAML::Key << "acdc_parameters" << YAML::Value << Opts::parameters();
@@ -232,7 +228,7 @@ void ResultIO::writeYAML(const ResultContainer & result, std::ostream & os)
         << YAML::EndMap;
     out << YAML::Key << "rnammer" << YAML::Value
         << YAML::BeginMap
-            << YAML::Key << "sixteen_s_per_point" << YAML::Value << my16s
+            << YAML::Key << "sixteen_s_per_point" << YAML::Value << result._16S
         << YAML::EndMap;        
     out << YAML::EndMap;
 
