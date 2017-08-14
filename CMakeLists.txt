@@ -22,9 +22,6 @@ include_directories(SYSTEM "libtsne")
 # Dip statistic
 include_directories(SYSTEM "libdip")
 
-# Jsoncpp
-include_directories(SYSTEM "libjsoncpp")
-
 # Seqan
 include_directories(SYSTEM "libseqan")
 
@@ -51,7 +48,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 
 add_subdirectory(libdip)
 add_subdirectory(libtsne)
-add_subdirectory(libjsoncpp)
 add_subdirectory(libfastcluster)
 add_subdirectory(src)
 add_subdirectory(test)

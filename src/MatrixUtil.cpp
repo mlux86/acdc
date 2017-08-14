@@ -97,23 +97,3 @@ void MatrixUtil::saveMatrix(const Eigen::MatrixXd & mat, std::string filename, c
 
     ofs.close();
 }
-
-Json::Value MatrixUtil::matrixToJSON(const Eigen::MatrixXd & mat)
-{
-    unsigned n = mat.rows();
-    unsigned dim = mat.cols();
-
-    auto arr = Json::Value(Json::arrayValue);
-
-    for(unsigned i = 0; i < n; i++)
-    {
-        auto entry = Json::Value(Json::arrayValue);
-        for(unsigned j = 0; j < dim; j++)
-        {
-            entry.append(mat(i, j));
-        }
-        arr.append(entry);
-    }
-
-    return arr;
-}

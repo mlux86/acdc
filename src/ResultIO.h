@@ -2,7 +2,6 @@
 
 #include <vector>
 #include <string>
-#include <json/json.h>
 #include <yaml-cpp/yaml.h>
 
 #include "ContaminationDetection.h"
@@ -24,14 +23,19 @@ struct ResultContainer
 	// Fasta file analyzed
 	std::string fasta;
 
+	// Vectorized representation of result
 	SequenceVectorizationResult seqVectorization;
 
+	// 2D t-SNE representation of the data
 	Eigen::MatrixXd dataSne;
 	
+	// 2D PCA representation of the data
 	Eigen::MatrixXd dataPca;
 
+	// Result of contamination analysis
 	ContaminationDetectionSummary contaminationAnalysis;
 
+	// Result of clusterings for decontamination
 	DecontaminationResult clusterings;
 
 	// Kraken results
@@ -46,22 +50,13 @@ struct ResultContainer
     SequenceStats stats;
 };
 
-// Processing of result files (i.e. I/O, writing assets, JSON export, etc.)
+// Processing of result files (i.e. I/O, writing assets, JS/YAML export, etc.)
 class ResultIO
 {
 
 private:
 	// Converts a vector of strings to a vector unsigned where each unique string corresponds to a unique unsigned value
 	std::vector<unsigned> numericLabels(const std::vector<std::string> & labels);
-
-	// Serialize a ClusteringResult to JSON
-    Json::Value clusteringResultToJSON(const ClusteringResult & cr);
-
-    // Serialize a ClusterAnalysisResult to JSON
-    Json::Value contaminationDetectionResultToJSON(const ResultContainer & result);
-
-    // Serialize a full ResultContainer as JSON to filename
-	void writeResultContainerToJSON(const ResultContainer & result, const std::string & filename);
 
 	// Write 16S sequences
 	void export16S(const ResultContainer & result);
@@ -79,7 +74,7 @@ private:
 
 	void clusteringToYAML(YAML::Emitter & out, const ResultContainer & result, const std::vector<ClusteringResult> & clusts);
 
-	void writeYAML(const ResultContainer & result, const std::string & filename);
+	void writeYAML(const ResultContainer & result, std::ostream & os);
 
     // Output directory to write to
 	std::string outputDir;

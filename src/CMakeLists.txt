@@ -24,4 +24,4 @@ add_library(mainprog
 
 add_executable(acdc main.cpp)
 
-target_link_libraries(acdc mainprog yaml-cpp tsne jsoncpp dip pthread fastcluster m ${Boost_LIBRARIES} ${JSONCPP_LIBRARY})
+target_link_libraries(acdc mainprog yaml-cpp tsne dip pthread fastcluster m ${Boost_LIBRARIES})

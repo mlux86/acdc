@@ -137,14 +137,13 @@ SequenceStats SequenceUtil::calculateStats(const std::string & fasta, unsigned m
         std::string seq;
         move(seq, seqs[i]);
 
-        stats.contigs.push_back(id);
-
-        unsigned len = seqan::length(seq);
-        if (len < minContigLength)
+        if (seq.size() < minContigLength)
         {
+            stats.discardedContigs.push_back(id);
             continue;
         }
 
+        stats.includedContigs.push_back(id);
         stats.numBasepairs += seq.size();
         stats.contigLength[id] = seq.size();
 

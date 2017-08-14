@@ -2,7 +2,7 @@
 
 #include <Eigen/Dense>
 #include <string>
-#include <json/json.h>
+#include <vector>
 
 // Matrix handling utilities
 class MatrixUtil
@@ -26,7 +26,4 @@ public:
 	// The first line of the file contains the number of dimensions of mat
 	static void saveMatrix(const Eigen::MatrixXd & mat, std::string filename, char delimiter = ' ');
 
-	// Converts mat to a JSON representation
-	static Json::Value matrixToJSON(const Eigen::MatrixXd & mat);
-	
 };

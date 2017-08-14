@@ -7,7 +7,11 @@
 
 struct SequenceStats
 {
-	std::vector<std::string> contigs;
+	// Included contigs (fulfilling all requirements, such as minimum length)
+	std::vector<std::string> includedContigs;
+
+	// Discarded contigs 
+	std::vector<std::string> discardedContigs;
 	
     // Size in bp
     unsigned long numBasepairs;

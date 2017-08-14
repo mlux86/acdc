@@ -133,7 +133,7 @@ std::pair<Eigen::MatrixXd, std::vector<WindowRange>> SequenceVectorizer::vectori
 		n++;
 	}
 
-	// Perform actual vectorization
+	// Perform actual vectorization using sliding windows
 
 	Eigen::MatrixXd mat = Eigen::MatrixXd::Zero(n, getDim());
 	std::vector<WindowRange> windows(n);

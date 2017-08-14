@@ -1,4 +1,4 @@
-var colors = ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#a65628", "#999999", "#ffff33"];
+var colors = ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#a65628", "#333333", "#ffff33"];
 var greyColor = '#b3b3b3';
 var highlightColor = '#ff7f00';
 
@@ -13,10 +13,19 @@ var selectedNumClusters = NaN;
 var showOutliers = true;
 var highlight16S = true;
 
+var results = Array();
+
 $(document).ready(function() 
 {
+	var id = 1;
+	for(var i in clusterinfo)
+	{
+		results[i] = jsyaml.load(clusterinfo[i]);
+		results[i].id = id;
+		id = id + 1;
+	}
 
-	buildConfidenceTable(results);
+	buildConfidenceTable();
 
 	$(document).keydown(function(evt) {
 		var elem = $('td.active');
