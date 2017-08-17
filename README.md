@@ -100,7 +100,7 @@ In the `docker` folder, acdc provides a Dockerfile script to build a docker cont
 # docker build -t acdc .
 ```
 
-The built acdc docker image shares result files using the `/acdc` and `/usr/share/nginx/html` volumes. The latter can be used by the official [nginx](https://nginx.org/) web server [docker container](https://hub.docker.com/_/nginx/). For example as follows:
+Run acdc as follows:
 
 ```
 # docker run --name acdc \
@@ -108,10 +108,13 @@ The built acdc docker image shares result files using the `/acdc` and `/usr/shar
              -v /path/to/kraken_db:/krakendb \
              acdc -i /assemblies/test.fasta
 
-# docker run --volumes-from acdc -p 80:80 --rm nginx
 ```
 
-where `/path/to/assemblies` contains the file `test.fasta` and `/path/to/kraken_db` contains the Kraken database. The second command runs an nginx container which serves the newly created acdc result files on port 80.
+where `/path/to/assemblies` contains the file `test.fasta` and `/path/to/kraken_db` contains the Kraken database. Copy the result files to the current working directory using
+
+```
+# docker cp acdc:/acdc ./results
+```
 
 ## Used Libraries
 

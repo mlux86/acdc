@@ -42,15 +42,13 @@ WORKDIR /
 # provide data shares and setup nginx compability
 
 RUN mkdir /acdc
-RUN mkdir -p /usr/share/nginx
-RUN ln -s /acdc /usr/share/nginx/html
-VOLUME ["/acdc", "/usr/share/nginx/html"]
 
 # start acdc per default
 
 ENTRYPOINT ["/usr/local/bin/acdc", "-o", "/acdc", "-K", "/krakendb"]
 
-# Example of running and displaying resulting web page in nginx
+# Run acdc
+# docker run --name acdc -v /path/to/assemblies:/assemblies -v /path/to/minikraken_db:/krakendb acdc -i /assemblies/test.fasta
 
-# docker run --name acdc -v /path/to/assemblies:/assemblies -v /path/to/minikraken_db:/krakendb acdc -i test.fasta
-# docker run --volumes-from acdc -p 80:80 --rm nginx
+# Copy results from container to current working directory
+# docker cp acdc:/acdc ./results
