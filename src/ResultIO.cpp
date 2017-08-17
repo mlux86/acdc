@@ -220,7 +220,9 @@ void ResultIO::processResult(const ResultContainer & result)
     std::string yamlstr = ss.str();
 
     // write yaml file
-    std::ofstream ofs(outputDir + "/" + result.fasta + ".yaml", std::ofstream::out);
+    std::string outFileName = result.fasta;
+    boost::replace_all(outFileName, "/", "_");
+    std::ofstream ofs(outputDir + "/" + outFileName + ".yaml", std::ofstream::out);
     ofs << yamlstr;
     ofs.close();
 
