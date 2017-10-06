@@ -42,6 +42,9 @@ private:
 
 	unsigned _aggressiveThreshold = 0;
 
+	std::string _taxonomyFile = "";
+	std::string _targetTaxonomy = "";
+
 	// Singleton object, keep constructors and copy operations private
 	Opts();
 	~Opts();
@@ -76,4 +79,6 @@ public:
 	static std::string outputDir();
 	static std::string krakenDb();
 	static unsigned aggressiveThreshold();	
+	static std::string taxonomyFile();
+	static std::string targetTaxonomy();
 };

@@ -70,12 +70,15 @@ void Opts::initializeOnce(int argc, char *argv[])
 	    ("window-kmer-length,k", boost::program_options::value<unsigned>()->default_value(4), "Length of the k-mers in the sequence vectorizer window")
 	    ("window-width,w", boost::program_options::value<unsigned>(), "Width of the sliding sequence vectorizer window (overrides automatic estimation using number of target points)")
 	    ("window-step,s", boost::program_options::value<unsigned>(), "Step of the sliding sequence vectorizer window (overrides automatic estimation using number of target points)")
-	    ("target-num-points,n", boost::program_options::value<unsigned>()->default_value(1000), "Approximate number of target points for estimating window parameters") ("num-bootstraps,b", boost::program_options::value<unsigned>()->default_value(10), "Number of bootstraps")
+	    ("target-num-points,n", boost::program_options::value<unsigned>()->default_value(1000), "Approximate number of target points for estimating window parameters") 
+	    ("num-bootstraps,b", boost::program_options::value<unsigned>()->default_value(10), "Number of bootstraps")
 	    ("bootstrap-ratio,r", boost::program_options::value<double>()->default_value(0.75), "Bootstrap subsampling ratio")
 	    ("num-threads,T", boost::program_options::value<unsigned>()->default_value(threads), "Number of threads for bootstrap analysis  (default: detect number of cores)")
 	    ("output-dir,o", boost::program_options::value<std::string>()->default_value("./results"), "Result output directory")
 	    ("kraken-db,K", boost::program_options::value<std::string>()->default_value(""), "Database to use for Kraken classification")
 	    ("aggressive-threshold,a", boost::program_options::value<unsigned>()->default_value(5000), "Aggressive threshold: Treat clusters having a bp size below this threshold as outliers. (Default = 0 = aggressive mode disabled)")
+	    ("taxonomy-file,x", boost::program_options::value<std::string>()->default_value(""), "File with external taxonomy information")
+	    ("target-taxonomy,X", boost::program_options::value<std::string>()->default_value(""), "Target taxonomy identifier")
 	    ;
 
 	boost::program_options::variables_map vm;
@@ -136,6 +139,8 @@ void Opts::initializeOnce(int argc, char *argv[])
 	opts._outputDir = vm["output-dir"].as<std::string>();
 	opts._krakenDb = vm["kraken-db"].as<std::string>();
 	opts._aggressiveThreshold = vm["aggressive-threshold"].as<unsigned>();
+	opts._taxonomyFile = vm["taxonomy-file"].as<std::string>();
+	opts._targetTaxonomy = vm["target-taxonomy"].as<std::string>();
 }
 
 std::map <std::string, std::string> Opts::parameters()
@@ -161,6 +166,8 @@ std::map <std::string, std::string> Opts::parameters()
 	params["outputDir"] = Opts::getInstance()._outputDir;
 	params["krakenDb"] = Opts::getInstance()._krakenDb;
 	params["aggressiveThreshold"] = std::to_string(Opts::getInstance()._aggressiveThreshold);
+	params["taxonomyFile"] = Opts::getInstance()._taxonomyFile;
+	params["targetTaxonomy"] = Opts::getInstance()._targetTaxonomy;
 	return params;
 }
 
@@ -272,4 +279,14 @@ std::string Opts::krakenDb()
 unsigned Opts::aggressiveThreshold()
 {
 	return Opts::getInstance()._aggressiveThreshold;
+}
+
+std::string Opts::taxonomyFile()
+{
+	return Opts::getInstance()._taxonomyFile;
+}
+
+std::string Opts::targetTaxonomy()
+{
+	return Opts::getInstance()._targetTaxonomy;
 }

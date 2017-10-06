@@ -18,7 +18,9 @@ struct DecontaminationResult
 	std::vector<ClusteringResult> clustsSne;
 
 	unsigned numClustPca; 
-	std::vector<ClusteringResult> clustsPca;	
+	std::vector<ClusteringResult> clustsPca;
+
+	ClusteringResult optimalClustering;
 };
 
 class Decontamination

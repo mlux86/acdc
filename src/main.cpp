@@ -10,6 +10,7 @@
 #include "IOUtil.h"
 #include "MLUtil.h"
 #include "HierarchicalClustering.h"
+#include "TaxonomyAnnotation.h"
 
 #include <boost/filesystem.hpp>
 #include <string>
@@ -159,6 +160,16 @@ int main(int argc, char *argv[])
 
             result.stats = SequenceUtil::calculateStats(fasta, Opts::minContigLength());
 
+            // annotate taxonomy if exists
+
+			if (!boost::filesystem::is_regular_file(boost::filesystem::path(Opts::taxonomyFile())))
+			{
+				ELOG << "Taxonomy file '" << Opts::taxonomyFile() << "' does not exist or is not a regular file! Ignoring..." << std::endl;
+			} else
+			{
+            	TaxonomyAnnotation::annotateFromFile(result, Opts::taxonomyFile());
+			}
+
             // convert sequences into vectorial data
 
 			ILOG << "Vectorizing contigs..." << std::endl;
@@ -201,6 +212,15 @@ int main(int argc, char *argv[])
 			ILOG << "Clustering..." << std::endl;
 
 			result.clusterings = Decontamination::findLikelyClusterings(result.dataSne, result.dataPca, svr);
+
+			if(result.contaminationAnalysis.confidenceCC > result.contaminationAnalysis.confidenceDip)
+			{
+				result.clusterings.optimalClustering = result.clusterings.clustsCC[0];
+			} else
+			{
+				unsigned optK = result.clusterings.numClustSne;
+				result.clusterings.optimalClustering = result.clusterings.clustsSne[optK-1];
+			}
 
 			// write output files
 

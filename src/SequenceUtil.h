@@ -5,6 +5,8 @@
 #include <set>
 #include <map>
 
+#include "TaxonomyAnnotation.h"
+
 struct SequenceStats
 {
 	// Included contigs (fulfilling all requirements, such as minimum length)
@@ -19,11 +21,14 @@ struct SequenceStats
     // GC% content
     double gcContent;
 
-    // Contig lenghts
+    // Contig lengths
 	std::map<std::string, unsigned long> contigLength;
 
     // GC% content per contig
 	std::map<std::string, double> contigGcContent;
+
+	// taxonomy information per contig
+	std::map<std::string, Taxonomy> taxonomies;
 };
 
 // Sequence handling utilities

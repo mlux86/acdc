@@ -20,6 +20,7 @@ add_library(mainprog
 	KrakenAdapter.cpp
 	ResultIO.cpp
 	RnammerAdapter.cpp
+	TaxonomyAnnotation.cpp
 )
 
 add_executable(acdc main.cpp)
