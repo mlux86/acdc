@@ -5,10 +5,42 @@
 #include <algorithm>
 #include <map>
 #include <set>
+#include <boost/algorithm/string/predicate.hpp>
+#include <queue>
 
 #include "ResultIO.h"
+#include "Opts.h"
+#include "Logger.h"
 
-void TaxonomyAnnotation::updateContaminationState(ResultContainer & res)
+YAML::Emitter & operator << (YAML::Emitter & out, const Taxonomy & t) 
+{
+    out << YAML::BeginMap;
+
+	std::string stateStr;
+	switch (t.state)
+	{
+		case Clean: stateStr = "clean"; break;
+		case Contamination: stateStr = "contamination"; break;
+		default: stateStr = "NA"; break;
+	}
+
+	std::string typeStr;
+	switch (t.type)
+	{
+		case Annotated: typeStr = "annotated"; break;
+		default: typeStr = "estimated"; break;
+	}	
+	
+    out << YAML::Key << "type" << YAML::Value << typeStr;
+    out << YAML::Key << "state" << YAML::Value << stateStr;
+    out << YAML::Key << "identifier" << YAML::Value << t.identifier;
+    out << YAML::Key << "confidence" << YAML::Value << t.confidence;
+    out << YAML::EndMap;
+
+    return out;
+}
+
+void TaxonomyAnnotation::updateContaminationConfidences(ResultContainer & res)
 {
 	const auto & contigs = res.stats.includedContigs;
 	const auto & optClust = res.clusterings.optimalClustering;
@@ -21,7 +53,6 @@ void TaxonomyAnnotation::updateContaminationState(ResultContainer & res)
     for (unsigned i = 0; i < optClust.labels.size(); i++)
     {
         unsigned lbl = optClust.labels.at(i);
-        //TODO initialize value vector??!
     	std::string contig = res.seqVectorization.contigs.at(i);
         contigsPerCluster[lbl].insert(contig);
         clusterPerContig[contig] = lbl;
@@ -55,33 +86,71 @@ void TaxonomyAnnotation::updateContaminationState(ResultContainer & res)
 		{
 			std::string tax = taxonomies.at(c).identifier;
 			unsigned lbl = clusterPerContig.at(c);
-			taxFreqs[tax][lbl] += res.stats.contigLength.at(c) / clusterSizes.at(lbl);
+			taxFreqs[tax][lbl] += (double)res.stats.contigLength.at(c) / (double)clusterSizes.at(lbl);
 		}
 	}
 
 	// calculate taxonomy confidences based on cluster
 
-	std::map<std::string, std::map<unsigned, double>> taxFreqs;
-
-	// 1. iterate over contigs and get taxonomy for each
-	// 2. find in which cluster contig is located
-	// 3. add length of contig to found cluster
-
-	for (auto & c : contigs)
+	for (auto & it : taxFreqs)
 	{
-		if(taxonomies.find(c) != taxonomies.end())
+		auto & freqs = it.second;
+
+		double freqSum = 0;
+		for (const auto & it2 : freqs)
 		{
-			std::string tax = taxonomies.at(c).identifier;
-			unsigned lbl = clusterPerContig.at(c);
-			taxFreqs[tax][lbl] += res.stats.contigLength.at(c) / clusterSizes.at(lbl);
+			freqSum += it2.second;
 		}
+
+		for (auto & it2 : freqs) 
+		{
+			it2.second = 0.5 * it2.second + 0.5 * it2.second / freqSum;
+		};
 	}
 
+	// assign confidences to result
 
+	for (const auto & it : contigsPerCluster)
+	{
+		unsigned lbl = it.first;
+		auto contigs = it.second;
+		for (auto & c : contigs)
+		{
+			auto & t = res.stats.taxonomies[c];
+			if (t.identifier != "unknown")
+			{
+				t.confidence = taxFreqs[t.identifier][lbl];
+			}
+		}
+	}
+}
+
+void TaxonomyAnnotation::updateContaminationState(ResultContainer & res)
+{
+	// update contamination state
+
+	std::string target = Opts::targetTaxonomy();
+	std::transform(target.begin(), target.end(), target.begin(), ::tolower);
+
+	if (target != "")
+	{
+		for (auto & t : res.stats.taxonomies)
+		{
+			auto & tax = t.second;
+			if (boost::starts_with(tax.identifier, target))
+			{
+				tax.state = Clean;
+			} else if (tax.identifier != "unknown")
+			{
+				tax.state = Contamination;
+			}
+		}
+	}
 }
 
 void TaxonomyAnnotation::annotateFromFile(ResultContainer & res, const std::string & filename)
 {
+	initialize(res);
 	// line format: contig id<tab>taxonomy
 
 	std::ifstream infile(filename);
@@ -91,6 +160,11 @@ void TaxonomyAnnotation::annotateFromFile(ResultContainer & res, const std::stri
 
 	while(std::getline(infile, line))
 	{
+		if(line == "")
+		{
+			continue;
+		}
+
 		std::stringstream linestream(line);
 		std::string contig;
 		std::string taxonomy;
@@ -100,23 +174,67 @@ void TaxonomyAnnotation::annotateFromFile(ResultContainer & res, const std::stri
 
 		if(std::find(contigs.begin(), contigs.end(), contig) != contigs.end())
 		{
+			res.stats.taxonomies[contig].type = Annotated;
 			res.stats.taxonomies[contig].identifier = taxonomy;
 		}
 	}
 
+	updateContaminationConfidences(res);
 	updateContaminationState(res);
 }
 
-void TaxonomyAnnotation::annotateContig(ResultContainer & res, const std::string & contigId, const std::string & taxonomy)
-{	
-	std::string t = taxonomy;
-	std::transform(t.begin(), t.end(), t.begin(), ::tolower);
-	res.stats.taxonomies[contigId].identifier = t;
-
-	updateContaminationState(res);
+void TaxonomyAnnotation::initialize(ResultContainer & res)
+{
+	for (const auto & c : res.stats.includedContigs)
+	{
+		res.stats.taxonomies[c].type = Estimated;
+		res.stats.taxonomies[c].identifier = "unknown";
+		res.stats.taxonomies[c].confidence = -1.0;
+		res.stats.taxonomies[c].state = NA;
+	}
 }
+
+struct TaxonomyComparison
+{
+	bool operator()(const Taxonomy* lhs, const Taxonomy* rhs) const
+	{
+		return lhs->confidence < rhs->confidence;
+	}
+};
 
 void TaxonomyAnnotation::annotateUnknown(ResultContainer & res)
 {
+	// 1. for each cluster iterate over contained contigs
+	// 2. create priorityqueue with taxonomies of each contig, sorted by confidence
+	// 3. assign taxonomy with highest confidence to all unknown contigs
 
+	const auto & optClust = res.clusterings.optimalClustering;
+
+	std::map<unsigned, std::priority_queue<Taxonomy*, std::vector<Taxonomy*>, TaxonomyComparison>> sortedTaxByCluster; 
+    for (unsigned i = 0; i < optClust.labels.size(); i++)
+    {
+        unsigned lbl = optClust.labels.at(i);
+    	std::string contig = res.seqVectorization.contigs.at(i);
+		sortedTaxByCluster[lbl].push(& res.stats.taxonomies.at(contig));    	
+    }
+
+    for (auto & it : sortedTaxByCluster)
+    {
+    	auto & taxonomies = it.second;
+    	auto & mostProbableTax = *(taxonomies.top());
+    	taxonomies.pop();
+
+    	while(!taxonomies.empty())
+    	{
+    		auto & tax = *(taxonomies.top());
+    		if (tax.identifier == "unknown")
+    		{
+    			tax.identifier = mostProbableTax.identifier;
+    			tax.confidence = mostProbableTax.confidence;
+    		}
+    		taxonomies.pop();
+    	}
+    }
+
+    updateContaminationState(res);
 }

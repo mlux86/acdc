@@ -204,7 +204,8 @@ void ResultIO::writeYAML(const ResultContainer & result, std::ostream & os)
     out << YAML::Key << "rnammer" << YAML::Value
         << YAML::BeginMap
             << YAML::Key << "sixteen_s_per_point" << YAML::Value << result._16S
-        << YAML::EndMap;        
+        << YAML::EndMap;
+    out << YAML::Key << "taxonomies" << YAML::Value << result.stats.taxonomies;
     out << YAML::EndMap;
 
     os << out.c_str();

@@ -160,16 +160,6 @@ int main(int argc, char *argv[])
 
             result.stats = SequenceUtil::calculateStats(fasta, Opts::minContigLength());
 
-            // annotate taxonomy if exists
-
-			if (!boost::filesystem::is_regular_file(boost::filesystem::path(Opts::taxonomyFile())))
-			{
-				ELOG << "Taxonomy file '" << Opts::taxonomyFile() << "' does not exist or is not a regular file! Ignoring..." << std::endl;
-			} else
-			{
-            	TaxonomyAnnotation::annotateFromFile(result, Opts::taxonomyFile());
-			}
-
             // convert sequences into vectorial data
 
 			ILOG << "Vectorizing contigs..." << std::endl;
@@ -221,6 +211,23 @@ int main(int argc, char *argv[])
 				unsigned optK = result.clusterings.numClustSne;
 				result.clusterings.optimalClustering = result.clusterings.clustsSne[optK-1];
 			}
+
+            // annotate taxonomy if exists
+
+            if (Opts::taxonomyFile() != "")
+            {
+				if (!boost::filesystem::is_regular_file(boost::filesystem::path(Opts::taxonomyFile())))
+				{
+					ELOG << "Taxonomy file '" << Opts::taxonomyFile() << "' does not exist or is not a regular file! Ignoring..." << std::endl;
+				} else
+				{
+	            	TaxonomyAnnotation::annotateFromFile(result, Opts::taxonomyFile());
+				}
+            }
+            
+			// update taxonomies
+
+			TaxonomyAnnotation::annotateUnknown(result);
 
 			// write output files
 
