@@ -205,7 +205,10 @@ void ResultIO::writeYAML(const ResultContainer & result, std::ostream & os)
         << YAML::BeginMap
             << YAML::Key << "sixteen_s_per_point" << YAML::Value << result._16S
         << YAML::EndMap;
-    out << YAML::Key << "taxonomies" << YAML::Value << result.stats.taxonomies;
+    if (result.contaminationAnalysis.state != "clean")
+    {
+        out << YAML::Key << "taxonomies" << YAML::Value << result.stats.taxonomies;
+    }
     out << YAML::EndMap;
 
     os << out.c_str();

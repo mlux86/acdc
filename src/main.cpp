@@ -214,7 +214,7 @@ int main(int argc, char *argv[])
 
             // annotate taxonomy if exists
 
-            if (Opts::taxonomyFile() != "")
+            if (result.contaminationAnalysis.state != "clean" && Opts::taxonomyFile() != "")
             {
 				if (!boost::filesystem::is_regular_file(boost::filesystem::path(Opts::taxonomyFile())))
 				{
@@ -222,12 +222,9 @@ int main(int argc, char *argv[])
 				} else
 				{
 	            	TaxonomyAnnotation::annotateFromFile(result, Opts::taxonomyFile());
+					TaxonomyAnnotation::annotateUnknown(result);
 				}
             }
-            
-			// update taxonomies
-
-			TaxonomyAnnotation::annotateUnknown(result);
 
 			// write output files
 
