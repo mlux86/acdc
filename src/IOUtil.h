@@ -23,7 +23,7 @@ struct Fixed
 	std::string toString() const 
 	{
 		std::stringstream ss;
-		ss << std::setprecision(5) << value;
+		ss << std::setprecision(4) << value;
 		return ss.str();
 	}
 };

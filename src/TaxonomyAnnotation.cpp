@@ -9,13 +9,12 @@
 #include <queue>
 
 #include "ResultIO.h"
+#include "IOUtil.h"
 #include "Opts.h"
 #include "Logger.h"
 
 YAML::Emitter & operator << (YAML::Emitter & out, const Taxonomy & t) 
-{
-    out << YAML::BeginMap;
-
+{    
 	std::string stateStr;
 	switch (t.state)
 	{
@@ -31,10 +30,11 @@ YAML::Emitter & operator << (YAML::Emitter & out, const Taxonomy & t)
 		default: typeStr = "estimated"; break;
 	}	
 	
+	out << YAML::Flow << YAML::BeginMap;
     out << YAML::Key << "type" << YAML::Value << typeStr;
     out << YAML::Key << "state" << YAML::Value << stateStr;
     out << YAML::Key << "identifier" << YAML::Value << t.identifier;
-    out << YAML::Key << "confidence" << YAML::Value << t.confidence;
+    out << YAML::Key << "confidence" << YAML::Value << Fixed(t.confidence);
     out << YAML::EndMap;
 
     return out;
@@ -126,9 +126,7 @@ void TaxonomyAnnotation::updateContaminationConfidences(ResultContainer & res)
 }
 
 void TaxonomyAnnotation::updateContaminationState(ResultContainer & res)
-{
-	// update contamination state
-
+{	
 	std::string target = Opts::targetTaxonomy();
 	std::transform(target.begin(), target.end(), target.begin(), ::tolower);
 
@@ -146,6 +144,45 @@ void TaxonomyAnnotation::updateContaminationState(ResultContainer & res)
 			}
 		}
 	}
+
+	// create per cluster label mapping and vice versa
+	const auto & optClust = res.clusterings.optimalClustering;
+	
+	std::map<std::string, unsigned> clusterPerContig; 
+    for (unsigned i = 0; i < optClust.labels.size(); i++)
+    {
+        unsigned lbl = optClust.labels.at(i);
+    	std::string contig = res.seqVectorization.contigs.at(i);
+        clusterPerContig[contig] = lbl;
+    }
+
+    // find clusters containing clean contigs and, if exist, set others to contamination
+
+    std::set<unsigned> cleanClusters;
+
+    for (auto & t : res.stats.taxonomies)
+    {
+    	unsigned cluster = clusterPerContig[t.first];
+    	auto & tax = t.second;
+    	if(tax.state == Clean)
+    	{
+    		cleanClusters.insert(cluster);
+    	}
+    }
+
+    if(cleanClusters.size() > 0)
+    {
+	    for (auto & t : res.stats.taxonomies)
+	    {
+	    	unsigned cluster = clusterPerContig[t.first];
+	    	auto & tax = t.second;
+	    	if(cleanClusters.find(cluster) == cleanClusters.end() && tax.state == NA)
+	    	{
+	    		tax.state = Contamination;
+	    	}
+	    }
+    }
+
 }
 
 void TaxonomyAnnotation::annotateFromFile(ResultContainer & res, const std::string & filename)
