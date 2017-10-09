@@ -203,19 +203,22 @@ int main(int argc, char *argv[])
 
 			result.clusterings = Decontamination::findLikelyClusterings(result.dataSne, result.dataPca, svr);
 
-			if(result.contaminationAnalysis.confidenceCC > result.contaminationAnalysis.confidenceDip)
-			{
-				result.clusterings.optimalClustering = result.clusterings.clustsCC[0];
-			} else
-			{
-				unsigned optK = result.clusterings.numClustSne;
-				result.clusterings.optimalClustering = result.clusterings.clustsSne[optK-1];
-			}
-
             // annotate taxonomy if exists
 
             if (result.contaminationAnalysis.state != "clean" && Opts::taxonomyFile() != "")
             {
+				if(result.contaminationAnalysis.confidenceCC > result.contaminationAnalysis.confidenceDip)
+				{
+					unsigned optK = result.clusterings.numClustCC;
+					VLOG << "Optimal clustering = CC with k = " << optK << std::endl;
+					result.clusterings.optimalClustering = result.clusterings.clustsCC[0];
+				} else
+				{
+					unsigned optK = result.clusterings.numClustSne;
+					VLOG << "Optimal clustering = Dip with k = " << optK << std::endl;
+					result.clusterings.optimalClustering = result.clusterings.clustsSne[optK-1];
+				}
+			            	
 				if (!boost::filesystem::is_regular_file(boost::filesystem::path(Opts::taxonomyFile())))
 				{
 					ELOG << "Taxonomy file '" << Opts::taxonomyFile() << "' does not exist or is not a regular file! Ignoring..." << std::endl;

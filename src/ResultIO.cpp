@@ -207,7 +207,12 @@ void ResultIO::writeYAML(const ResultContainer & result, std::ostream & os)
         << YAML::EndMap;
     if (result.contaminationAnalysis.state != "clean")
     {
-        out << YAML::Key << "taxonomies" << YAML::Value << result.stats.taxonomies;
+        out << YAML::Key << "taxonomies" << YAML::Value << YAML::BeginMap;
+        for (const auto & contig : result.stats.includedContigs)
+        {
+            out << YAML::Key << contig << YAML::Value << result.stats.taxonomies.at(contig);
+        }
+        out << YAML::EndMap;
     }
     out << YAML::EndMap;
 
