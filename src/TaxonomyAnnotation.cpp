@@ -43,7 +43,7 @@ YAML::Emitter & operator << (YAML::Emitter & out, const Taxonomy & t)
 void TaxonomyAnnotation::updateContaminationConfidences(ResultContainer & res)
 {
 	const auto & contigs = res.stats.includedContigs;
-	const auto & optClust = res.clusterings.optimalClustering;
+	const auto & optClust = *(res.clusterings.mostLikelyClustering);
 	auto & taxonomies = res.stats.taxonomies;
 
 	// create per cluster label mapping and vice versa
@@ -146,7 +146,7 @@ void TaxonomyAnnotation::updateContaminationState(ResultContainer & res)
 	}
 
 	// create per cluster label mapping and vice versa
-	const auto & optClust = res.clusterings.optimalClustering;
+	const auto & optClust = *(res.clusterings.mostLikelyClustering);
 	
 	std::map<std::string, unsigned> clusterPerContig; 
     for (unsigned i = 0; i < optClust.labels.size(); i++)
@@ -245,7 +245,7 @@ void TaxonomyAnnotation::annotateUnknown(ResultContainer & res)
 	// 2. create priorityqueue with taxonomies of each contig, sorted by confidence
 	// 3. assign taxonomy with highest confidence to all unknown contigs
 
-	const auto & optClust = res.clusterings.optimalClustering;
+	const auto & optClust = *(res.clusterings.mostLikelyClustering);
 
 	std::map<unsigned, std::priority_queue<Taxonomy*, std::vector<Taxonomy*>, TaxonomyComparison>> sortedTaxByCluster; 
     for (unsigned i = 0; i < optClust.labels.size(); i++)

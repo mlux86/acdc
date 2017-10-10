@@ -170,7 +170,12 @@ void ResultIO::writeYAML(const ResultContainer & result, std::ostream & os)
     out << YAML::Key << "confidence_dip" << YAML::Value << result.contaminationAnalysis.confidenceDip;
     out << YAML::Key << "contamination_state" << YAML::Value << result.contaminationAnalysis.state;
     out << YAML::Key << "cluster_estimates" << YAML::Value 
-        << YAML::BeginMap 
+        << YAML::BeginMap         
+            << YAML::Key << "most_likely_clustering" << YAML::Value 
+                << YAML::BeginMap 
+                    << YAML::Key << "method" << YAML::Value << result.clusterings.mostLikelyClusteringName
+                    << YAML::Key << "estimated_k" << YAML::Value << result.clusterings.mostLikelyClustering->numClusters;
+                out << YAML::EndMap            
             << YAML::Key << "cc" << YAML::Value 
                 << YAML::BeginMap 
                     << YAML::Key << "method" << YAML::Value << result.clusterings.estimatorCC->name()

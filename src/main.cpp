@@ -210,13 +210,15 @@ int main(int argc, char *argv[])
 				if(result.contaminationAnalysis.confidenceCC > result.contaminationAnalysis.confidenceDip)
 				{
 					unsigned optK = result.clusterings.numClustCC;
-					VLOG << "Optimal clustering = CC with k = " << optK << std::endl;
-					result.clusterings.optimalClustering = result.clusterings.clustsCC[0];
+					VLOG << "Optimal clustering = cc with k = " << optK << std::endl;
+					result.clusterings.mostLikelyClusteringName = "cc";
+					result.clusterings.mostLikelyClustering = & (result.clusterings.clustsCC[0]);
 				} else
 				{
 					unsigned optK = result.clusterings.numClustSne;
-					VLOG << "Optimal clustering = Dip with k = " << optK << std::endl;
-					result.clusterings.optimalClustering = result.clusterings.clustsSne[optK-1];
+					VLOG << "Optimal clustering = validity_sne with k = " << optK << std::endl;
+					result.clusterings.mostLikelyClusteringName = "validity_sne";
+					result.clusterings.mostLikelyClustering = & (result.clusterings.clustsSne[optK-1]);
 				}
 			            	
 				if (!boost::filesystem::is_regular_file(boost::filesystem::path(Opts::taxonomyFile())))
