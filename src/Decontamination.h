@@ -21,7 +21,7 @@ struct DecontaminationResult
 	std::vector<ClusteringResult> clustsPca;
 
 	std::string mostLikelyClusteringName;
-	ClusteringResult* mostLikelyClustering;
+	ClusteringResult* mostLikelyClustering = nullptr;
 };
 
 class Decontamination

@@ -226,13 +226,16 @@ int main(int argc, char *argv[])
 					ELOG << "Taxonomy file '" << Opts::taxonomyFile() << "' does not exist or is not a regular file! Ignoring..." << std::endl;
 				} else
 				{
+					ILOG << "Annotating taxonomy from file..." << std::endl;
 	            	TaxonomyAnnotation::annotateFromFile(result, Opts::taxonomyFile());
+	            	ILOG << "Annotating unknown taxonomies..." << std::endl;
 					TaxonomyAnnotation::annotateUnknown(result);
 				}
             }
 
 			// write output files
 
+            ILOG << "Writing result..." << std::endl;
 			rio.processResult(result);
 
 		} catch(const std::exception & e)
