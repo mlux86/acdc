@@ -92,13 +92,13 @@ In the visualization, 16S genes are highlighted by a large star shape. A click o
 While acdc is running, it generates results in an output directory defaulting to `./results/` (can be overridden using the `-o` parameter).
 It contains the file `index.html` that can be viewed in any modern browser, supporting HTML5 and CSS3.
 
-## Docker Container
+## Using Docker 
 
-In the `docker` folder, acdc provides a Dockerfile script to build a docker container. Building depends on the rnammer sources which can be obtained via the [RNAmmer homepage](http://www.cbs.dtu.dk/services/RNAmmer/). Just put the obtained `rnammer-1.2.src.tar.Z` file into the `docker` folder and from inside the directory, run
+Acdc is provided on docker hub: [mlux86/acdc](https://hub.docker.com/r/mlux86/acdc/). Pull the
+container using `docker pull mlux86/acdc:stable`. If you wish to use the development version, then
+replace `stable` by `dev`.
 
-```
-# docker build -t acdc .
-```
+### Running the container
 
 Run acdc as follows:
 
@@ -110,10 +110,23 @@ Run acdc as follows:
 
 ```
 
-where `/path/to/assemblies` contains the file `test.fasta` and `/path/to/kraken_db` contains the Kraken database. Copy the result files to the current working directory using
+where `/path/to/assemblies` contains the file `test.fasta` and `/path/to/kraken_db` contains the Kraken database. 
+
+Copy the result files to the current working directory using
 
 ```
 # docker cp acdc:/acdc ./results
+```
+
+### Building the container yourself
+
+In the `docker` folder, acdc provides a Dockerfile script to build a docker container. Building
+depends on the rnammer sources which can be obtained via the [RNAmmer
+homepage](http://www.cbs.dtu.dk/services/RNAmmer/). Just put the obtained `rnammer-1.2.src.tar.Z`
+file into the `docker` folder and from inside the directory, run
+
+```
+# docker build -t acdc .
 ```
 
 ## Used Libraries
