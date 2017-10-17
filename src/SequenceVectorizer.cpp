@@ -126,7 +126,12 @@ std::pair<Eigen::MatrixXd, std::vector<WindowRange>> SequenceVectorizer::vectori
 {
 
 	unsigned len = seqan::length(sequence);
-	unsigned n = (unsigned) (((int)len - (int)windowWidth) / (int)windowStep) + 1;
+
+	unsigned n = 0;
+	if (windowWidth <= len)
+	{
+		n = (unsigned) (((int)len - (int)windowWidth) / (int)windowStep) + 1;
+	}
 
 	if (n == 0) // include contigs smaller than window width
 	{
