@@ -1,12 +1,18 @@
-import yaml
+#!/usr/bin/python
 
-yaml_file = "_global_projectb_scratch_andreopo_ACDC_acdc_build_SAG_contam_Meiothermus_ruber_SAG.Pedobacter_heparinus_SAG_Meiothermus.Pedobacter.fastq.CAREFUL_scaffolds.fasta.min2kb.fasta.yaml"
+import yaml
+import sys
+
+if len(sys.argv) != 2:
+	print('YAML file as only argument needed! Exiting...')
+	sys.exit(0)
+
+yaml_file = sys.argv[1]
 
 with open (yaml_file, 'r') as f:
     doc=yaml.load(f)
     # use safe_load instead load
     # dataMap = yaml.safe_load(f)
-
 
 method=doc['cluster_estimates']['most_likely_clustering']['method']
 
