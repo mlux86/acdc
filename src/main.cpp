@@ -205,7 +205,7 @@ int main(int argc, char *argv[])
 
             // annotate taxonomy if exists
 
-            if (result.contaminationAnalysis.state != "clean" && Opts::taxonomyFile() != "")
+            if (result.contaminationAnalysis.state != "clean")
             {
                 if(result.contaminationAnalysis.confidenceCC > result.contaminationAnalysis.confidenceDip)
                 {
@@ -221,7 +221,7 @@ int main(int argc, char *argv[])
                     result.clusterings.mostLikelyClustering = & (result.clusterings.clustsSne[optK-1]);
                 }
 
-                if (!boost::filesystem::is_regular_file(boost::filesystem::path(Opts::taxonomyFile())))
+                if (Opts::taxonomyFile() != "" && !boost::filesystem::is_regular_file(boost::filesystem::path(Opts::taxonomyFile())))
                 {
                     ELOG << "Taxonomy file '" << Opts::taxonomyFile() << "' does not exist or is not a regular file! Ignoring..." << std::endl;
                 } else

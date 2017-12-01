@@ -49,7 +49,7 @@ void ResultIO::exportContigJS(const std::string & fastaFilename)
         move(seq, seqs[i]);
         ofs << "inputcontigs['" << fastaFilename << "']['" << id << "'] = '" << seq << "'" << std::endl;
     }
-    ofs.close();    
+    ofs.close();
 }
 
 std::vector<unsigned> ResultIO::contigIndicesVisualization(const ResultContainer & result)
@@ -104,8 +104,8 @@ void ResultIO::clusteringToYAML(YAML::Emitter & out, const ResultContainer & res
         out << YAML::BeginMap;
         out << YAML::Key << "assignment" << YAML::Value;
 
-        out << YAML::BeginMap 
-                << YAML::Key << "k" << YAML::Value << (clust.numClusters + clust.outlierClusters.size())
+        out << YAML::BeginMap
+                << YAML::Key << "k" << YAML::Value << clust.numClusters
                 << YAML::Key << "labels" << YAML::Value << YAML::Flow << labelsPerContig(result, clust)
                 << YAML::Key << "outlierClusters" << YAML::Value << YAML::Flow << clust.outlierClusters
             << YAML::EndMap;
@@ -137,31 +137,31 @@ void ResultIO::writeYAML(const ResultContainer & result, std::ostream & os)
         {
             krakenContigs.push_back("unknown");
         }
-    } 
+    }
 
     YAML::Emitter out;
     out << YAML::BeginMap;
     out << YAML::Key << "acdc_parameters" << YAML::Value << Opts::parameters();
     out << YAML::Key << "input_fasta" << YAML::Value << IOUtil::absoluteFilepath(result.fasta);
-    out << YAML::Key << "fasta_stats" << YAML::Value 
-        << YAML::BeginMap 
+    out << YAML::Key << "fasta_stats" << YAML::Value
+        << YAML::BeginMap
             << YAML::Key << "included_contigs" << YAML::Value << YAML::Flow << result.stats.includedContigs
             << YAML::Key << "excluded_contigs" << YAML::Value << YAML::Flow << result.stats.discardedContigs
             << YAML::Key << "num_basepairs" << YAML::Value << result.stats.numBasepairs
             << YAML::Key << "gc_content" << YAML::Value << result.stats.gcContent
             << YAML::Key << "contig_lengths" << YAML::Value << YAML::Flow << contigLengths
             << YAML::Key << "contig_gc" << YAML::Value << YAML::Flow  << contigGCs
-        << YAML::EndMap;        
-    out << YAML::Key << "visualizations" << YAML::Value 
-        << YAML::BeginMap 
-            << YAML::Key << "sne" << YAML::Value 
-                << YAML::BeginMap 
-                    << YAML::Key << "x1" << YAML::Value << YAML::Flow << sneCol0 
+        << YAML::EndMap;
+    out << YAML::Key << "visualizations" << YAML::Value
+        << YAML::BeginMap
+            << YAML::Key << "sne" << YAML::Value
+                << YAML::BeginMap
+                    << YAML::Key << "x1" << YAML::Value << YAML::Flow << sneCol0
                     << YAML::Key << "x2" << YAML::Value << YAML::Flow << sneCol1
                 << YAML::EndMap
-            << YAML::Key << "pca" << YAML::Value 
-                << YAML::BeginMap 
-                    << YAML::Key << "x1" << YAML::Value << YAML::Flow << pcaCol0 
+            << YAML::Key << "pca" << YAML::Value
+                << YAML::BeginMap
+                    << YAML::Key << "x1" << YAML::Value << YAML::Flow << pcaCol0
                     << YAML::Key << "x2" << YAML::Value << YAML::Flow << pcaCol1
                 << YAML::EndMap
             << YAML::Key << "contig_labels" << YAML::Value  << YAML::Flow << contigIndicesVisualization(result)
@@ -169,39 +169,39 @@ void ResultIO::writeYAML(const ResultContainer & result, std::ostream & os)
     out << YAML::Key << "confidence_cc" << YAML::Value << result.contaminationAnalysis.confidenceCC;
     out << YAML::Key << "confidence_dip" << YAML::Value << result.contaminationAnalysis.confidenceDip;
     out << YAML::Key << "contamination_state" << YAML::Value << result.contaminationAnalysis.state;
-    out << YAML::Key << "cluster_estimates" << YAML::Value 
+    out << YAML::Key << "cluster_estimates" << YAML::Value
         << YAML::BeginMap;
             if (result.clusterings.mostLikelyClustering != nullptr)
             {
-            out << YAML::Key << "most_likely_clustering" << YAML::Value 
-                << YAML::BeginMap 
+            out << YAML::Key << "most_likely_clustering" << YAML::Value
+                << YAML::BeginMap
                     << YAML::Key << "method" << YAML::Value << result.clusterings.mostLikelyClusteringName
                     << YAML::Key << "estimated_k" << YAML::Value << result.clusterings.mostLikelyClustering->numClusters;
                 out << YAML::EndMap;
             }
-            out << YAML::Key << "cc" << YAML::Value 
-                << YAML::BeginMap 
+            out << YAML::Key << "cc" << YAML::Value
+                << YAML::BeginMap
                     << YAML::Key << "method" << YAML::Value << result.clusterings.estimatorCC->name()
                     << YAML::Key << "parameters" << YAML::Value << result.clusterings.estimatorCC->parameters()
                     << YAML::Key << "estimated_k" << YAML::Value << (result.clusterings.numClustCC)
                     << YAML::Key << "assignments" << YAML::Value; clusteringToYAML(out, result, result.clusterings.clustsCC);
                 out << YAML::EndMap
-            << YAML::Key << "validity_sne" << YAML::Value 
-                << YAML::BeginMap 
+            << YAML::Key << "validity_sne" << YAML::Value
+                << YAML::BeginMap
                     << YAML::Key << "method" << YAML::Value << result.clusterings.estimatorClusterValidity->name()
                     << YAML::Key << "parameters" << YAML::Value << result.clusterings.estimatorClusterValidity->parameters()
                     << YAML::Key << "dimensionality_reduction" << YAML::Value << "tsne"
                     << YAML::Key << "estimated_k" << YAML::Value << result.clusterings.numClustSne
                     << YAML::Key << "assignments" << YAML::Value; clusteringToYAML(out, result, result.clusterings.clustsSne);
                 out << YAML::EndMap
-            << YAML::Key << "validity_pca" << YAML::Value 
-                << YAML::BeginMap 
+            << YAML::Key << "validity_pca" << YAML::Value
+                << YAML::BeginMap
                     << YAML::Key << "method" << YAML::Value << result.clusterings.estimatorClusterValidity->name()
                     << YAML::Key << "parameters" << YAML::Value << result.clusterings.estimatorClusterValidity->parameters()
                     << YAML::Key << "dimensionality_reduction" << YAML::Value << "pca"
                     << YAML::Key << "estimated_k" << YAML::Value << result.clusterings.numClustPca
                     << YAML::Key << "assignments" << YAML::Value; clusteringToYAML(out, result, result.clusterings.clustsPca);
-                out << YAML::EndMap                
+                out << YAML::EndMap
         << YAML::EndMap;
     out << YAML::Key << "kraken" << YAML::Value
         << YAML::BeginMap
