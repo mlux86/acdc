@@ -94,9 +94,7 @@ It contains the file `index.html` that can be viewed in any modern browser, supp
 
 ## Using Docker 
 
-Acdc is provided on docker hub: [mlux86/acdc](https://hub.docker.com/r/mlux86/acdc/). Pull the
-container using `docker pull mlux86/acdc:stable`. If you wish to use the development version, then
-replace `stable` by `dev`.
+Acdc is provided on docker hub: [mlux86/acdc](https://hub.docker.com/r/mlux86/acdc/). Pull the container using `docker pull mlux86/acdc:stable`.
 
 ### Running the container
 
@@ -136,7 +134,7 @@ file into the `docker` folder and from inside the directory, run
 * [t-SNE](https://lvdmaaten.github.io/tsne/), t-Distributed Stochastic Neighbor Embedding (t-SNE) is a technique for dimensionality reduction that is particularly well suited for the visualization of high-dimensional datasets.
 * [diptest: Hartigan's Dip Test Statistic for Unimodality](https://cran.r-project.org/web/packages/diptest/), by Martin Maechler (originally from Fortran and S-plus by Dario Ringach, NYU.edu), modified for use in a C++ application.
 * [fastcluster](http://danifold.net/fastcluster.html) fastcluster: Fast hierarchical clustering routines for R and Python, extracted relevant code and added pure C++ interface
-* [JsonCpp](https://github.com/open-source-parsers/jsoncpp), a C++ library for interacting with JSON.
+* [yaml-cpp](https://github.com/jbeder/yaml-cpp)
 * [nanoflann](https://github.com/jlblancoc/nanoflann), a C++ header-only library for Nearest Neighbor (NN) search wih KD-trees.
 * [Catch](https://github.com/philsquared/Catch), a modern, C++-native, header-only, framework for unit-tests, TDD and BDD.
 * [jQuery](https://jquery.com/), a fast, small, and feature-rich JavaScript library.
@@ -146,7 +144,7 @@ file into the `docker` folder and from inside the directory, run
 
 The MIT License (MIT)
 
-Copyright (c) [2016] [Markus Lux]
+Copyright (c) [2018] [Markus Lux]
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
