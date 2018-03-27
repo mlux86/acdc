@@ -2,7 +2,7 @@ FROM debian:jessie
 MAINTAINER Markus Lux
 
 RUN apt-get update
-RUN apt-get -y install build-essential cmake git libboost-filesystem-dev libboost-program-options-dev libboost-system-dev hmmer2 libxml-simple-perl
+RUN apt-get -y install build-essential cmake git libboost-filesystem-dev libboost-program-options-dev libboost-system-dev hmmer2 libxml-simple-perl python3 python3-yaml
 
 # install acdc
 
