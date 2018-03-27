@@ -9,7 +9,7 @@ if len(sys.argv) != 2:
     print('YAML file as only argument needed! Exiting...')
     sys.exit(0)
 
-basedir = os.path.dirname(os.path.abspath(__file__))
+basedir = os.path.dirname(os.path.realpath(os.path.abspath(__file__)))
 
 yaml_file = sys.argv[1]
 
