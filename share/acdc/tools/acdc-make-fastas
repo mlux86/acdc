@@ -52,11 +52,10 @@ for t in taxa_contigs:
 
 for c in cluster_to_class:
     classif = cluster_to_class.get(c)
-    print(classif)
     file_classif = open(classif + '.names', 'w')
     contigs = unsupclusters_to_contigs.get(c)
     for name in contigs:
         file_classif.write(name + '\n')
     file_classif.close()
     with open(classif + '.fasta', 'w') as outfile:
-        subprocess.call(['awk', '-f', basedir + '/filter_by_name.awk', classif + '.names', doc['input_fasta']], stdout = outfile)
+        subprocess.call(['awk', '-f', basedir + '/acdc-filter-fasta-by-name.awk', classif + '.names', doc['input_fasta']], stdout = outfile)
