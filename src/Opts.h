@@ -14,6 +14,8 @@ private:
 
 	std::string _cliCall = "";
 
+	bool _needsVersion = false;
+	std::string _version = "";
 	bool _needsHelp = false;
 	std::string _helpDesc = "";
 	int _logLevel = 0;
@@ -60,6 +62,8 @@ public:
 	static std::string execPath();
 	static std::string sharePath();
 	static std::string cliCall();
+	static bool needsVersion();
+	static std::string version();
 	static bool needsHelp();
 	static unsigned logLevel();
 	static std::string helpDesc();

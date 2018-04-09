@@ -42,6 +42,14 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
+    // show version
+
+    if (Opts::needsVersion())
+    {
+        std::cout << "acdc version " << Opts::version() << std::endl;
+        return EXIT_SUCCESS;
+    }
+
     // show help
 
     if (Opts::needsHelp())

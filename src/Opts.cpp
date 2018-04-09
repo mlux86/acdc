@@ -2,6 +2,7 @@
 #include "OptsAccumulator.h"
 #include "Logger.h"
 #include "IOUtil.h"
+#include "version.h"
 
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
@@ -58,6 +59,7 @@ void Opts::initializeOnce(int argc, char *argv[])
 
 	description.add_options()
 	    ("help,h", "Display this help message")
+	    ("version,V", "Display the software version")
 	    ("verbose,v", accumulator<int>(&(opts._logLevel))->implicit_value(1), "Verbose output (use -vv for more or -vvv for maximum verbosity)")
 	    ("quiet,q", "No output")
 	    ("input-fasta,i", boost::program_options::value<std::string>(), "Input FASTA file")
@@ -99,6 +101,9 @@ void Opts::initializeOnce(int argc, char *argv[])
 	{
 		opts._logLevel = std::min(opts._logLevel, 3);
 	}
+
+	opts._needsVersion = vm.count("version");
+	opts._version = ACDC_VERSION;
 
 	opts._needsHelp = vm.count("help");
 	if (vm.count("input-list"))
@@ -150,6 +155,7 @@ std::map <std::string, std::string> Opts::parameters()
 	params["sharePath"] = Opts::getInstance()._sharePath;
 	params["cliCall"] = Opts::getInstance()._cliCall;
 	params["needsHelp"] = std::to_string(Opts::getInstance()._needsHelp);
+	params["needsVersion"] = std::to_string(Opts::getInstance()._needsVersion);
 	params["logLevel"] = std::to_string(Opts::getInstance()._logLevel);
 	params["tsneDim"] = std::to_string(Opts::getInstance()._tsneDim);
 	params["tsnePcaDim"] = std::to_string(Opts::getInstance()._tsnePcaDim);
@@ -189,6 +195,16 @@ std::string Opts::cliCall()
 bool Opts::needsHelp()
 {
 	return Opts::getInstance()._needsHelp;
+}
+
+bool Opts::needsVersion()
+{
+	return Opts::getInstance()._needsVersion;
+}
+
+std::string Opts::version()
+{
+	return Opts::getInstance()._version;
 }
 
 unsigned Opts::logLevel()
