@@ -21,6 +21,6 @@ private:
 public:
 	// Run BH-Sne on the eigendata object
 	// Copied and modified from the original BH-SNE implementation
-	static Eigen::MatrixXd runBarnesHutSNE(const Eigen::MatrixXd & eigendata);
+	static Eigen::MatrixXd runBarnesHutSNE(const Eigen::MatrixXd & eigendata, unsigned seed);
 	
 };

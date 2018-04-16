@@ -20,6 +20,8 @@ private:
 	std::string _helpDesc = "";
 	int _logLevel = 0;
 
+	unsigned _randomSeed = 0;
+
 	std::vector<std::string> _inputFASTAs;
 
 	unsigned _tsneDim = 0;
@@ -67,6 +69,7 @@ public:
 	static bool needsHelp();
 	static unsigned logLevel();
 	static std::string helpDesc();
+	static unsigned randomSeed();
 	static std::vector<std::string> inputFASTAs();
 	static unsigned tsneDim();
 	static unsigned tsnePcaDim();

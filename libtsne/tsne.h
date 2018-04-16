@@ -32,12 +32,19 @@
 
 #pragma once
 
+#include <random>
+
 static inline double sign(double x) { return (x == .0 ? .0 : (x < .0 ? -1.0 : 1.0)); }
 
 
 class TSNE
 {    
 public:
+    TSNE();
+    ~TSNE();    
+    std::default_random_engine rng;
+    void seedRng(unsigned seed);
+
     void run(double* X, int N, int D, double* Y, int no_dims, double perplexity, double theta);
     bool load_data(double** data, int* n, int* d, int* no_dims, double* theta, double* perplexity, int* rand_seed);
     void save_data(double* data, int* landmarks, double* costs, int n, int d);

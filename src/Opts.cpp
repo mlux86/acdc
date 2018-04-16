@@ -62,6 +62,7 @@ void Opts::initializeOnce(int argc, char *argv[])
 	    ("version,V", "Display the software version")
 	    ("verbose,v", accumulator<int>(&(opts._logLevel))->implicit_value(1), "Verbose output (use -vv for more or -vvv for maximum verbosity)")
 	    ("quiet,q", "No output")
+	    ("random-seed,R", boost::program_options::value<unsigned>(), "Random seed number for reproducible results") 
 	    ("input-fasta,i", boost::program_options::value<std::string>(), "Input FASTA file")
 	    ("input-list,I", boost::program_options::value<std::string>(), "File with a list of input FASTA files, one per line")
 	    ("tsne-dimension,d", boost::program_options::value<unsigned>()->default_value(2), "T-SNE dimension")
@@ -104,8 +105,17 @@ void Opts::initializeOnce(int argc, char *argv[])
 
 	opts._needsVersion = vm.count("version");
 	opts._version = ACDC_VERSION;
-
 	opts._needsHelp = vm.count("help");
+	
+	if(vm.count("random-seed"))
+	{
+		opts._randomSeed = vm["random-seed"].as<unsigned>();
+	} else
+	{
+		opts._randomSeed = time(NULL);
+	}
+	std::srand(Opts::randomSeed());
+	
 	if (vm.count("input-list"))
 	{
 		std::string fastaListFile = vm["input-list"].as<std::string>();
@@ -154,6 +164,7 @@ std::map <std::string, std::string> Opts::parameters()
 	params["execPath"] = Opts::getInstance()._execPath;
 	params["sharePath"] = Opts::getInstance()._sharePath;
 	params["cliCall"] = Opts::getInstance()._cliCall;
+	params["randomSeed"] = std::to_string(Opts::getInstance()._randomSeed);
 	params["needsHelp"] = std::to_string(Opts::getInstance()._needsHelp);
 	params["needsVersion"] = std::to_string(Opts::getInstance()._needsVersion);
 	params["logLevel"] = std::to_string(Opts::getInstance()._logLevel);
@@ -215,6 +226,11 @@ unsigned Opts::logLevel()
 std::string Opts::helpDesc()
 {
 	return Opts::getInstance()._helpDesc;
+}
+
+unsigned Opts::randomSeed()
+{
+	return Opts::getInstance()._randomSeed;
 }
 
 std::vector<std::string> Opts::inputFASTAs()

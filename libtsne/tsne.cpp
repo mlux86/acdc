@@ -46,6 +46,16 @@
 
 using namespace std;
 
+TSNE::TSNE()
+{
+    seedRng(time(0));
+}
+
+TSNE::~TSNE()
+{
+    
+}
+
 // Perform t-SNE
 void TSNE::run(double* X, int N, int D, double* Y, int no_dims, double perplexity, double theta) {
     
@@ -709,13 +719,19 @@ void TSNE::zeroMean(double* X, int N, int D) {
     free(mean); mean = NULL;
 }
 
+void TSNE::seedRng(unsigned seed)
+{
+    rng = std::default_random_engine(seed);
+}
 
 // Generates a Gaussian random number
 double TSNE::randn() {
+    std::uniform_real_distribution<double> dist(0.0, 1.0);
+
 	double x, y, radius;
 	do {
-		x = 2 * (rand() / ((double) RAND_MAX + 1)) - 1;
-		y = 2 * (rand() / ((double) RAND_MAX + 1)) - 1;
+		x = 2 * dist(rng) - 1;
+		y = 2 * dist(rng) - 1;
 		radius = (x * x) + (y * y);
 	} while((radius >= 1.0) || (radius == 0.0));
 	radius = sqrt(-2 * log(radius) / radius);

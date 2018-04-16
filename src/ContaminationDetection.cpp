@@ -22,7 +22,9 @@ std::vector< std::vector<unsigned> > ContaminationDetection::stratifiedSubsampli
 {
     std::vector<unsigned> indices(n);
     std::iota(indices.begin(), indices.end(), 0);
-    std::shuffle(indices.begin(), indices.end(), std::mt19937{std::random_device{}()});
+
+	auto rng = std::default_random_engine {};
+    std::shuffle(indices.begin(), indices.end(), rng);
 
     unsigned m = (unsigned) ((double)n * ratio);
     unsigned step = (n - m) / k;
@@ -45,7 +47,7 @@ std::vector< std::vector<unsigned> > ContaminationDetection::stratifiedSubsampli
     return result;
 }
 
-ContaminationDetectionResult ContaminationDetection::bootstrapTask(const SequenceVectorizationResult & svr, const std::vector<unsigned> indices)
+ContaminationDetectionResult ContaminationDetection::bootstrapTask(const SequenceVectorizationResult & svr, const std::vector<unsigned> indices, const unsigned bootstrapId)
 {
 	// generate new data matrices from bootstrap indices and cluster them
 
@@ -58,14 +60,14 @@ ContaminationDetectionResult ContaminationDetection::bootstrapTask(const Sequenc
 		contigs[i] = svr.contigs[indices[i]];
 	}
 
-	auto res = ContaminationDetection::analyze(data, contigs, svr.contigSizes);
+	auto res = ContaminationDetection::analyze(data, contigs, svr.contigSizes, Opts::randomSeed() + bootstrapId);
 
 	res.bootstrapIndexes = indices;
 
 	return res;
 }
 
-ContaminationDetectionResult ContaminationDetection::analyze(const Eigen::MatrixXd & data, const std::vector<std::string> & contigs, const std::map<std::string, unsigned> & contigSizes)
+ContaminationDetectionResult ContaminationDetection::analyze(const Eigen::MatrixXd & data, const std::vector<std::string> & contigs, const std::map<std::string, unsigned> & contigSizes, const unsigned randomSeed)
 {
 	ContaminationDetectionResult res;
 
@@ -75,7 +77,7 @@ ContaminationDetectionResult ContaminationDetection::analyze(const Eigen::Matrix
 	res.dataPca = MLUtil::pca(data, Opts::tsneDim());
 
 	VLOG << "Running t-SNE..." << std::endl;
-	res.dataSne = BarnesHutSNEAdapter::runBarnesHutSNE(data);
+	res.dataSne = BarnesHutSNEAdapter::runBarnesHutSNE(data, randomSeed);
 
 	VLOG << "Testing for multi-modality..." << std::endl;
 	res.isMultiModal = ClusteringUtil::isMultiModal(res.dataSne, 0, 0.001) ||
@@ -98,16 +100,18 @@ std::vector<ContaminationDetectionResult> ContaminationDetection::analyzeBootstr
 
 	// add oneshot task (always first element in returned vector)
 	futures.push_back(
-		pool.enqueue(&ContaminationDetection::analyze, svr.data, svr.contigs, svr.contigSizes)
+		pool.enqueue(&ContaminationDetection::analyze, svr.data, svr.contigs, svr.contigSizes, Opts::randomSeed())
 	);
 
 	// add bootstrap tasks
 	const std::vector< std::vector<unsigned> > bootstrapIndexes = ContaminationDetection::stratifiedSubsamplingIndices(svr.data.rows(), Opts::numBootstraps(), Opts::bootstrapRatio());
+	unsigned bootstrapId = 1;
 	for (const auto & indices : bootstrapIndexes)
 	{
 		futures.push_back(
-			pool.enqueue(&ContaminationDetection::bootstrapTask, svr, indices)
+			pool.enqueue(&ContaminationDetection::bootstrapTask, svr, indices, bootstrapId)
 		);
+		bootstrapId++;
 	}
 
 	std::vector<ContaminationDetectionResult> results;

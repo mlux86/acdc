@@ -53,7 +53,7 @@ Eigen::MatrixXd BarnesHutSNEAdapter::saveData(double* data, int N, int D)
 	return eigendata;	
 }
 
-Eigen::MatrixXd BarnesHutSNEAdapter::runBarnesHutSNE(const Eigen::MatrixXd & eigendata)
+Eigen::MatrixXd BarnesHutSNEAdapter::runBarnesHutSNE(const Eigen::MatrixXd & eigendata, unsigned seed)
 {
     Eigen::MatrixXd tsneData;
     if (eigendata.cols() > Opts::tsnePcaDim())
@@ -66,6 +66,7 @@ Eigen::MatrixXd BarnesHutSNEAdapter::runBarnesHutSNE(const Eigen::MatrixXd & eig
     }
 
     TSNE* tsne = new TSNE();
+    tsne->seedRng(seed);
 
     int N = tsneData.rows();
     int D = tsneData.cols();
@@ -86,7 +87,6 @@ Eigen::MatrixXd BarnesHutSNEAdapter::runBarnesHutSNE(const Eigen::MatrixXd & eig
 	{ 
 		throw std::runtime_error("Memory allocation failed.");
 	}
-    srand(time(NULL));
     
     DLOG << "n=" << N << "   " 
             << "dim=" << D << "   " 
