@@ -2,4 +2,4 @@
 
 #include <string>
 
-const std::string ACDC_VERSION = "1.01";
+const std::string ACDC_VERSION = "1.02";

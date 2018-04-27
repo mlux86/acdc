@@ -81,7 +81,7 @@ void Opts::initializeOnce(int argc, char *argv[])
 	    ("kraken-db,K", boost::program_options::value<std::string>()->default_value(""), "Database to use for Kraken classification")
 	    ("aggressive-threshold,a", boost::program_options::value<unsigned>()->default_value(5000), "Aggressive threshold: Treat clusters having a bp size below this threshold as outliers. (Default = 0 = aggressive mode disabled)")
 	    ("taxonomy-file,x", boost::program_options::value<std::string>()->default_value(""), "File with external taxonomy information")
-	    ("target-taxonomy,X", boost::program_options::value<std::string>()->default_value(""), "Target taxonomy identifier")
+	    ("target-taxonomy,X", boost::program_options::value<std::string>()->default_value(""), "Target taxonomy identifier, supports regular expressions")
 	    ;
 
 	boost::program_options::variables_map vm;

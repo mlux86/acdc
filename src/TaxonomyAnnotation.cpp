@@ -7,6 +7,7 @@
 #include <set>
 #include <boost/algorithm/string/predicate.hpp>
 #include <queue>
+#include <regex>
 
 #include "ResultIO.h"
 #include "IOUtil.h"
@@ -129,13 +130,14 @@ void TaxonomyAnnotation::updateContaminationState(ResultContainer & res)
 {	
 	std::string target = Opts::targetTaxonomy();
 	std::transform(target.begin(), target.end(), target.begin(), ::tolower);
+    auto targetRegex = std::regex(target);
 
 	if (target != "")
 	{
 		for (auto & t : res.stats.taxonomies)
 		{
 			auto & tax = t.second;
-			if (boost::starts_with(tax.identifier, target))
+            if (std::regex_match(tax.identifier, targetRegex))
 			{
 				tax.state = Clean;
 			} else if (tax.identifier != "unknown")
