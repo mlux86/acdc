@@ -1,61 +1,194 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+'''
+This script reads in a yaml file that has been output by ACDC. The yaml file
+shows the fasta file that is to be deconatminated under the tag input_fasta.
+Then it finds the most likely clustering and each cluster is annotated as clean
+or contaminated based on the Kraken taxonomic hits and whether they match the target taxonomy.
+The script prints out the clean.fasta and contamination.fasta files. Also an optional NA.fasta
+may be printed in case a cluster has no taxonomic assignment.
+
+The ACDC workflow is described in the LucidChart:
+https://www.lucidchart.com/documents/edit/2d2e0c33-83cf-464f-9a2d-ff9c6deda503/0
+Some ACDC documentation is under:
+https://docs.google.com/document/d/1mPWlTvt47u3FgcypFGWRUcQbvDfocsn8y7BVW2ry8-g/edit#
+
+Author: Bill Andreopoulos
+Place: JGI, LBNL
+Date updated: July 5, 2019
+'''
 
 import yaml
+import argparse
 import sys
+import glob, os
 import subprocess
-import os
 
-if len(sys.argv) != 2:
-    print('YAML file as only argument needed! Exiting...')
-    sys.exit(0)
+desc = 'make_fastas'
+parser = argparse.ArgumentParser(description=desc)
+parser.add_argument("-f", "--file", dest="yamlfile", help="YAML file name (absolute path)", required=True)
+parser.add_argument("-o", "--output", dest="output", help="YAML file name output (absolute path)", required=False)
+
+
+options = parser.parse_args()
 
 basedir = os.path.dirname(os.path.realpath(os.path.abspath(__file__)))
 
-yaml_file = sys.argv[1]
+for f in glob.glob("*.names"):
+    os.remove(f)
+
+#These files will contain the clean and contaminated contigs
+open("clean.names", "w")
+open("clean.fasta", "w")
+open("contamination.names", "w")
+open("contamination.fasta", "w")
+
+yaml_file = "" #_global_projectb_scratch_andreopo_ACDC_acdc_build_SAG_contam_Meiothermus_ruber_SAG.Pedobacter_heparinus_SAG_Meiothermus.Pedobacter.fastq.CAREFUL_scaffolds.fasta.min2kb.fasta.yaml"
+
+if options.yamlfile:
+    yaml_file = options.yamlfile
+
+if len(glob.glob(yaml_file)) < 1:
+    print "Input does not exist: %s" % (yaml_file)
+    exit(1)
+
+output = os.getcwd()
+
+if options.output:
+    output = options.output
+
+if not os.path.exists(output) or not os.path.isdir(output):
+    print "Output directory does not exist: %s" % (output)
+    exit(1)
+
+for f in glob.glob(os.path.join(output, "*.names")):
+    os.remove(f)
+
+for f in glob.glob(os.path.join(output, "*.fasta")):
+    os.remove(f)
+
+open(os.path.join(output, "clean.names"), "w")
+open(os.path.join(output, "clean.fasta"), "w")
+open(os.path.join(output, "contamination.names"), "w")
+open(os.path.join(output, "contamination.fasta"), "w")
+
 
 with open (yaml_file, 'r') as f:
-    doc = yaml.load(f)
+    doc=yaml.load(f)
+    # use safe_load instead load
+    # dataMap = yaml.safe_load(f)
 
-method = doc['cluster_estimates']['most_likely_clustering']['method']
+print "YAML file input: %s " % (yaml_file)
 
-num_clusters = doc['cluster_estimates']['most_likely_clustering']['estimated_k']
-
-contig_names= doc['fasta_stats']['included_contigs']
-contigs_to_unsupclusters = {}
-unsupclusters_to_contigs = {}
-
-unsup_clusters = []
-all_k_clusterings = doc['cluster_estimates'][method]['assignments']###['assignment'][num_clusters]
-for a in all_k_clusterings:
-    if a.get('assignment').get('k') == num_clusters:
-        unsup_clusters = a.get('assignment').get('labels')
-
-count = 0
-for cluster in unsup_clusters:
-    contig_name = contig_names[count]
-    contigs_to_unsupclusters[contig_name] = cluster
-    if not cluster in unsupclusters_to_contigs:
-        unsupclusters_to_contigs[cluster] = []
-    unsupclusters_to_contigs[cluster].append(contig_name)
-    count += 1
-
-cluster_to_max_confidence = {}
-cluster_to_class = {}
-taxa_contigs =  doc['taxonomies']  ###a dictionary with the contig names as keys
-for t in taxa_contigs:
-    cluster = contigs_to_unsupclusters.get(t)
-    conf = taxa_contigs.get(t).get('confidence')
-    classif = taxa_contigs.get(t).get('state')
-    if not cluster in cluster_to_class or conf > cluster_to_max_confidence[cluster]:
+#Check if the contamination_state is clean or contaminated for the input fasta
+#In case this is decided to be a clean fasta then the entire fasta is written to clean.fasta
+#Else the contamination.fasta is created with the method shown below: Unsupervised clusters
+#get overlapped with the taxonomic annotation of highest confidence, which determines which
+#clusters are clean vs. contaminated.
+if doc['contamination_state'] == 'clean':
+   classif = 'clean'
+   contigs = doc['fasta_stats']['included_contigs']
+   file_classif = open(yaml_file + "." + classif + ".names", 'w')
+   for name in contigs:
+      file_classif.write(name + '\n')
+   file_classif.close()
+else:
+   method=doc['cluster_estimates']['most_likely_clustering']['method']
+   
+   print "method: %s" % (method)
+   
+   num_clusters = doc['cluster_estimates']['most_likely_clustering']['estimated_k']
+   
+   print "num_clusters: %s" % (num_clusters)
+   
+   contig_names= doc['fasta_stats']['included_contigs']
+   contigs_to_unsupclusters = {}
+   unsupclusters_to_contigs = {}
+   
+   #Create dictionaries for the unsupervised clusters. 
+   #The most_likely_clustering (CC or DIP) is retrieved with the most_likely_clustering estimated_k
+   #Then each cluster index is put in a dictionary and mapped to the contigs.
+   unsup_clusters = []
+   all_k_clusterings = doc['cluster_estimates'][method]['assignments']###['assignment'][num_clusters]
+   for a in all_k_clusterings:
+      if a.get('assignment').get('k') == num_clusters:
+          unsup_clusters = a.get('assignment').get('labels')
+   count = 0
+   for cluster in unsup_clusters:
+      contig_name = contig_names[count]
+      contigs_to_unsupclusters[contig_name] = cluster
+      if not cluster in unsupclusters_to_contigs:
+         unsupclusters_to_contigs[cluster] = []
+      unsupclusters_to_contigs[cluster].append(contig_name)
+      count+=1
+   
+   print "unsup_clusters: %s" %(unsup_clusters)
+   print "contig_names: %s" %(contig_names)
+   #print "contigs_to_unsupclusters %s" %(contigs_to_unsupclusters)
+   #print "unsupclusters_to_contigs %s" %(unsupclusters_to_contigs)
+   print "num contigs: %s" %(len(contig_names))
+   
+   
+   # The taxonomies from Kraken get overlaid on the unsupervised clusters.
+   # Each Kraken taxonomic assignment has a confidence value. The taxonomy
+   # with the highest confidence gets assigned to the entire cluster.
+   # If the taxonomy assignment matches the target then the cluster is a
+   # clean one, else it is a contaminant cluster.
+   cluster_to_max_confidence = {}
+   cluster_to_class = {}
+   taxa_contigs =  doc['taxonomies']  ###a dictionary with the contig names as keys
+   for t in taxa_contigs:
+      cluster = contigs_to_unsupclusters.get(t)
+      conf = taxa_contigs.get(t).get("confidence")
+      classif = taxa_contigs.get(t).get("state")
+      if not cluster in cluster_to_class or conf > cluster_to_max_confidence[cluster]:
         cluster_to_class[cluster] = classif
         cluster_to_max_confidence[cluster] = conf
 
-for c in cluster_to_class:
-    classif = cluster_to_class.get(c)
-    file_classif = open(classif + '.names', 'w')
-    contigs = unsupclusters_to_contigs.get(c)
-    for name in contigs:
-        file_classif.write(name + '\n')
-    file_classif.close()
-    with open(classif + '.fasta', 'w') as outfile:
-        subprocess.call(['awk', '-f', basedir + '/acdc-filter-fasta-by-name.awk', classif + '.names', doc['input_fasta']], stdout = outfile)
+   '''
+   ###In case any contigs were not in the taxonomy.
+   ###"NA" is a classification used in case Kraken gives no hit for a cluster at all.
+   '''
+   for u in unsupclusters_to_contigs:
+      #print "  u1 %s" % u
+      if not u in cluster_to_class:
+         #print "  u2 %s" % u
+         cluster_to_class[u] = "NA"
+
+   print "unsup_cluster_to_class mapping: %s" %(cluster_to_class)
+   
+   ###Print the names files with contig classifications.
+   for c in cluster_to_class:
+      classif = cluster_to_class.get(c)
+      file_classif = open(os.path.join(output, classif + ".names"), 'a')
+      contigs = unsupclusters_to_contigs.get(c)
+      for name in contigs:
+         file_classif.write(name + '\n')
+      file_classif.close()
+
+   '''
+   #After some investigation, I remembered that the "NA.fasta" class is used because Kraken&ACDC occasionally give a decision of "NA" rather than "clean" or "contaminated" for some contigs. For example, see this yaml file for the CUYYH run:
+
+   #> grep NA $RQC_SHARED/pipelines/sag_pool/archive/03/01/10/95/acdc/_global_projectb_scratch_qc_user_rqc_prod_pipelines_sag_pool_in-progress_03_01_10_95_pool_asm_pool_decontam.fasta.yaml
+  CUYYH_NODE_11_length_21040_cov_41.289138: {type: estimated, state: NA, identifier: unknown, confidence: -1}
+  CUYYH_NODE_25_length_15363_cov_18.340844: {type: estimated, state: NA, identifier: unknown, confidence: -1}
+
+   #Those contigs go in the "NA.fasta" and then are added to "contamination.fasta" by Bryce's request. Therefore, "NA" is a classification used in case Kraken gives no hit for a cluster at all. Note, in this particular case those two contigs are separate from all other contigs, they are in cluster "3" on their own, which is very suspicious
+   '''
+   classifs = ['contamination', 'clean', 'NA']
+   for classif in classifs:
+      if len(glob.glob(os.path.join(output, classif + '.names'))) > 0:
+         with open(os.path.join(output, classif + '.fasta'), 'a') as outfile:
+            subprocess.call(['awk', '-f', basedir + '/acdc-filter-fasta-by-name.awk', os.path.join(output, classif + '.names'), doc['input_fasta']], stdout = outfile)
+
+   ###By Bryce's request add NA.fasta to containation.fasta
+   if len(glob.glob(os.path.join(output, 'NA.fasta'))) > 0:
+      with open(os.path.join(output, 'contamination.fasta'), 'a') as contamfile:
+         subprocess.call(['cat', os.path.join(output, 'NA.fasta')], stdout = contamfile)
+
+
+
+###for i in `ls *.names` ; do filterbyname.sh names=$i in=$fasta out=$i.fasta ; done
+
+
+sys.exit(0)
+
