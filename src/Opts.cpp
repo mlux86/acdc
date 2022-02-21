@@ -218,7 +218,7 @@ std::string Opts::version()
 	return Opts::getInstance()._version;
 }
 
-unsigned Opts::logLevel()
+int Opts::logLevel()
 {
 	return Opts::getInstance()._logLevel;
 }

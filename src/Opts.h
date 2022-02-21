@@ -67,7 +67,7 @@ public:
 	static bool needsVersion();
 	static std::string version();
 	static bool needsHelp();
-	static unsigned logLevel();
+	static int logLevel();
 	static std::string helpDesc();
 	static unsigned randomSeed();
 	static std::vector<std::string> inputFASTAs();
