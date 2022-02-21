@@ -38,6 +38,7 @@ Clone the repository, run CMake and build the library
 
 ```
 # git clone https://github.com/mlux86/acdc.git
+# cd acdc
 # mkdir build && cd build
 # cmake ..
 # make -j4
