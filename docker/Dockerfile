@@ -1,4 +1,4 @@
-FROM debian:jessie
+FROM debian:bookworm
 MAINTAINER Markus Lux
 
 RUN apt-get update
